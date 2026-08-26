@@ -7,11 +7,11 @@
     {% if tenant %}
       <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez l'espace <strong>{{ tenant.name }}</strong></p>
     {% else %}
-      <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez la communauté des Makers FabOS</p>
+      <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez la communauté des Makers LabOS</p>
     {% endif %}
   </div>
 
-  <form method="post" action="{% url 'signup' %}">
+  <form method="post" action="{% url 'signup' %}" enctype="multipart/form-data" onsubmit="handleSignupSubmit(this)">
     {% csrf_token %}
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
       <div>
@@ -39,24 +39,73 @@
       <input type="text" name="phone" placeholder="+33 6 12 34 56 78" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
     </div>
 
+    {% if tenant %}
+      <!-- Auto-attribué selon le sous-domaine / tenant actif -->
+      <input type="hidden" name="fablab_id" value="{{ tenant.id }}" />
+      <div style="margin-bottom: 16px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: var(--muted); font-weight: 500;">FabLab / Établissement :</span>
+        <span style="font-weight: 700; color: var(--text);">📍 {{ tenant.name }} ({{ tenant.city }})</span>
+      </div>
+    {% else %}
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Sélectionner votre FabLab / Établissement</label>
+        <select name="fablab_id" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+          {% for lab in all_tenants %}
+            <option value="{{ lab.id }}">
+              {{ lab.name }} ({{ lab.city }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+
     <div style="margin-bottom: 16px;">
       <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Statut / Profil</label>
       <select name="role" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
         <option value="MAKER">Maker Résident (Prototypage & Création)</option>
-        <option value="STUDENT">Étudiant / Stagiaire (Tarif Réduit)</option>
+        <option value="STUDENT">Étudiant / Stagiaire </option>
         <option value="INSTRUCTOR">Formateur / Intervenant</option>
       </select>
     </div>
 
-    <div style="margin-bottom: 24px;">
-      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Mot de passe</label>
-      <input type="password" name="password" required placeholder="••••••••" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">📄 Justificatif / Carte Étudiant / Pièce d'Identité  :</label>
+      <input type="file" name="dossier_document" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-input" style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Permet au FabManager de vérifier votre dossier avant d'approuver votre compte.</div>
     </div>
 
-    <button type="submit" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
-      Créer mon Compte Membre
+    <div style="margin-bottom: 24px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Mot de passe</label>
+      <div style="position: relative;">
+        <input type="password" id="signup-password" name="password" required placeholder="••••••••" class="form-input" style="width: 100%; padding: 10px 85px 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+        <button type="button" onclick="togglePasswordVisibility('signup-password', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 8px;">
+          Afficher
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" id="signup-submit-btn" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <span>Créer mon Compte Membre</span>
     </button>
   </form>
+
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+    function handleSignupSubmit(form) {
+      const btn = document.getElementById('signup-submit-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+        btn.innerHTML = `<span style="display: inline-block; width: 16px; height: 16px; border: 2px solid var(--bg); border-right-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px;"></span> Création de votre compte en cours...`;
+      }
+    }
+  </script>
 
   <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--muted);">
     Déjà inscrit ? <a href="{% url 'login' %}" style="color: var(--text); font-weight: 600; text-decoration: underline;">Se connecter</a>

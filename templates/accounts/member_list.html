@@ -3,14 +3,19 @@
 {% block content %}
 <div style="display: flex; flex-direction: column; gap: 24px;">
   
-  <div style="display: flex; align-items: center; justify-content: space-between;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
     <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Annuaire des Membres du FabLab</h1>
+      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Annuaire des Membres & Gouvernance</h1>
       <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">
-        Gestion des comptes, des rôles et des habilitations machines sur <strong>{{ tenant.name|default:"l'espace" }}</strong>.
+        Validation des inscriptions, gestion des rôles et habilitations machines sur <strong>{{ tenant.name|default:"l'espace" }}</strong>.
       </p>
     </div>
-    <div style="display: flex; gap: 12px;">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      {% if pending_count > 0 %}
+        <div style="padding: 10px 16px; background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #f59e0b; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;">
+          ⏳ Inscriptions en Attente : {{ pending_count }}
+        </div>
+      {% endif %}
       <div style="padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
         👥 Total Membres : <strong>{{ total_members }}</strong>
       </div>
@@ -20,15 +25,275 @@
     </div>
   </div>
 
-  <!-- Table Card -->
+  <!-- SECTION 1A: DEMANDES FABMANAGER (SUPERADMIN) -->
+  {% if is_superadmin and pending_fabmanagers %}
+    <div style="background: var(--surface); border: 2px solid #8b5cf6; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+      <div style="padding: 16px 20px; background: rgba(139, 92, 246, 0.08); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text);">👑 Demandes d'Inscription FabManager & Administration ({{ pending_fabmanagers.count }})</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">Validation réservée exclusivement au Super Administrateur Système.</p>
+        </div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+          <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
+            <th style="padding: 12px 16px;">Demandeur</th>
+            <th style="padding: 12px 16px;">Rôle Souhaité</th>
+            <th style="padding: 12px 16px;">FabLab Rattaché</th>
+            <th style="padding: 12px 16px;">Contact</th>
+            <th style="padding: 12px 16px; text-align: right;">Décision SuperAdmin</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pm in pending_fabmanagers %}
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 14px 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #8b5cf6; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 13px;">
+                    {{ pm.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; color: var(--text);">{{ pm.get_full_name|default:pm.username }}</div>
+                    <div style="font-size: 12px; color: var(--muted);">@{{ pm.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 14px 16px;">
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3);">
+                  {{ pm.get_role_display }}
+                </span>
+              </td>
+              <td style="padding: 14px 16px; font-size: 13px; font-weight: 600;">
+                {{ pm.fablab.name|default:"Non spécifié" }}
+              </td>
+              <td style="padding: 14px 16px; font-size: 13px; color: var(--muted);">
+                {{ pm.email }} <br/> {{ pm.phone }}
+              </td>
+              <td style="padding: 14px 16px; text-align: right;">
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                    <button type="submit" name="action" value="approve_user" style="padding: 6px 14px; font-size: 12px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✓ Valider FabManager
+                    </button>
+                  </form>
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                    <button type="submit" name="action" value="reject_user" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✕ Refuser
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <!-- SECTION 1B: DEMANDES MEMBRES REGULIERS DU FABLAB -->
+  {% if pending_regular_members %}
+    <div style="background: var(--surface); border: 2px solid #f59e0b; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+      <div style="padding: 16px 20px; background: rgba(245, 158, 11, 0.08); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text);">Demandes d'Inscription Membres en Attente ({{ pending_regular_members.count }})</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">Validez ou refusez les accès membres de votre FabLab pour débloquer leurs réservations.</p>
+        </div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+          <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
+            <th style="padding: 12px 16px;">Demandeur</th>
+            <th style="padding: 12px 16px;">Profil Souhaité</th>
+            <th style="padding: 12px 16px;">Contact</th>
+            <th style="padding: 12px 16px;">Date d'Inscription</th>
+            <th style="padding: 12px 16px; text-align: right;">Décision FabManager</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pm in pending_regular_members %}
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 14px 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 34px; height: 34px; border-radius: 50%; background: #f59e0b; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 13px;">
+                    {{ pm.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; color: var(--text);">{{ pm.get_full_name|default:pm.username }}</div>
+                    <div style="font-size: 12px; color: var(--muted);">@{{ pm.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 14px 16px;">
+                <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+                  {{ pm.get_role_display }}
+                </span>
+              </td>
+              <td style="padding: 14px 16px; font-size: 13px; color: var(--muted);">
+                {{ pm.email }} <br/> {{ pm.phone }}
+              </td>
+              <td style="padding: 14px 16px; font-size: 13px; color: var(--muted);">
+                {{ pm.date_joined|date:"d/m/Y H:i" }}
+              </td>
+              <td style="padding: 14px 16px; text-align: right;">
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                  <button type="button" onclick="openDossierModal('pm-{{ pm.id }}')" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 4px;">
+                    📂 Consulter Dossier
+                  </button>
+                  <button type="button" onclick="openReqInfoModal('pm-{{ pm.id }}')" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); cursor: pointer; color: #2563eb; display: inline-flex; align-items: center; gap: 4px;">
+                    💬 Demander Complément
+                  </button>
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                    <button type="submit" name="action" value="approve_user" style="padding: 6px 14px; font-size: 12px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✓ Approuver
+                    </button>
+                  </form>
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                    <button type="submit" name="action" value="reject_user" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✕ Refuser
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Modal Demande Informations Complémentaires -->
+                <div id="reqinfo-modal-pm-{{ pm.id }}" style="display: none; position: fixed; inset: 0; background: rgba(8,10,14,0.65); backdrop-filter: blur(4px); z-index: 10000; place-items: center; text-align: left;">
+                  <div style="width: min(500px, 92vw); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+                      <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text);">💬 Demande d'Informations Complémentaires</h3>
+                      <button type="button" onclick="closeReqInfoModal('pm-{{ pm.id }}')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">✕</button>
+                    </div>
+
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="member_id" value="{{ pm.id }}">
+                      <input type="hidden" name="action" value="request_info">
+
+                      <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.4;">
+                        Rédigez le message qui sera envoyé automatiquement par e-mail à <strong>{{ pm.get_full_name|default:pm.username }}</strong> ({{ pm.email }}) :
+                      </p>
+
+                      <div style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 6px;">Message / Précisions demandées :</label>
+                        <textarea name="custom_message" rows="4" required style="width: 100%; padding: 10px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); resize: vertical;" placeholder="ex: Merci de nous fournir votre carte étudiant ou une attestation d'inscription pour bénéficier du tarif réduit."></textarea>
+                      </div>
+
+                      <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                        <button type="button" onclick="closeReqInfoModal('pm-{{ pm.id }}')" style="padding: 8px 14px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); cursor: pointer;">
+                          Annuler
+                        </button>
+                        <button type="submit" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: #2563eb; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                          ✉️ Envoyer la Demande par Mail
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Modal Dossier Membre -->
+                <div id="dossier-modal-pm-{{ pm.id }}" style="display: none; position: fixed; inset: 0; background: rgba(8,10,14,0.65); backdrop-filter: blur(4px); z-index: 999; place-items: center; text-align: left;">
+                  <div style="width: min(560px, 92vw); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+                      <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text);">📂 Dossier d'Inscription Membre</h3>
+                      <button type="button" onclick="closeDossierModal('pm-{{ pm.id }}')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">✕</button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px;">
+                      <div style="display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #f59e0b; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 16px;">
+                          {{ pm.username|slice:":1"|upper }}
+                        </div>
+                        <div>
+                          <div style="font-size: 16px; font-weight: 700; color: var(--text);">{{ pm.get_full_name|default:pm.username }}</div>
+                          <div style="font-size: 13px; color: var(--muted);">{{ pm.email }} • {{ pm.phone|default:"Aucun téléphone" }}</div>
+                        </div>
+                      </div>
+
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="padding: 10px 14px; background: var(--panel); border-radius: 6px; border: 1px solid var(--border);">
+                          <div style="font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase;">Profil Membre</div>
+                          <div style="font-weight: 700; margin-top: 2px; color: var(--text);">{{ pm.get_role_display }}</div>
+                        </div>
+                        <div style="padding: 10px 14px; background: var(--panel); border-radius: 6px; border: 1px solid var(--border);">
+                          <div style="font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase;">Date d'Inscription</div>
+                          <div style="font-weight: 700; margin-top: 2px; color: var(--text);">{{ pm.date_joined|date:"d/m/Y H:i" }}</div>
+                        </div>
+                      </div>
+
+                      <div style="margin-top: 6px;">
+                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);">📄 Document Justificatif / Carte Étudiant / Identité :</div>
+                        {% if pm.dossier_document %}
+                          <div style="padding: 14px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                              <div style="font-weight: 700; color: var(--text); word-break: break-all;">{{ pm.dossier_document.name }}</div>
+                              <div style="font-size: 12px; color: var(--muted);">Pièce jointe au dossier candidat</div>
+                            </div>
+                            <a href="{{ pm.dossier_document.url }}" target="_blank" class="btn btn-primary btn-sm" style="padding: 8px 14px; font-size: 13px; font-weight: 700; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px;">
+                              👁 Ouvrir / Télécharger
+                            </a>
+                          </div>
+                        {% else %}
+                          <div style="padding: 12px; background: var(--panel); border: 1px dashed var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); text-align: center;">
+                            ⚠️ Aucun document justificatif n'a été fourni lors de l'inscription.
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+                      <button type="button" onclick="closeDossierModal('pm-{{ pm.id }}')" style="padding: 8px 14px; font-size: 13px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); cursor: pointer;">
+                        Fermer
+                      </button>
+                      <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                        <button type="submit" name="action" value="reject_user" style="padding: 8px 14px; font-size: 13px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                          ✕ Refuser
+                        </button>
+                      </form>
+                      <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="member_id" value="{{ pm.id }}" />
+                        <button type="submit" name="action" value="approve_user" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                          ✓ Approuver
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% elif not is_superadmin %}
+    <div style="padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 16px;">ℹ️</span>
+      <span>Les demandes d'inscription au rôle de <strong>FabManager</strong> ou <strong>Administrateur</strong> sont directement transmises au <strong>Super Administrateur Système</strong> pour validation.</span>
+    </div>
+  {% endif %}
+
+  <!-- SECTION 2: LISTE COMPLÈTE DES MEMBRES DU FABLAB -->
   <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel);">
+      <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Tous les Membres Inscrits</h3>
+    </div>
+    
     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
       <thead>
         <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
           <th style="padding: 12px 16px;">Membre / Utilisateur</th>
           <th style="padding: 12px 16px;">Rôle FabLab</th>
-          <th style="padding: 12px 16px;">Contact</th>
-          <th style="padding: 12px 16px;">Badge / RFID</th>
+          <th style="padding: 12px 16px;">Validation Compte</th>
           <th style="padding: 12px 16px;">Statut Habilitation</th>
           <th style="padding: 12px 16px;">Actions FabManager</th>
         </tr>
@@ -43,7 +308,7 @@
                 </div>
                 <div>
                   <div style="font-weight: 600; color: var(--text);">{{ m.get_full_name|default:m.username }}</div>
-                  <div style="font-size: 12px; color: var(--muted);">@{{ m.username }}</div>
+                  <div style="font-size: 12px; color: var(--muted);">{{ m.email }}</div>
                 </div>
               </div>
             </td>
@@ -52,11 +317,20 @@
                 {{ m.get_role_display }}
               </span>
             </td>
-            <td style="padding: 14px 16px; font-size: 13px; color: var(--muted);">
-              {{ m.email|default:"No Email" }} <br/> {{ m.phone|default:"" }}
-            </td>
-            <td style="padding: 14px 16px; font-family: monospace; font-size: 13px;">
-              {{ m.rfid_card_id|default:"-" }}
+            <td style="padding: 14px 16px;">
+              {% if m.role == 'FABMANAGER' or m.role == 'ADMIN' %}
+                {% if m.is_approved %}
+                  <span style="font-size: 12px; font-weight: 700; color: #10b981;">✓ Approuvé (SuperAdmin)</span>
+                {% else %}
+                  <span style="font-size: 12px; font-weight: 700; color: #8b5cf6;">⏳ Attente SuperAdmin</span>
+                {% endif %}
+              {% else %}
+                {% if m.is_approved %}
+                  <span style="font-size: 12px; font-weight: 700; color: #10b981;">✓ Approuvé</span>
+                {% else %}
+                  <span style="font-size: 12px; font-weight: 700; color: #f59e0b;">⏳ En attente</span>
+                {% endif %}
+              {% endif %}
             </td>
             <td style="padding: 14px 16px;">
               {% if m.is_certified %}
@@ -66,24 +340,44 @@
               {% endif %}
             </td>
             <td style="padding: 14px 16px;">
-              <form method="post" style="display: flex; align-items: center; gap: 8px;">
-                {% csrf_token %}
-                <input type="hidden" name="member_id" value="{{ m.id }}" />
-                <select name="role" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-                  <option value="MAKER" {% if m.role == 'MAKER' %}selected{% endif %}>Maker</option>
-                  <option value="STUDENT" {% if m.role == 'STUDENT' %}selected{% endif %}>Étudiant</option>
-                  <option value="INSTRUCTOR" {% if m.role == 'INSTRUCTOR' %}selected{% endif %}>Formateur</option>
-                  <option value="FABMANAGER" {% if m.role == 'FABMANAGER' %}selected{% endif %}>FabManager</option>
-                </select>
-                <button type="submit" name="toggle_certified" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
-                  Toggle Habilitation
-                </button>
-              </form>
+              {% if m.role == 'FABMANAGER' or m.role == 'ADMIN' %}
+                {% if is_superadmin %}
+                  <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="member_id" value="{{ m.id }}" />
+                    <button type="submit" name="toggle_approved" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
+                      Toggle Validation
+                    </button>
+                  </form>
+                {% else %}
+                  <span style="font-size: 11px; color: var(--muted); font-style: italic;">Validation SuperAdmin</span>
+                {% endif %}
+              {% else %}
+                <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="member_id" value="{{ m.id }}" />
+                  <select name="role" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                    <option value="MAKER" {% if m.role == 'MAKER' %}selected{% endif %}>Maker</option>
+                    <option value="STUDENT" {% if m.role == 'STUDENT' %}selected{% endif %}>Étudiant</option>
+                    <option value="INSTRUCTOR" {% if m.role == 'INSTRUCTOR' %}selected{% endif %}>Formateur</option>
+                    {% if is_superadmin %}
+                      <option value="FABMANAGER" {% if m.role == 'FABMANAGER' %}selected{% endif %}>FabManager</option>
+                      <option value="ADMIN" {% if m.role == 'ADMIN' %}selected{% endif %}>Administrateur</option>
+                    {% endif %}
+                  </select>
+                  <button type="submit" name="toggle_certified" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
+                    Toggle Habilitation
+                  </button>
+                  <button type="submit" name="toggle_approved" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
+                    Toggle Validation
+                  </button>
+                </form>
+              {% endif %}
             </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="6" style="padding: 30px; text-align: center; color: var(--muted);">Aucun membre enregistré pour cet espace.</td>
+            <td colspan="5" style="padding: 30px; text-align: center; color: var(--muted);">Aucun membre enregistré pour cet espace.</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -91,4 +385,23 @@
   </div>
 
 </div>
+
+<script>
+  function openDossierModal(id) {
+    const modal = document.getElementById('dossier-modal-' + id);
+    if (modal) modal.style.display = 'grid';
+  }
+  function closeDossierModal(id) {
+    const modal = document.getElementById('dossier-modal-' + id);
+    if (modal) modal.style.display = 'none';
+  }
+  function openReqInfoModal(id) {
+    const modal = document.getElementById('reqinfo-modal-' + id);
+    if (modal) modal.style.display = 'grid';
+  }
+  function closeReqInfoModal(id) {
+    const modal = document.getElementById('reqinfo-modal-' + id);
+    if (modal) modal.style.display = 'none';
+  }
+</script>
 {% endblock %}

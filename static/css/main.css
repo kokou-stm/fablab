@@ -763,7 +763,7 @@ body[data-density="compact"] .topbar { margin-bottom: 16px; }
 
 .btn {
   border: none;
-  background: var(--accent);
+  background: var(--text);
   color: var(--bg);
   padding: 10px 16px;
   border-radius: var(--radius-md);
@@ -772,10 +772,20 @@ body[data-density="compact"] .topbar { margin-bottom: 16px; }
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
 }
 
-.btn.ghost {
-  background: transparent;
-  color: var(--text);
+.btn-outline, .btn.ghost {
+  background: var(--panel);
+  color: var(--text) !important;
   border: 1px solid var(--border);
+}
+.btn-outline:hover, .btn.ghost:hover {
+  background: var(--hover);
+  color: var(--text) !important;
+}
+
+.btn-primary {
+  background: var(--text);
+  color: var(--bg) !important;
+  border: 1px solid var(--text);
 }
 
 .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,0.18); }

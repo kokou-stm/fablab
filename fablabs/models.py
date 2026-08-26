@@ -16,6 +16,8 @@ class FabLab(models.Model):
         ('ENTERPRISE', 'Entreprise / Prototypage Pro'),
     ], default='COMMUNITY')
     is_active = models.BooleanField("Actif", default=True)
+    is_approved = models.BooleanField("Approuvé par le SuperAdmin", default=False)
+    justification_document = models.FileField("Justificatif officiel (KBIS, attestation)", upload_to="justificatifs/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

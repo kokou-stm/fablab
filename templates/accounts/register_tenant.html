@@ -3,6 +3,8 @@
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto; padding: 20px 0;">
   
+  <a href="/" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 600; margin-bottom: 20px;">← Retour à l'accueil</a>
+
   <!-- Header Title -->
   <div style="text-align: center; margin-bottom: 32px;">
     <div style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: var(--text); color: var(--bg); border-radius: 12px; font-size: 24px; font-weight: 700; margin-bottom: 12px;">
@@ -14,7 +16,7 @@
 
   <!-- Form Box -->
   <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow);">
-    <form action="/register-lab/" method="POST" style="display: grid; gap: 24px;">
+    <form action="/register-lab/" method="POST" enctype="multipart/form-data" onsubmit="handleRegisterSubmit(this)" style="display: grid; gap: 24px;">
       {% csrf_token %}
 
       <!-- Section 1 : Information de l'Établissement -->
@@ -36,6 +38,12 @@
           </div>
 
           <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Nom de domaine personnalisé (optionnel) :</label>
+            <input type="text" name="domain" placeholder="ex: monfablab.fr" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Si vous possédez déjà votre propre nom de domaine et souhaitez le pointer vers votre espace.</div>
+          </div>
+
+          <div>
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Email Officiel de Contact :</label>
             <input type="email" name="contact_email" required placeholder="contact@polytech-nantes.fr" value="{{ contact_email|default:'' }}" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
           </div>
@@ -43,6 +51,12 @@
           <div>
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Ville d'Implantation :</label>
             <input type="text" name="city" required placeholder="Nantes" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Justificatif Officiel d'Établissement (KBIS, Statuts, Attestation PDF/Image) :</label>
+            <input type="file" name="justification_document" accept=".pdf,.jpg,.png,.doc,.docx" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Document nécessaire pour l'examen et la validation de votre espace par l'équipe SuperAdmin.</div>
           </div>
         </div>
       </div>
@@ -93,19 +107,42 @@
 
           <div style="grid-column: 1 / -1;">
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Mot de passe de Connexion :</label>
-            <input type="password" name="password" required placeholder="••••••••••••" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+            <div style="position: relative;">
+              <input type="password" id="tenant-admin-password" name="password" required placeholder="••••••••••••" style="width: 100%; padding: 10px 85px 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+              <button type="button" onclick="togglePasswordVisibility('tenant-admin-password', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 8px;">
+                Afficher
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Submit Button -->
       <div style="margin-top: 8px;">
-        <button type="submit" style="width: 100%; padding: 14px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span>🚀 Créer mon Espace FabLab & Provisionner mon Schéma</span>
+        <button type="submit" id="tenant-submit-btn" style="width: 100%; padding: 14px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>🚀 Créer mon Espace FabLab</span>
         </button>
       </div>
 
     </form>
+
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+
+    <script>
+      function handleRegisterSubmit(form) {
+        const btn = document.getElementById('tenant-submit-btn');
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.85';
+          btn.innerHTML = `<span style="display: inline-block; width: 18px; height: 18px; border: 2px solid var(--bg); border-right-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px;"></span> Provisionnement du Schéma & Création de l'Espace en cours...`;
+        }
+      }
+    </script>
   </div>
 </div>
 {% endblock %}

@@ -1,0 +1,376 @@
+<div style="display: flex; flex-direction: column; gap: 28px;">
+  
+  <!-- Header Title & Action Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.08)); padding: 24px; border-radius: var(--radius-lg); border: 1px solid rgba(139, 92, 246, 0.3);">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">👑</span>
+        <h1 style="font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.02em;">SuperAdmin Control Center</h1>
+      </div>
+      <p style="margin: 6px 0 0 0; color: var(--muted); font-size: 14px;">
+        Supervision globale du réseau multi-tenant LabOS, validation des FabManagers et gestion des espaces.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="{% url 'register_tenant' %}" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); text-decoration: none; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px;">
+        <span>+ Créer un Nouveau FabLab</span>
+      </a>
+      <a href="/admin/" target="_blank" class="btn btn-outline" style="padding: 10px 18px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); color: var(--text); display: inline-flex; align-items: center; gap: 6px;">
+        ⚙️ Admin Master Django
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Analytics Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+    
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">FabLabs du Réseau</div>
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 8px;">
+        <span style="font-size: 32px; font-weight: 800;">{{ total_fablabs }}</span>
+        <span style="font-size: 13px; font-weight: 600; color: #10b981;">({{ active_fablabs }} actifs)</span>
+      </div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">Total Utilisateurs</div>
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 8px;">
+        <span style="font-size: 32px; font-weight: 800; color: #3b82f6;">{{ total_users }}</span>
+        <span style="font-size: 12px; color: var(--muted);">membres inscrits</span>
+      </div>
+    </div>
+
+    <div style="background: var(--surface); border: {% if pending_fabmanagers %}2px solid #8b5cf6{% else %}1px solid var(--border){% endif %}; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: {% if pending_fabmanagers %}#8b5cf6{% else %}var(--muted){% endif %}; letter-spacing: 0.05em;">FabManagers en Attente</div>
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 8px;">
+        <span style="font-size: 32px; font-weight: 800; color: {% if pending_fabmanagers %}#8b5cf6{% else %}var(--text){% endif %};">{{ pending_fabmanagers.count }}</span>
+        <span style="font-size: 12px; color: var(--muted);">validation requise</span>
+      </div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">Cotisations Membres</div>
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 8px;">
+        <span style="font-size: 32px; font-weight: 800; color: #10b981;">{{ total_revenue }} €</span>
+        <span style="font-size: 12px; color: var(--muted);">({{ total_subscriptions }} abonnements)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECTION 1: DEMANDES DE FABMANAGERS EN ATTENTE (SUPERADMIN ONLY) -->
+  {% if pending_fabmanagers %}
+    <div style="background: var(--surface); border: 2px solid #8b5cf6; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+      <div style="padding: 18px 24px; background: rgba(139, 92, 246, 0.1); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: var(--text);">👑 Demandes d'Inscription FabManager & Administration ({{ pending_fabmanagers.count }})</h3>
+          <p style="font-size: 13px; color: var(--muted); margin: 3px 0 0 0;">Ces utilisateurs ont demandé la gestion d'un FabLab. Validez leur accès pour leur ouvrir l'interface FabManager.</p>
+        </div>
+        <span style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #8b5cf6; color: #ffffff;">
+          ACTION REQUISE
+        </span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+          <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
+            <th style="padding: 14px 20px;">Demandeur</th>
+            <th style="padding: 14px 20px;">Rôle Demandé</th>
+            <th style="padding: 14px 20px;">FabLab Rattaché</th>
+            <th style="padding: 14px 20px;">Contact</th>
+            <th style="padding: 14px 20px;">Date</th>
+            <th style="padding: 14px 20px; text-align: right;">Décision SuperAdmin</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pm in pending_fabmanagers %}
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 16px 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 38px; height: 38px; border-radius: 50%; background: #8b5cf6; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 14px;">
+                    {{ pm.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; color: var(--text); font-size: 15px;">{{ pm.get_full_name|default:pm.username }}</div>
+                    <div style="font-size: 12px; color: var(--muted);">@{{ pm.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 16px 20px;">
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 12px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3);">
+                  {{ pm.get_role_display }}
+                </span>
+              </td>
+              <td style="padding: 16px 20px; font-weight: 700;">
+                {{ pm.fablab.name|default:"Non assigné" }}
+              </td>
+              <td style="padding: 16px 20px; font-size: 13px; color: var(--muted);">
+                {{ pm.email }} <br/> {{ pm.phone }}
+              </td>
+              <td style="padding: 16px 20px; font-size: 13px; color: var(--muted);">
+                {{ pm.date_joined|date:"d/m/Y H:i" }}
+              </td>
+              <td style="padding: 16px 20px; text-align: right;">
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                  <button type="button" onclick="openDossierModal('sa-{{ pm.id }}')" style="padding: 8px 14px; font-size: 13px; font-weight: 600; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 4px;">
+                    📂 Consulter Dossier
+                  </button>
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve_fabmanager" />
+                    <input type="hidden" name="target_id" value="{{ pm.id }}" />
+                    <button type="submit" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✓ Approuver FabManager
+                    </button>
+                  </form>
+                  <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject_fabmanager" />
+                    <input type="hidden" name="target_id" value="{{ pm.id }}" />
+                    <button type="submit" style="padding: 8px 14px; font-size: 13px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✕ Refuser
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Modal Dossier SuperAdmin -->
+                <div id="dossier-modal-sa-{{ pm.id }}" style="display: none; position: fixed; inset: 0; background: rgba(8,10,14,0.65); backdrop-filter: blur(4px); z-index: 999; place-items: center; text-align: left;">
+                  <div style="width: min(580px, 92vw); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+                      <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text);">📂 Dossier Responsable / FabLab</h3>
+                      <button type="button" onclick="closeDossierModal('sa-{{ pm.id }}')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">✕</button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px;">
+                      <div style="display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #8b5cf6; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 16px;">
+                          {{ pm.username|slice:":1"|upper }}
+                        </div>
+                        <div>
+                          <div style="font-size: 16px; font-weight: 700; color: var(--text);">{{ pm.get_full_name|default:pm.username }}</div>
+                          <div style="font-size: 13px; color: var(--muted);">{{ pm.email }} • {{ pm.phone|default:"Aucun téléphone" }}</div>
+                        </div>
+                      </div>
+
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="padding: 10px 14px; background: var(--panel); border-radius: 6px; border: 1px solid var(--border);">
+                          <div style="font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase;">FabLab Rattaché</div>
+                          <div style="font-weight: 700; margin-top: 2px; color: var(--text);">{{ pm.fablab.name|default:"Non assigné" }}</div>
+                        </div>
+                        <div style="padding: 10px 14px; background: var(--panel); border-radius: 6px; border: 1px solid var(--border);">
+                          <div style="font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase;">Rôle Demandé</div>
+                          <div style="font-weight: 700; margin-top: 2px; color: #8b5cf6;">{{ pm.get_role_display }}</div>
+                        </div>
+                      </div>
+
+                      <div style="margin-top: 6px;">
+                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);">📄 Document Justificatif / KBIS / Attestation :</div>
+                        {% if pm.fablab.justification_document or pm.dossier_document %}
+                          {% with doc=pm.fablab.justification_document|default:pm.dossier_document %}
+                            <div style="padding: 14px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between;">
+                              <div>
+                                <div style="font-weight: 700; color: var(--text); word-break: break-all;">{{ doc.name }}</div>
+                                <div style="font-size: 12px; color: var(--muted);">Justificatif officiel d'établissement</div>
+                              </div>
+                              <a href="{{ doc.url }}" target="_blank" class="btn btn-primary btn-sm" style="padding: 8px 14px; font-size: 13px; font-weight: 700; background: #8b5cf6; color: #ffffff; text-decoration: none; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px;">
+                                👁 Ouvrir / Télécharger
+                              </a>
+                            </div>
+                          {% endwith %}
+                        {% else %}
+                          <div style="padding: 12px; background: var(--panel); border: 1px dashed var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); text-align: center;">
+                            ⚠️ Aucun document justificatif téléversé pour ce compte.
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+                      <button type="button" onclick="closeDossierModal('sa-{{ pm.id }}')" style="padding: 8px 14px; font-size: 13px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); cursor: pointer;">
+                        Fermer
+                      </button>
+                      <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject_fabmanager" />
+                        <input type="hidden" name="target_id" value="{{ pm.id }}" />
+                        <button type="submit" style="padding: 8px 14px; font-size: 13px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                          ✕ Refuser
+                        </button>
+                      </form>
+                      <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve_fabmanager" />
+                        <input type="hidden" name="target_id" value="{{ pm.id }}" />
+                        <button type="submit" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                          ✓ Approuver FabManager
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <!-- SECTION 2: RÉSEAU DES FABLABS ENREGISTRÉS -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="font-size: 17px; font-weight: 800; margin: 0;">🏢 Réseau des FabLabs Enregistrés ({{ total_fablabs }})</h3>
+      <a href="{% url 'register_tenant' %}" class="btn btn-outline btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; border: 1px solid var(--border); font-weight: 600; color: var(--text);">
+        + Ajouter un Espace
+      </a>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+      <thead>
+        <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
+          <th style="padding: 14px 20px;">Nom de l'Espace FabLab</th>
+          <th style="padding: 14px 20px;">Ville / Localisation</th>
+          <th style="padding: 14px 20px;">Formule / Offre</th>
+          <th style="padding: 14px 20px;">Statut</th>
+          <th style="padding: 14px 20px;">Créé le</th>
+          <th style="padding: 14px 20px; text-align: right;">Actions SuperAdmin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lab in all_fablabs %}
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 16px 20px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--text); color: var(--bg); display: grid; place-items: center; font-weight: 800; font-size: 16px;">
+                  ⚡
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 15px; color: var(--text);">{{ lab.name }}</div>
+                  <div style="font-size: 12px; color: var(--muted); font-family: monospace;">Slug: {{ lab.slug }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 16px 20px; font-weight: 600; color: var(--muted);">
+              📍 {{ lab.city|default:"Non renseignée" }}
+            </td>
+            <td style="padding: 16px 20px;">
+              <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+                {{ lab.get_plan_display }}
+              </span>
+            </td>
+            <td style="padding: 16px 20px;">
+              {% if lab.is_active %}
+                <span style="font-size: 12px; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span> Actif
+                </span>
+              {% else %}
+                <span style="font-size: 12px; font-weight: 700; color: #ef4444; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span> Inactif
+                </span>
+              {% endif %}
+            </td>
+            <td style="padding: 16px 20px; font-size: 13px; color: var(--muted);">
+              {{ lab.created_at|date:"d/m/Y" }}
+            </td>
+            <td style="padding: 16px 20px; text-align: right;">
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                <a href="/switch-tenant/{{ lab.slug }}/" class="btn btn-outline btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; border: 1px solid var(--border); font-weight: 600; color: var(--text);">
+                  👁 Infiltrer Context
+                </a>
+                <form method="post" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_lab_status" />
+                  <input type="hidden" name="target_id" value="{{ lab.id }}" />
+                  <button type="submit" style="padding: 6px 12px; font-size: 12px; font-weight: 600; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text);">
+                    {% if lab.is_active %}Désactiver{% else %}Activer{% endif %}
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="padding: 30px; text-align: center; color: var(--muted);">Aucun FabLab enregistré pour le moment.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 3: ANNUAIRE GLOBAL DES UTILISATEURS DU RÉSEAU -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--panel);">
+      <h3 style="font-size: 17px; font-weight: 800; margin: 0;">👥 Annuaire Utilisateurs Réseau Global ({{ total_users }})</h3>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+      <thead>
+        <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
+          <th style="padding: 14px 20px;">Utilisateur</th>
+          <th style="padding: 14px 20px;">Rôle</th>
+          <th style="padding: 14px 20px;">FabLab Attribué</th>
+          <th style="padding: 14px 20px;">Validation Status</th>
+          <th style="padding: 14px 20px;">Action SuperAdmin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in all_users %}
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 16px 20px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-weight: 700; font-size: 14px;">
+                  {{ u.username|slice:":1"|upper }}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: var(--text);">{{ u.get_full_name|default:u.username }}</div>
+                  <div style="font-size: 12px; color: var(--muted);">{{ u.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 16px 20px;">
+              <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+                {{ u.get_role_display }}
+              </span>
+            </td>
+            <td style="padding: 16px 20px; font-weight: 600;">
+              {{ u.fablab.name|default:"SuperAdmin Master" }}
+            </td>
+            <td style="padding: 16px 20px;">
+              {% if u.is_approved or u.is_superuser %}
+                <span style="font-size: 12px; font-weight: 700; color: #10b981;">✓ Validé</span>
+              {% else %}
+                <span style="font-size: 12px; font-weight: 700; color: #f59e0b;">⏳ En Attente</span>
+              {% endif %}
+            </td>
+            <td style="padding: 16px 20px;">
+              <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                {% csrf_token %}
+                <input type="hidden" name="target_id" value="{{ u.id }}" />
+                {% if not u.is_approved %}
+                  <button type="submit" name="action" value="approve_fabmanager" style="padding: 6px 12px; font-size: 12px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                    ✓ Valider Compte
+                  </button>
+                {% else %}
+                  <span style="font-size: 12px; color: var(--muted); font-style: italic;">Compte Actif</span>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  function openDossierModal(id) {
+    const modal = document.getElementById('dossier-modal-' + id);
+    if (modal) modal.style.display = 'grid';
+  }
+  function closeDossierModal(id) {
+    const modal = document.getElementById('dossier-modal-' + id);
+    if (modal) modal.style.display = 'none';
+  }
+</script>

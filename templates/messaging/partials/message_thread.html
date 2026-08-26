@@ -1,0 +1,111 @@
+{% load chat_tags %}
+{% for msg in message_list %}
+  <div style="display: flex; align-items: flex-start; gap: 12px; {% if msg.sender.id == request.user.id %}flex-direction: row-reverse;{% endif %}">
+    
+    <!-- User Avatar -->
+    <div style="width: 36px; height: 36px; border-radius: 50%; background: {% if msg.sender.is_fabmanager_user %}#8b5cf6{% else %}var(--text){% endif %}; color: var(--bg); display: grid; place-items: center; font-weight: 800; font-size: 14px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+      {{ msg.sender_username|slice:":1"|upper }}
+    </div>
+
+    <!-- Message Bubble -->
+    <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {% if msg.sender.id == request.user.id %}flex-end{% else %}flex-start{% endif %};">
+      
+      <!-- Meta Header -->
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px;">
+        <span style="font-weight: 700; color: var(--text);">{{ msg.sender_username }}</span>
+        <span style="font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); color: var(--muted);">
+          {{ msg.sender_role }}
+        </span>
+        <span style="font-size: 11px; color: var(--muted);">{{ msg.created_at|date:"H:i" }}</span>
+      </div>
+
+      <!-- Content Card -->
+      <div style="padding: 12px 16px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,0.04); {% if msg.sender.id == request.user.id %}background: var(--text); color: var(--bg); border-top-right-radius: 2px;{% else %}background: var(--panel); color: var(--text); border: 1px solid var(--border); border-top-left-radius: 2px;{% endif %}">
+        
+        <div style="white-space: pre-wrap; word-break: break-word;">{{ msg.content|format_mentions }}</div>
+
+        <!-- Attachment Link -->
+        {% if msg.attachment and msg.attachment.name %}
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <a href="{{ msg.attachment.url }}" target="_blank" style="font-size: 12px; font-weight: 700; color: inherit; text-decoration: underline; display: inline-flex; align-items: center; gap: 6px;">
+              Pièce jointe : {{ msg.attachment.name }}
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+{% empty %}
+  <div style="padding: 40px; text-align: center; color: var(--muted); margin: auto;">
+    <div style="font-weight: 700; font-size: 15px; color: var(--text);">Aucun message dans ce canal.</div>
+    <div style="font-size: 13px; margin-top: 4px;">Soyez le premier à poser une question ou envoyer un message !</div>
+  </div>
+{% endfor %}
+
+<!-- HTMX OUT-OF-BAND (OOB) REAL-TIME SIDEBAR BADGES UPDATE -->
+<div id="dm-members-list" hx-swap-oob="true" style="display: flex; flex-direction: column; gap: 4px;">
+  {% for m in members %}
+    <a href="/messaging/?dm={{ m.id }}" 
+       hx-get="/messaging/?dm={{ m.id }}" 
+       hx-target="#chat-container" 
+       hx-push-url="true" 
+       class="dm-member-item {% if active_dm_user and active_dm_user.id == m.id %}active-dm{% endif %}" 
+       data-search="{{ m.get_full_name|lower }} {{ m.username|lower }} {{ m.email|lower }}" 
+       onclick="selectDmItem(this)"
+       style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); text-decoration: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; {% if active_dm_user and active_dm_user.id == m.id %}background: var(--text); color: var(--bg);{% else %}color: var(--text);{% endif %}">
+      
+      <div style="position: relative; flex-shrink: 0;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: {% if active_dm_user and active_dm_user.id == m.id %}var(--bg){% else %}var(--panel){% endif %}; color: {% if active_dm_user and active_dm_user.id == m.id %}var(--text){% else %}var(--text){% endif %}; border: 1px solid var(--border); display: grid; place-items: center; font-weight: 700; font-size: 12px;">
+          {{ m.username|slice:":1"|upper }}
+        </div>
+        <span style="position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; background: #10b981; border: 1.5px solid var(--surface);"></span>
+      </div>
+
+      <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <div style="font-size: 13px; font-weight: 700; line-height: 1.2;">{{ m.get_full_name|default:m.username }}</div>
+        <div style="font-size: 11px; opacity: 0.75; font-weight: 400; margin-top: 1px;">@{{ m.username }}</div>
+      </div>
+
+      {% if m.unread_count > 0 %}
+        <span class="unread-pill" style="font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 10px; background: #ef4444; color: #ffffff; min-width: 19px; text-align: center; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4); flex-shrink: 0;">
+          {{ m.unread_count }}
+        </span>
+      {% endif %}
+
+    </a>
+  {% empty %}
+    <div style="font-size: 12px; color: var(--muted); padding: 10px; text-align: center;">Aucun autre membre disponible dans cet espace.</div>
+  {% endfor %}
+</div>
+
+<div id="channels-list-container" hx-swap-oob="true" style="display: flex; flex-direction: column; gap: 2px;">
+  {% for ch in channels %}
+    <a href="/messaging/?channel={{ ch.slug }}" 
+       hx-get="/messaging/?channel={{ ch.slug }}" 
+       hx-target="#chat-container" 
+       hx-push-url="true" 
+       class="channel-item"
+       onclick="selectChannelItem(this)"
+       style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.15s; {% if not active_dm_user and active_channel.id == ch.id %}background: var(--text); color: var(--bg);{% else %}color: var(--text);{% endif %}" 
+       onmouseover="if(this.style.background!=='var(--text)') this.style.background='var(--panel)'" 
+       onmouseout="if(this.style.background!=='var(--text)') this.style.background='transparent'">
+      <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;">
+        <span>{{ ch.name }}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        {% if ch.unread_count > 0 %}
+          <span class="unread-pill-channel" style="font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 10px; background: #ef4444; color: #ffffff; min-width: 18px; text-align: center; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);">
+            {{ ch.unread_count }}
+          </span>
+        {% endif %}
+        {% if ch.channel_type == 'FABMANAGER' %}
+          <span style="font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">VIP</span>
+        {% elif ch.is_private or ch.channel_type == 'GROUP' %}
+          <span style="font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: rgba(59, 130, 246, 0.2); color: #2563eb;">Groupe</span>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
+</div>

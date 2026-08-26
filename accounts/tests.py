@@ -116,3 +116,23 @@ class AccountsViewsTests(BaseTenantTestCase):
         self.client.login(username='test_admin', password='password123')
         response = self.client.get(reverse('member_list'))
         self.assertEqual(response.status_code, 200)
+
+    def test_member_approval_by_fabmanager(self):
+        new_user = User.objects.create_user(
+            username="pending_maker",
+            email="pending@test.org",
+            password="password123",
+            role="MAKER",
+            fablab=self.fablab,
+            is_approved=False
+        )
+        self.assertFalse(new_user.is_approved)
+
+        self.client.login(username="test_admin", password="password123")
+        response = self.client.post(reverse('member_list'), {
+            'action': 'approve_user',
+            'member_id': new_user.id
+        })
+        self.assertEqual(response.status_code, 302)
+        new_user.refresh_from_db()
+        self.assertTrue(new_user.is_approved)

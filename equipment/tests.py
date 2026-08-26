@@ -1,6 +1,7 @@
 from django.test import Client
 from django.urls import reverse
 from config.test_utils import BaseTenantTestCase
+from accounts.models import User
 from equipment.models import EquipmentCategory, Equipment, MaintenanceTicket
 
 class EquipmentModelTests(BaseTenantTestCase):
@@ -39,6 +40,14 @@ class EquipmentModelTests(BaseTenantTestCase):
 class EquipmentViewsTests(BaseTenantTestCase):
     def setUp(self):
         self.client = Client()
+        self.user = User.objects.create_user(
+            username="eq_user",
+            email="eq@test.org",
+            password="password123",
+            role="MAKER",
+            is_approved=True
+        )
+        self.client.login(username="eq_user", password="password123")
         self.category = EquipmentCategory.objects.create(
             name="Découpe Laser",
             slug="decoupe-laser",
@@ -59,3 +68,15 @@ class EquipmentViewsTests(BaseTenantTestCase):
     def test_equipment_detail_view(self):
         response = self.client.get(reverse('equipment_detail', kwargs={'slug': self.equipment.slug}))
         self.assertEqual(response.status_code, 200)
+
+    def test_maintenance_list_view_post(self):
+        response = self.client.post(reverse('maintenance_list'), {
+            'equipment_id': self.equipment.id,
+            'issue_title': 'Moteur pas à pas bloqué',
+            'description': 'Axe X bloqué',
+            'priority': 'HIGH'
+        })
+        self.assertEqual(response.status_code, 302)
+        ticket = MaintenanceTicket.objects.get(equipment=self.equipment)
+        self.assertEqual(ticket.reported_by, self.user)
+        self.assertEqual(ticket.reported_by_username, "eq_user")

@@ -1,27 +1,136 @@
 <div style="display: grid; gap: 20px;">
-  <div style="display: flex; align-items: center; justify-content: space-between;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
     <div>
       <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Catalogue des Équipements & Machines</h1>
       <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Machines d'usinage, d'impression 3D, découpe laser et d'électronique.</p>
     </div>
+
+    {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
+      <button onclick="document.getElementById('add-equipment-modal').style.display='grid'" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        + Ajouter une Machine
+      </button>
+    {% endif %}
   </div>
 
-  <!-- Filters Row -->
-  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-md);">
-    <span style="font-size: 13px; font-weight: 600; color: var(--muted);">Filtrer par catégorie :</span>
-    <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">Toutes</a>
-    {% for cat in categories %}
-      <a href="/equipment/?category={{ cat.slug }}" hx-get="/equipment/?category={{ cat.slug }}" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if current_category == cat.slug %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-        {{ cat.name }}
-      </a>
-    {% endfor %}
+  <!-- Modal d'ajout de machine -->
+  <div id="add-equipment-modal" style="display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); place-items: center;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: min(600px, 92vw); padding: 28px; box-shadow: var(--shadow);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Ajouter un Nouvel Équipement</h3>
+        <button onclick="document.getElementById('add-equipment-modal').style.display='none'" style="background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer;">✕</button>
+      </div>
+
+      <form action="/equipment/create/" method="POST" enctype="multipart/form-data" style="display: grid; gap: 16px;">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Nom de la Machine :</label>
+            <input type="text" name="name" required placeholder="ex: Prusa MK4 3D" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Catégorie :</label>
+            <select name="category_id" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+              {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Photo / Image de la Machine :</label>
+          <input type="file" name="image" accept="image/*" style="width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Emplacement / Zone dans le FabLab :</label>
+          <input type="text" name="location_zone" placeholder="ex: Atelier 3D - Table 1" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Puissance (Watts) :</label>
+            <input type="number" name="power_watts" value="250" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 20px;">
+            <input type="checkbox" id="requires_certification" name="requires_certification" style="width: 16px; height: 16px;">
+            <label for="requires_certification" style="font-size: 13px; font-weight: 600; cursor: pointer;">Habilitation / Badge requis</label>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description & Caractéristiques :</label>
+          <textarea name="description" rows="2" placeholder="Volume d'impression, buse, matériaux supportés..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px; resize: vertical;"></textarea>
+        </div>
+
+        <!-- Documentation Technique (Optionnel) -->
+        <div style="padding: 14px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);">📚 Documentation Technique & Notice (Optionnel) :</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">📄 Notice / Fichier PDF :</label>
+              <input type="file" name="doc_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" style="width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">🔗 Lien Web Manuel / Wiki :</label>
+              <input type="url" name="doc_url" placeholder="https://..." style="width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+          <button type="button" onclick="document.getElementById('add-equipment-modal').style.display='none'" style="padding: 9px 16px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); cursor: pointer;">Annuler</button>
+          <button type="submit" style="padding: 9px 20px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Enregistrer la Machine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Search & Filters Row -->
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    <!-- Search Bar -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 14px 18px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
+      <form method="GET" action="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+        
+        <div style="position: relative; flex: 1; min-width: 260px;">
+          <input type="text" name="search" value="{{ search_query }}" placeholder="🔍 Rechercher une machine (nom, marque, zone, catégorie...)" hx-get="/equipment/" hx-trigger="keyup changed delay:300ms, search" hx-target="#content" hx-push-url="true" style="width: 100%; padding: 10px 14px 10px 38px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.6; font-size: 14px;">🔍</span>
+        </div>
+        <button type="submit" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
+          Rechercher
+        </button>
+        {% if search_query %}
+          <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="padding: 9px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); text-decoration: none; background: var(--panel);">
+            ✕ Effacer
+          </a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Category Filters -->
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-md);">
+      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">Catégories :</span>
+      <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">Toutes</a>
+      {% for cat in categories %}
+        <a href="/equipment/?category={{ cat.slug }}" hx-get="/equipment/?category={{ cat.slug }}" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if current_category == cat.slug %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+          {{ cat.name }}
+        </a>
+      {% endfor %}
+    </div>
   </div>
 
   <!-- Grid of Equipments -->
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
     {% for eq in equipments %}
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
-        <div style="padding: 20px;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;">
+        {% if eq.image %}
+          <div style="width: 100%; height: 160px; overflow: hidden; border-bottom: 1px solid var(--border); background: var(--panel);">
+            <img src="{{ eq.image.url }}" alt="{{ eq.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+        {% endif %}
+        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <span class="tenant-badge" style="font-size: 11px;">{{ eq.category.name }}</span>
             <span style="font-size: 13px; font-weight: 700; color: var(--text);">{{ eq.hourly_rate }} €/heure</span>
@@ -45,11 +154,36 @@
             {% endif %}
           </div>
 
-          <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span class="machine-status-dot status-{{ eq.status }}"></span>
-              <span style="font-size: 12px; font-weight: 600;">{{ eq.get_status_display }}</span>
-            </div>
+          <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            {% if eq.is_currently_reserved or eq.status == 'RESERVED' %}
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);"></span>
+                <span style="font-size: 12px; font-weight: 700; color: #2563eb;">
+                  🔵 En Utilisation / Réservé
+                </span>
+              </div>
+            {% elif eq.status == 'MAINTENANCE' %}
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span>
+                <span style="font-size: 12px; font-weight: 700; color: #d97706;">
+                  🟠 En Maintenance
+                </span>
+              </div>
+            {% elif eq.status == 'OFFLINE' %}
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
+                <span style="font-size: 12px; font-weight: 700; color: #dc2626;">
+                  🔴 Hors Service
+                </span>
+              </div>
+            {% else %}
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);"></span>
+                <span style="font-size: 12px; font-weight: 700; color: #059669;">
+                  🟢 Disponible / Opérationnel
+                </span>
+              </div>
+            {% endif %}
             
             <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; border: 1px solid var(--border); color: var(--text);">Fiche & Réserver →</a>
           </div>

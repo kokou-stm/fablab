@@ -1,0 +1,251 @@
+{% load chat_tags %}
+<div id="chat-container" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 100%; min-height: 0; box-shadow: var(--shadow); overflow: hidden;">
+  
+  <!-- CHAT HEADER -->
+  <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+    <div>
+      {% if active_dm_user %}
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #2563eb; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 12px;">
+            {{ active_dm_user.username|slice:":1"|upper }}
+          </div>
+          <h2 style="font-size: 16px; font-weight: 800; margin: 0; color: var(--text);">
+            Conversation privée avec {{ active_dm_user.get_full_name|default:active_dm_user.username }}
+          </h2>
+          <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981;">En Ligne</span>
+        </div>
+      {% else %}
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h2 style="font-size: 18px; font-weight: 800; margin: 0; color: var(--text);">
+                {{ active_channel.name }}
+              </h2>
+              {% if active_channel.is_private or active_channel.channel_type == 'GROUP' %}
+                <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: #2563eb;">Groupe Privé</span>
+              {% endif %}
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">
+              {{ active_channel.description|default:"Canal d'échanges du FabLab." }}
+            </p>
+          </div>
+
+          {% if active_channel.is_private or active_channel.channel_type == 'GROUP' or user.is_instructor_user %}
+            <button onclick="document.getElementById('invite-members-modal').style.display='flex'" style="background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 5px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              + Inviter des membres
+            </button>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Active Tag Filter Badge -->
+    {% if selected_tag %}
+      <div style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); font-size: 12px; font-weight: 700; color: #2563eb;">
+        <span>Filtre actif : #{{ selected_tag }}</span>
+        <a href="/messaging/?channel={{ active_channel.slug }}" hx-get="/messaging/?channel={{ active_channel.slug }}" hx-target="#chat-container" hx-push-url="true" style="color: #2563eb; text-decoration: none; font-weight: 800; margin-left: 4px;">✕</a>
+      </div>
+    {% endif %}
+
+    <!-- MODAL D'INVITATION DE MEMBRES AU CANAL -->
+    <div id="invite-members-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 440px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;">
+        
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text);">Inviter des membres à {{ active_channel.name }}</h3>
+          <button onclick="document.getElementById('invite-members-modal').style.display='none'" style="background: none; border: none; font-size: 18px; font-weight: 800; color: var(--muted); cursor: pointer;">✕</button>
+        </div>
+
+        <form method="POST" action="/messaging/?channel={{ active_channel.slug }}" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="invite_members">
+
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px;">Sélectionnez les membres à inviter :</label>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; background: var(--panel); display: flex; flex-direction: column; gap: 6px;">
+              {% for m in members %}
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 4px;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">
+                  <input type="checkbox" name="members" value="{{ m.id }}" style="width: 13px; height: 13px;">
+                  <span style="font-weight: 700; color: var(--text);">{{ m.get_full_name|default:m.username }}</span>
+                  <span style="font-size: 10.5px; color: var(--muted);">(@{{ m.username }})</span>
+                </label>
+              {% empty %}
+                <div style="font-size: 12px; color: var(--muted);">Aucun membre disponible.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button type="button" onclick="document.getElementById('invite-members-modal').style.display='none'" style="padding: 7px 14px; font-size: 12px; font-weight: 700; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;">Annuler</button>
+            <button type="submit" style="padding: 7px 16px; font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Ajouter au groupe</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT MESSAGES THREAD (SCROLLABLE) -->
+  <div id="message-thread" hx-get="/messaging/{% if active_dm_user %}?dm={{ active_dm_user.id }}{% else %}?channel={{ active_channel.slug }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}&thread_only=1" hx-trigger="every 4s" hx-target="#message-thread" hx-swap="innerHTML" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-height: 0;">
+    {% include "messaging/partials/message_thread.html" %}
+  </div>
+
+  <!-- COMPOSER MESSAGE INPUT FORM -->
+  {% if not active_dm_user and active_channel.slug == 'annonces' and not request.user.is_superuser and not request.user.is_fabmanager_user %}
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--panel); text-align: center; font-size: 13px; color: var(--muted); font-weight: 600;">
+      🔒 Seuls les FabManagers et l'équipe d'administration peuvent publier dans ce canal d'annonces officielles.
+    </div>
+  {% else %}
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--panel); position: relative;">
+      
+      <!-- Mention Suggestions Floating Dropdown -->
+      <div id="mention-dropdown" style="display: none; position: absolute; bottom: 80px; left: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 180px; overflow-y: auto; z-index: 1000; width: 260px;">
+        <div style="padding: 6px 10px; font-size: 11px; font-weight: 800; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--panel);">
+          Tagger un membre (@)
+        </div>
+        <div id="mention-items">
+          {% for m in members %}
+            <div class="mention-option" onclick="insertMention('{{ m.username }}')" style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border);" onmouseover="this.style.background='var(--panel)'" onmouseout="this.style.background='transparent'">
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 10px; font-weight: 800;">
+                {{ m.username|slice:":1"|upper }}
+              </div>
+              <div>
+                <span style="display: block;">{{ m.get_full_name|default:m.username }}</span>
+                <span style="font-size: 10px; color: #2563eb; font-weight: 700;">@{{ m.username }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form method="POST" 
+            action="/messaging/{% if active_dm_user %}?dm={{ active_dm_user.id }}{% else %}?channel={{ active_channel.slug }}{% endif %}" 
+            hx-post="/messaging/{% if active_dm_user %}?dm={{ active_dm_user.id }}{% else %}?channel={{ active_channel.slug }}{% endif %}" 
+            hx-target="#chat-container" 
+            hx-swap="outerHTML" 
+            enctype="multipart/form-data" 
+            style="display: flex; flex-direction: column; gap: 8px;">
+        {% csrf_token %}
+
+        <!-- Attached File Preview Badge -->
+        <div id="attached-file-preview" style="display: none; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text); background: var(--surface); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); width: fit-content;">
+          <span>📎 <span id="attached-file-name">fichier</span></span>
+          <span onclick="clearAttachedFile()" style="cursor: pointer; color: #ef4444; margin-left: 6px; font-weight: 800;" title="Retirer la pièce jointe">✕</span>
+        </div>
+
+        <!-- Main Input Bar Row (Modern ChatGPT/Slack style) -->
+        <div style="display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 6px 10px 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          
+          <!-- (+) Button for File Upload -->
+          <label title="Joindre un fichier ou une photo" style="width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; cursor: pointer; font-size: 20px; font-weight: 700; color: var(--text); flex-shrink: 0; transition: background 0.15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--panel)'">
+            +
+            <input type="file" name="attachment" id="chat-attachment-input" style="display: none;" onchange="showAttachedFileName(this)">
+          </label>
+
+          <!-- Textarea Input -->
+          <div style="flex: 1; position: relative;">
+            <textarea id="chat-textarea" name="content" rows="1" required onkeydown="handleChatKeyDown(event)" onkeyup="handleMentionTrigger(event)" placeholder="Envoyer un message à {% if active_dm_user %}@{{ active_dm_user.username }}{% else %}{{ active_channel.name }}{% endif %} (tapez @ pour tagger un membre)..." style="width: 100%; padding: 6px 4px; font-size: 13.5px; border: none; background: transparent; color: var(--text); resize: none; outline: none; font-family: inherit; max-height: 120px; vertical-align: middle;"></textarea>
+          </div>
+
+          <!-- Send Button -->
+          <button type="submit" title="Envoyer le message (Appuyez sur Entrée)" style="width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); border: none; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; font-size: 14px; font-weight: 800; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            ➔
+          </button>
+
+        </div>
+
+      </form>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Auto-scroll chat thread to bottom on page load & HTMX updates
+  const thread = document.getElementById('message-thread');
+  if (thread) {
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  // Handle Enter key to send message (Shift+Enter for new line)
+  function handleChatKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      const form = event.target.closest('form');
+      if (form && event.target.value.trim().length > 0) {
+        if (window.htmx) {
+          htmx.trigger(form, 'submit');
+        } else {
+          form.submit();
+        }
+      }
+    }
+  }
+
+  function showAttachedFileName(input) {
+    const preview = document.getElementById('attached-file-preview');
+    const nameSpan = document.getElementById('attached-file-name');
+    if (input.files && input.files[0]) {
+      nameSpan.innerText = input.files[0].name;
+      preview.style.display = 'inline-flex';
+    }
+  }
+
+  function clearAttachedFile() {
+    const input = document.getElementById('chat-attachment-input');
+    const preview = document.getElementById('attached-file-preview');
+    if (input) input.value = '';
+    if (preview) preview.style.display = 'none';
+  }
+
+  function handleMentionTrigger(e) {
+    const textarea = document.getElementById('chat-textarea');
+    const dropdown = document.getElementById('mention-dropdown');
+    if (!textarea || !dropdown) return;
+
+    const val = textarea.value;
+    const lastAtPos = val.lastIndexOf('@');
+
+    if (lastAtPos !== -1 && (lastAtPos === 0 || val.charAt(lastAtPos - 1) === ' ')) {
+      const query = val.substring(lastAtPos + 1).toLowerCase();
+      const options = document.querySelectorAll('.mention-option');
+      let hasMatches = false;
+
+      options.forEach(opt => {
+        const text = opt.innerText.toLowerCase();
+        if (text.includes(query)) {
+          opt.style.display = 'flex';
+          hasMatches = true;
+        } else {
+          opt.style.display = 'none';
+        }
+      });
+
+      if (hasMatches) {
+        dropdown.style.display = 'block';
+      } else {
+        dropdown.style.display = 'none';
+      }
+    } else {
+      dropdown.style.display = 'none';
+    }
+  }
+
+  function insertMention(username) {
+    const textarea = document.getElementById('chat-textarea');
+    const dropdown = document.getElementById('mention-dropdown');
+    if (!textarea) return;
+
+    const val = textarea.value;
+    const lastAtPos = val.lastIndexOf('@');
+
+    if (lastAtPos !== -1) {
+      textarea.value = val.substring(0, lastAtPos) + '@' + username + ' ';
+    } else {
+      textarea.value += '@' + username + ' ';
+    }
+
+    if (dropdown) dropdown.style.display = 'none';
+    textarea.focus();
+  }
+</script>

@@ -22,6 +22,7 @@ class Certification(models.Model):
 
 
 class UserCertification(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, null=True, blank=True, related_name="user_certifications")
     user_username = models.CharField("Nom d'utilisateur", max_length=150)
     user_full_name = models.CharField("Nom complet du membre", max_length=200)
     certification = models.ForeignKey(Certification, on_delete=models.CASCADE, related_name="user_certifications")
@@ -47,11 +48,12 @@ class Reservation(models.Model):
     ]
 
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="reservations")
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, null=True, blank=True, related_name="reservations")
     user_username = models.CharField("Nom d'utilisateur", max_length=150)
     user_full_name = models.CharField("Nom complet", max_length=200)
     start_time = models.DateTimeField("Heure de Début")
     end_time = models.DateTimeField("Heure de Fin")
-    status = models.CharField("Statut", max_length=20, choices=STATUS_CHOICES, default='APPROVED')
+    status = models.CharField("Statut", max_length=20, choices=STATUS_CHOICES, default='PENDING')
     total_cost = models.DecimalField("Cout Total (€)", max_digits=8, decimal_places=2, default=0.00)
     project_description = models.TextField("Description du travail à réaliser", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

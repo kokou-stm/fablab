@@ -16,7 +16,9 @@ class User(AbstractUser):
     rfid_card_id = models.CharField("Identifiant Carte RFID / Badge", max_length=100, blank=True, null=True, unique=True)
     bio = models.TextField("Bio / Compétences", blank=True)
     avatar = models.ImageField("Photo de profil", upload_to="avatars/", blank=True, null=True)
+    dossier_document = models.FileField("Justificatif / Carte Étudiant / Document Dossier", upload_to="user_dossiers/", blank=True, null=True)
     is_certified = models.BooleanField("Est habilité / Certifié", default=False)
+    is_approved = models.BooleanField("Compte Approuvé / Validé par le Responsable", default=False)
 
     class Meta:
         verbose_name = "Utilisateur"

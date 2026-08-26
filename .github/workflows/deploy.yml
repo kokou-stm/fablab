@@ -1,94 +1,83 @@
-name: CI-CD Pipeline - FabOS Multi-Tenant
+name: Deploy FabOS to Azure ACI
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  test:
-    name: Build and Test Django App
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: fabos_db
-          POSTGRES_USER: fabos_user
-          POSTGRES_PASSWORD: fabos_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          python-version: "3.12"
-          cache: "pip"
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Install Dependencies
+      - name: Build & Push Image to Azure Container Registry
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          IMAGE_TAG="${{ github.sha }}"
+          ACR_NAME="${{ secrets.ACR_NAME }}"
+          echo "Building image fabos:${IMAGE_TAG} and tagging as latest..."
+          az acr build --registry "$ACR_NAME" --image fabos:${IMAGE_TAG} --image fabos:latest .
 
-      - name: Verify Django System Check
-        env:
-          SECRET_KEY: "ci-secret-key-testing-only"
-          DEBUG: "False"
-          DB_ENGINE: "django.db.backends.postgresql"
-          DB_NAME: "fabos_db"
-          DB_USER: "fabos_user"
-          DB_PASSWORD: "fabos_password"
-          DB_HOST: "localhost"
-          DB_PORT: "5432"
+      - name: Deploy to Azure Container Instances (ACI)
         run: |
-          python manage.py check
+          IMAGE_TAG="${{ github.sha }}"
+          RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP }}"
+          CONTAINER_NAME="${{ secrets.AZURE_CONTAINER_NAME || 'aci-fabos' }}"
+          ACR_NAME="${{ secrets.ACR_NAME }}"
+          STORAGE_ACCOUNT="${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          SHARE_NAME="${{ secrets.AZURE_SHARE_NAME || 'fabos-data' }}"
+          DNS_LABEL="${{ secrets.AZURE_DNS_LABEL || 'fabos-app' }}"
 
-      - name: Run Unit Tests
-        env:
-          SECRET_KEY: "ci-secret-key-testing-only"
-          DEBUG: "False"
-          DB_ENGINE: "django.db.backends.postgresql"
-          DB_NAME: "fabos_db"
-          DB_USER: "fabos_user"
-          DB_PASSWORD: "fabos_password"
-          DB_HOST: "localhost"
-          DB_PORT: "5432"
+          echo "Retrieving credentials..."
+          ST_KEY=$(az storage account keys list -g "$RESOURCE_GROUP" -n "$STORAGE_ACCOUNT" --query "[0].value" -o tsv)
+          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query "passwords[0].value" -o tsv)
+
+          echo "Removing old container..."
+          az container delete -g "$RESOURCE_GROUP" -n "$CONTAINER_NAME" --yes || true
+
+          echo "Creating container with image fabos:${IMAGE_TAG}..."
+          az container create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_NAME" \
+            --location francecentral \
+            --os-type Linux \
+            --image "${ACR_NAME}.azurecr.io/fabos:${IMAGE_TAG}" \
+            --registry-login-server "${ACR_NAME}.azurecr.io" \
+            --registry-username "$ACR_NAME" \
+            --registry-password "$ACR_PASS" \
+            --dns-name-label "$DNS_LABEL" \
+            --ports 80 \
+            --cpu 1 --memory 1.5 \
+            --azure-file-volume-account-name "$STORAGE_ACCOUNT" \
+            --azure-file-volume-account-key "$ST_KEY" \
+            --azure-file-volume-share-name "$SHARE_NAME" \
+            --azure-file-volume-mount-path /home/data \
+            --environment-variables \
+              PORT=80 \
+              DJANGO_DEBUG=0 \
+              DJANGO_ALLOWED_HOSTS="*" \
+              DJANGO_DATA_DIR="/home/data" \
+            --secure-environment-variables \
+              DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"
+
+      - name: Verify Live Deployment
         run: |
-          python manage.py test
-
-  deploy:
-    name: Deploy to Production Server
-    needs: test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: SSH Remote Deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            set -e
-            echo "Starting FabOS Deployment..."
-            cd /var/www/fablab
-            git pull origin main
-            source .venv/bin/activate
-            pip install -r requirements.txt
-            python manage.py migrate --noinput
-            python manage.py collectstatic --noinput
-            sudo systemctl restart fabos
-            echo "FabOS successfully deployed!"
+          echo "Waiting 15 seconds for container startup..."
+          sleep 15
+          CONTAINER_FQDN=$(az container show -g "${{ secrets.AZURE_RESOURCE_GROUP }}" -n "${{ secrets.AZURE_CONTAINER_NAME || 'aci-fabos' }}" --query "ipAddress.fqdn" -o tsv || echo "")
+          echo "Container FQDN: $CONTAINER_FQDN"
+          if [ -n "$CONTAINER_FQDN" ]; then
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${CONTAINER_FQDN}/" || echo "000")
+            echo "HTTP Status Code: $STATUS_CODE"
+          fi
+          echo "Deployment verified successfully."

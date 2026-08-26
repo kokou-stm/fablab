@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FabOS — Le Système d'Exploitation pour FabLabs & Hackerspaces</title>
+  <title>LabOS — Gestion de FabLabs & Hackerspaces</title>
   
   <!-- Fonts Space Grotesk & Spectral -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -217,7 +217,7 @@
     <a href="/" class="landing-brand">
       <div class="landing-logo">⚡</div>
       <div class="landing-title-box">
-        <span class="landing-title">FabOS</span>
+        <span class="landing-title">LabOS</span>
         <span class="landing-tagline">Space OS</span>
       </div>
     </a>
@@ -235,13 +235,20 @@
     <div class="landing-actions">
       
       <!-- Compact Multi-tenant Switcher -->
-      <select class="landing-select" onchange="window.location.href='/switch-tenant/' + this.value + '/'" title="Changer d'espace FabLab">
-        {% for t in all_tenants %}
-          <option value="{{ t.slug }}" {% if tenant and tenant.slug == t.slug %}selected{% endif %}>
-            {{ t.name }}
-          </option>
-        {% endfor %}
-      </select>
+      {% if not request.user.is_authenticated or is_superadmin %}
+        <select class="landing-select" onchange="window.location.href='/switch-tenant/' + this.value + '/'" title="Changer d'espace FabLab">
+          {% for t in all_tenants %}
+            <option value="{{ t.slug }}" {% if tenant and tenant.slug == t.slug %}selected{% endif %}>
+              {{ t.name }}
+            </option>
+          {% endfor %}
+        </select>
+      {% else %}
+        <div class="landing-select" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; cursor: default;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <span>{{ tenant.name|default:request.user.fablab.name }}</span>
+        </div>
+      {% endif %}
 
       <!-- Dark/Light Theme Toggle -->
       <button class="landing-theme-btn" onclick="toggleTheme()" title="Basculer le thème">
@@ -249,13 +256,28 @@
       </button>
 
       <!-- App Access CTA Buttons -->
-      <a href="/dashboard/" class="landing-btn-sec">
-        Tableau de bord
-      </a>
-      
-      <a href="/register-lab/" class="landing-btn-pri">
-        + Créer un Espace
-      </a>
+      {% if request.user.is_authenticated %}
+        <a href="/profile/" class="landing-btn-sec" style="display: inline-flex; align-items: center; gap: 8px;">
+          <span style="width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 11px; font-weight: 700;">
+            {{ request.user.username|slice:":1"|upper }}
+          </span>
+          <span>{{ request.user.username }}</span>
+        </a>
+        <a href="/dashboard/" class="landing-btn-sec">
+          Tableau de bord
+        </a>
+        <a href="/logout/" class="landing-btn-pri" style="background: #dc2626; color: #ffffff; gap: 6px; display: inline-flex; align-items: center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Déconnexion</span>
+        </a>
+      {% else %}
+        <a href="/login/" class="landing-btn-sec">
+          Connexion
+        </a>
+        <a href="/register-lab/" class="landing-btn-pri">
+          + Créer un Espace
+        </a>
+      {% endif %}
     </div>
 
   </header>
@@ -271,13 +293,13 @@
       <div>
         <div style="display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px;">
           <div style="width: 34px; height: 34px; background: var(--text); color: var(--bg); border-radius: 8px; display: grid; place-items: center; font-size: 18px;">⚡</div>
-          FabOS
+          LabOS
         </div>
         <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 14px; max-width: 320px;">
           Le système d'exploitation multi-tenant conçu pour les FabLabs universitaires, Tiers-lieux et Hackerspaces.
         </p>
         <div style="font-size: 12px; color: var(--muted); margin-top: 20px;">
-          © 2026 FabOS Platform • Propulsé par Django & HTMX
+          © 2026 LabOS Platform • Propulsé par Django & HTMX
         </div>
       </div>
 

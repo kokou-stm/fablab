@@ -13,8 +13,12 @@ urlpatterns = [
     path('login/', account_views.login_view, name='login'),
     path('logout/', account_views.logout_view, name='logout'),
     path('signup/', account_views.signup_view, name='signup'),
+    path('signup-pending/', account_views.signup_pending_view, name='signup_pending'),
+    path('password-reset/', account_views.password_reset_view, name='password_reset'),
+    path('password-reset/confirm/<uidb64>/<token>/', account_views.password_reset_confirm_view, name='password_reset_confirm'),
     path('profile/', account_views.profile_view, name='profile'),
     path('members/', account_views.member_list_view, name='member_list'),
+    path('superadmin/', account_views.superadmin_dashboard_view, name='superadmin_dashboard'),
 
     # Landing Page & Dashboard & Multi-tenant Switching
     path('', views.landing_view, name='landing'),
@@ -24,6 +28,7 @@ urlpatterns = [
 
     # Machines & Equipements
     path('equipment/', views.equipment_list_view, name='equipment_list'),
+    path('equipment/create/', views.equipment_create_view, name='equipment_create'),
     path('equipment/<slug:slug>/', views.equipment_detail_view, name='equipment_detail'),
 
     # Réservations, Planning & Habilitations
@@ -46,6 +51,12 @@ urlpatterns = [
 
     # Maintenance & Incidents
     path('maintenance/', views.maintenance_list_view, name='maintenance_list'),
+
+    # Messagerie Interne & Chat Multi-tenant
+    path('messaging/', views.messaging_view, name='messaging'),
+
+    # API Notifications en Temps Réel
+    path('api/notifications/', views.notifications_api_view, name='notifications_api'),
 ]
 
 if settings.DEBUG:

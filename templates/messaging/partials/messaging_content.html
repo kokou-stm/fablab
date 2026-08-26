@@ -1,0 +1,211 @@
+<div style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; height: calc(100vh - 120px); min-height: 600px;">
+
+  <!-- LEFT COLUMN: SIDEBAR CANAUX & CONTACTS -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow);">
+    
+    <!-- Header Sidebar -->
+    <div style="padding: 16px; border-bottom: 1px solid var(--border); background: var(--panel);">
+      <div style="font-size: 16px; font-weight: 800; color: var(--text); display: flex; align-items: center; justify-content: space-between;">
+        <span>Messagerie {% if tenant %}{{ tenant.name }}{% elif request.tenant %}{{ request.tenant.name }}{% else %}LabOS{% endif %}</span>
+      </div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Discussion & Entraide de l'espace</div>
+    </div>
+
+    <div style="flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- SECTION 1: CANAUX PUBLICS ET GROUPES -->
+      <div>
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 8px; padding-left: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <span>Canaux & Groupes</span>
+          {% if user.is_instructor_user %}
+            <button onclick="document.getElementById('create-channel-modal').style.display='flex'" style="background: var(--text); color: var(--bg); border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;" title="Créer un nouveau groupe / canal de discussion">
+              + Nouveau
+            </button>
+          {% endif %}
+        </div>
+        <div id="channels-list-container" style="display: flex; flex-direction: column; gap: 2px;">
+          {% for ch in channels %}
+            <a href="/messaging/?channel={{ ch.slug }}" 
+               hx-get="/messaging/?channel={{ ch.slug }}" 
+               hx-target="#chat-container" 
+               hx-push-url="true" 
+               class="channel-item"
+               onclick="selectChannelItem(this)"
+               style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.15s; {% if not active_dm_user and active_channel.id == ch.id %}background: var(--text); color: var(--bg);{% else %}color: var(--text);{% endif %}" 
+               onmouseover="if(this.style.background!=='var(--text)') this.style.background='var(--panel)'" 
+               onmouseout="if(this.style.background!=='var(--text)') this.style.background='transparent'">
+              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis;">
+                <span>{{ ch.name }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                {% if ch.unread_count > 0 %}
+                  <span class="unread-pill-channel" style="font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 10px; background: #ef4444; color: #ffffff; min-width: 18px; text-align: center; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);">
+                    {{ ch.unread_count }}
+                  </span>
+                {% endif %}
+                {% if ch.channel_type == 'FABMANAGER' %}
+                  <span style="font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">VIP</span>
+                {% elif ch.is_private or ch.channel_type == 'GROUP' %}
+                  <span style="font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: rgba(59, 130, 246, 0.2); color: #2563eb;">Groupe</span>
+                {% endif %}
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- SECTION 3: MESSAGES DIRECTS (DMs) -->
+      <div>
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 8px; padding-left: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <span>Messages Privés (DMs)</span>
+        </div>
+
+        <!-- Search Bar for Destinataire / Recipient -->
+        <div style="padding: 0 2px 8px 2px; position: relative;">
+          <input type="text" id="dm-search-input" onkeyup="filterDmMembers(this.value)" placeholder="🔍 Chercher un destinataire..." style="width: 100%; padding: 8px 12px; font-size: 12.5px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+        </div>
+
+        <div id="dm-members-list" style="display: flex; flex-direction: column; gap: 4px;">
+          {% for m in members %}
+            <a href="/messaging/?dm={{ m.id }}" 
+               hx-get="/messaging/?dm={{ m.id }}" 
+               hx-target="#chat-container" 
+               hx-push-url="true" 
+               class="dm-member-item {% if active_dm_user and active_dm_user.id == m.id %}active-dm{% endif %}" 
+               data-search="{{ m.get_full_name|lower }} {{ m.username|lower }} {{ m.email|lower }}" 
+               onclick="selectDmItem(this)"
+               style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); text-decoration: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; {% if active_dm_user and active_dm_user.id == m.id %}background: var(--text); color: var(--bg);{% else %}color: var(--text);{% endif %}">
+              
+              <div style="position: relative; flex-shrink: 0;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: {% if active_dm_user and active_dm_user.id == m.id %}var(--bg){% else %}var(--panel){% endif %}; color: {% if active_dm_user and active_dm_user.id == m.id %}var(--text){% else %}var(--text){% endif %}; border: 1px solid var(--border); display: grid; place-items: center; font-weight: 700; font-size: 12px;">
+                  {{ m.username|slice:":1"|upper }}
+                </div>
+                <span style="position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; background: #10b981; border: 1.5px solid var(--surface);"></span>
+              </div>
+
+              <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <div style="font-size: 13px; font-weight: 700; line-height: 1.2;">{{ m.get_full_name|default:m.username }}</div>
+                <div style="font-size: 11px; opacity: 0.75; font-weight: 400; margin-top: 1px;">@{{ m.username }}</div>
+              </div>
+
+              {% if m.unread_count > 0 %}
+                <span class="unread-pill" style="font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 10px; background: #ef4444; color: #ffffff; min-width: 19px; text-align: center; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4); flex-shrink: 0;">
+                  {{ m.unread_count }}
+                </span>
+              {% endif %}
+
+            </a>
+          {% empty %}
+            <div style="font-size: 12px; color: var(--muted); padding: 10px; text-align: center;">Aucun autre membre disponible dans cet espace.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: MAIN CHAT WORKSPACE CONTAINER -->
+  <div id="chat-container" style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
+    {% include "messaging/partials/chat_box.html" %}
+  </div>
+
+</div>
+
+<script>
+  function filterDmMembers(query) {
+    const q = query.toLowerCase().trim();
+    const items = document.querySelectorAll('.dm-member-item');
+    items.forEach(item => {
+      const searchData = item.getAttribute('data-search') || '';
+      if (!q || searchData.includes(q)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  function selectChannelItem(element) {
+    document.querySelectorAll('.channel-item').forEach(el => {
+      el.style.background = 'transparent';
+      el.style.color = 'var(--text)';
+    });
+    element.style.background = 'var(--text)';
+    element.style.color = 'var(--bg)';
+
+    const badge = element.querySelector('.unread-pill-channel');
+    if (badge) {
+      badge.remove();
+    }
+  }
+
+  function selectDmItem(element) {
+    document.querySelectorAll('.dm-member-item').forEach(el => {
+      el.style.background = 'transparent';
+      el.style.color = 'var(--text)';
+      el.classList.remove('active-dm');
+    });
+    element.style.background = 'var(--text)';
+    element.style.color = 'var(--bg)';
+    element.classList.add('active-dm');
+
+    const badge = element.querySelector('.unread-pill');
+    if (badge) {
+      badge.remove();
+    }
+  }
+</script>
+
+<!-- MODAL DE CRÉATION DE CANAL / GROUPE -->
+<div id="create-channel-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 480px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;">
+    
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text);">Créer un Groupe / Canal de Discussion</h3>
+      <button onclick="document.getElementById('create-channel-modal').style.display='none'" style="background: none; border: none; font-size: 18px; font-weight: 800; color: var(--muted); cursor: pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="/messaging/" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create_channel">
+
+      <div>
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Nom du groupe / canal *</label>
+        <input type="text" name="name" required placeholder="ex: Atelier Arduino, Projet CNC..." style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Description</label>
+        <input type="text" name="description" placeholder="ex: Échanges sur le projet de cours..." style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" name="is_private" value="1" id="is_private_chk" style="width: 14px; height: 14px; cursor: pointer;">
+        <label for="is_private_chk" style="font-size: 12.5px; font-weight: 600; color: var(--text); cursor: pointer;">
+          Groupe privé (accessible uniquement aux personnes invitées)
+        </label>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px;">Inviter des membres au groupe :</label>
+        <div style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; background: var(--panel); display: flex; flex-direction: column; gap: 6px;">
+          {% for m in members %}
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 4px;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='transparent'">
+              <input type="checkbox" name="members" value="{{ m.id }}" style="width: 13px; height: 13px;">
+              <span style="font-weight: 700; color: var(--text);">{{ m.get_full_name|default:m.username }}</span>
+              <span style="font-size: 10.5px; color: var(--muted);">(@{{ m.username }})</span>
+            </label>
+          {% empty %}
+            <div style="font-size: 12px; color: var(--muted);">Aucun autre membre disponible.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" onclick="document.getElementById('create-channel-modal').style.display='none'" style="padding: 7px 14px; font-size: 12px; font-weight: 700; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;">Annuler</button>
+        <button type="submit" style="padding: 7px 16px; font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Créer et Inviter</button>
+      </div>
+    </form>
+
+  </div>
+</div>

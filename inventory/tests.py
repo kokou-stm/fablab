@@ -2,11 +2,20 @@ from decimal import Decimal
 from django.test import Client
 from django.urls import reverse
 from config.test_utils import BaseTenantTestCase
+from accounts.models import User
 from inventory.models import InventoryItem
 
 class InventoryModelAndViewsTests(BaseTenantTestCase):
     def setUp(self):
         self.client = Client()
+        self.user = User.objects.create_user(
+            username="inv_user",
+            email="inv@test.org",
+            password="password123",
+            role="MAKER",
+            is_approved=True
+        )
+        self.client.login(username="inv_user", password="password123")
         self.item = InventoryItem.objects.create(
             name="Filament PLA Noir",
             sku="PLA-BLK",

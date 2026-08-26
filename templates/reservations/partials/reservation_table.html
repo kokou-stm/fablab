@@ -5,10 +5,10 @@
       <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Réservations de créneaux sur les équipements du FabLab.</p>
     </div>
     <div style="display: flex; gap: 10px;">
-      <a href="{% url 'reservation_calendar' %}" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
+      <a href="{% url 'reservation_calendar' %}" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: var(--radius-sm);">
         Planning Centralisé
       </a>
-      <a href="{% url 'usage_history' %}" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
+      <a href="{% url 'usage_history' %}" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: var(--radius-sm);">
         Historique
       </a>
     </div>
@@ -23,35 +23,76 @@
           <th style="padding: 12px 16px;">Maker / Utilisateur</th>
           <th style="padding: 12px 16px;">Créneau Horaires</th>
           <th style="padding: 12px 16px;">Statut</th>
-          <th style="padding: 12px 16px;">Coût</th>
-          <th style="padding: 12px 16px;">Actions</th>
+          <th style="padding: 12px 16px;">Coût Est.</th>
+          <th style="padding: 12px 16px; text-align: right;">Validation / Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for r in reservations %}
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 14px 16px; font-weight: 600;">{{ r.equipment.name }}</td>
-            <td style="padding: 14px 16px;">{{ r.user_full_name }}</td>
+          <tr style="border-bottom: 1px solid var(--border); {% if r.status == 'PENDING' %}background: rgba(245, 158, 11, 0.04);{% endif %}">
+            <td style="padding: 14px 16px;">
+              <div style="font-weight: 700; color: var(--text);">{{ r.equipment.name }}</div>
+              {% if r.project_description %}
+                <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">💬 {{ r.project_description }}</div>
+              {% endif %}
+            </td>
+            <td style="padding: 14px 16px;">
+              <div style="font-weight: 600;">{{ r.user_full_name }}</div>
+              <div style="font-size: 12px; color: var(--muted);">@{{ r.user_username }}</div>
+            </td>
             <td style="padding: 14px 16px; color: var(--muted); font-size: 13px;">
               {{ r.start_time|date:"d/m/Y H:i" }} → {{ r.end_time|date:"H:i" }}
             </td>
             <td style="padding: 14px 16px;">
-              <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); {% if r.status == 'CANCELLED' %}color: #ef4444;{% elif r.status == 'APPROVED' %}color: #10b981;{% endif %}">
-                {{ r.get_status_display }}
-              </span>
+              {% if r.status == 'PENDING' %}
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                  ⏳ En Attente de Validation
+                </span>
+              {% elif r.status == 'APPROVED' %}
+                <span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  ✓ Confirmée
+                </span>
+              {% elif r.status == 'CANCELLED' %}
+                <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+                  ✕ Refusée / Annulée
+                </span>
+              {% else %}
+                <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+                  {{ r.get_status_display }}
+                </span>
+              {% endif %}
             </td>
             <td style="padding: 14px 16px; font-weight: 700;">{{ r.total_cost }} €</td>
-            <td style="padding: 14px 16px;">
-              {% if r.status != 'CANCELLED' %}
-                <form method="post" action="{% url 'reservation_cancel' r.id %}" style="display: inline;">
-                  {% csrf_token %}
-                  <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')" style="padding: 4px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border); background: var(--panel); color: #ef4444; cursor: pointer;">
-                    Annuler
-                  </button>
-                </form>
-              {% else %}
-                <span style="font-size: 12px; color: var(--muted);">-</span>
-              {% endif %}
+            <td style="padding: 14px 16px; text-align: right;">
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                {% if request.user.is_authenticated and request.user.is_fabmanager_user and r.status == 'PENDING' %}
+                  <form method="post" action="{% url 'reservation_list' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve_reservation">
+                    <input type="hidden" name="reservation_id" value="{{ r.id }}">
+                    <button type="submit" style="padding: 6px 12px; font-size: 12px; font-weight: 700; background: #059669; color: #ffffff; border: none; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✓ Valider
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'reservation_list' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject_reservation">
+                    <input type="hidden" name="reservation_id" value="{{ r.id }}">
+                    <button type="submit" style="padding: 6px 10px; font-size: 12px; font-weight: 600; background: transparent; color: #dc2626; border: 1px solid #dc2626; border-radius: var(--radius-sm); cursor: pointer;">
+                      ✕ Refuser
+                    </button>
+                  </form>
+                {% elif r.status != 'CANCELLED' %}
+                  <form method="post" action="{% url 'reservation_cancel' r.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')" style="padding: 4px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border); background: var(--panel); color: #ef4444; cursor: pointer;">
+                      Annuler
+                    </button>
+                  </form>
+                {% else %}
+                  <span style="font-size: 12px; color: var(--muted);">-</span>
+                {% endif %}
+              </div>
             </td>
           </tr>
         {% empty %}

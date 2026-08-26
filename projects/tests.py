@@ -10,7 +10,8 @@ class ProjectsModelAndViewsTests(BaseTenantTestCase):
         self.user = User.objects.create_user(
             username="author_user",
             email="author@test.org",
-            password="password123"
+            password="password123",
+            is_approved=True
         )
         self.project = Project.objects.create(
             title="Projet Test",

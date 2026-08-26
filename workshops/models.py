@@ -3,7 +3,8 @@ from django.db import models
 class Workshop(models.Model):
     title = models.CharField("Titre de l'atelier", max_length=200)
     slug = models.SlugField("Slug", max_length=200, unique=True)
-    instructor_name = models.CharField("Formateur / Animateur", max_length=150)
+    instructor = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name="workshops_instructed")
+    instructor_name = models.CharField("Formateur / Animateur (Nom)", max_length=150, blank=True)
     description = models.TextField("Description complète et programme")
     start_date = models.DateTimeField("Date & Heure de Début")
     end_date = models.DateTimeField("Date & Heure de Fin")
@@ -31,6 +32,7 @@ class Workshop(models.Model):
 
 class WorkshopRegistration(models.Model):
     workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE, related_name="registrations")
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, null=True, blank=True, related_name="workshop_registrations")
     user_full_name = models.CharField("Nom Complet du Participant", max_length=200)
     user_email = models.EmailField("Email", max_length=254)
     payment_status = models.CharField("Statut du Paiement", max_length=20, choices=[

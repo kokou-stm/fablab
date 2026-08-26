@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px;">
+  
+  <!-- Left Side: Profile Card -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px auto;">
+        {{ user_obj.username|slice:":1"|upper }}
+      </div>
+      <h2 style="font-size: 18px; font-weight: 700; margin: 0;">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
+      <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">{{ user_obj.get_role_display }}</div>
+      {% if user_obj.fablab %}
+        <div style="margin-top: 8px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: inline-block;">
+          📍 {{ user_obj.fablab.name }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 16px; font-size: 13px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span style="color: var(--muted);">Email :</span>
+        <span style="font-weight: 600;">{{ user_obj.email|default:"Non renseigné" }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span style="color: var(--muted);">Téléphone :</span>
+        <span style="font-weight: 600;">{{ user_obj.phone|default:"Non renseigné" }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span style="color: var(--muted);">Badge RFID :</span>
+        <span style="font-weight: 600; font-family: monospace;">{{ user_obj.rfid_card_id|default:"Non associé" }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--muted);">Habilité Machines :</span>
+        <span style="font-weight: 700; color: {% if user_obj.is_certified %}#10b981{% else %}var(--muted){% endif %};">
+          {% if user_obj.is_certified %}Oui (Certifié){% else %}Non{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Edit Form & Subscriptions & Certifications -->
+  <div style="display: flex; flex-direction: column; gap: 24px;">
+    
+    <!-- Active Subscription Status Box -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Mon Abonnement & Cotisation</h3>
+          <p style="margin: 2px 0 0 0; font-size: 13px; color: var(--muted);">Statut de votre accès aux machines du FabLab</p>
+        </div>
+        {% if active_sub %}
+          <span style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #10b98120; color: #10b981; border: 1px solid #10b98140;">
+            ✓ ABONNEMENT ACTIF
+          </span>
+        {% else %}
+          <span style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40;">
+            ⚠ PAS D'ABONNEMENT EN COURS
+          </span>
+        {% endif %}
+      </div>
+
+      {% if active_sub %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; background: var(--panel); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Formule</div>
+            <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.get_plan_type_display }}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Date d'échéance</div>
+            <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.end_date|date:"d/m/Y" }}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Tarif Mensuel</div>
+            <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.price }} €</div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Renew/Change Form -->
+      <form method="post" style="display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--border); padding-top: 16px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="renew_subscription" />
+        <select name="plan_type" class="form-select" style="flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+          <option value="MAKER_MONTHLY">Abonnement Maker (30€ / mois)</option>
+          <option value="STUDENT">Pass Étudiant (15€ / mois)</option>
+          <option value="MAKER_ANNUAL">Abonnement Maker Annuel (300€ / an)</option>
+          <option value="PRO">Pass Pro / Entreprise (100€ / mois)</option>
+        </select>
+        <button type="submit" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm); cursor: pointer;">
+          Souscrire / Renouveler
+        </button>
+      </form>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
+      <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">Modifier mes Informations</h3>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_profile" />
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Prénom</label>
+            <input type="text" name="first_name" value="{{ user_obj.first_name }}" class="form-input" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nom</label>
+            <input type="text" name="last_name" value="{{ user_obj.last_name }}" class="form-input" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Téléphone</label>
+          <input type="text" name="phone" value="{{ user_obj.phone }}" class="form-input" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bio & Compétences (Spécialités, Logiciels CAD/CAM maîtrisés)</label>
+          <textarea name="bio" rows="3" class="form-input" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">{{ user_obj.bio }}</textarea>
+        </div>
+
+        <button type="submit" style="padding: 10px 20px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
+          Enregistrer les Modifications
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

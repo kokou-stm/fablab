@@ -1,0 +1,48 @@
+<div style="display: grid; gap: 24px;">
+  <div>
+    <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Ateliers, Formations & Événements</h1>
+    <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Programme des formations collectives et initiations aux machines.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+    {% for w in workshops %}
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;">
+        <div style="padding: 20px; flex: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; font-weight: 700; color: #10b981; background: var(--panel); border: 1px solid var(--border); padding: 2px 8px; border-radius: 12px;">
+              {{ w.available_seats }} places restantes
+            </span>
+            <span style="font-size: 14px; font-weight: 700;">
+              {% if w.price == 0 %}Gratuit{% else %}{{ w.price }} €{% endif %}
+            </span>
+          </div>
+
+          <h3 style="font-size: 18px; font-weight: 700; margin: 12px 0 6px 0;">{{ w.title }}</h3>
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+            👤 Formateur : <strong>{{ w.instructor_name }}</strong>
+          </div>
+
+          <p style="font-size: 13px; color: var(--text); line-height: 1.5;">{{ w.description }}</p>
+        </div>
+
+        <div style="padding: 16px 20px; background: var(--panel); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 12px; color: var(--muted);">
+            📅 {{ w.start_date|date:"d/m/Y à H:i" }}
+          </div>
+          
+          <form action="/workshops/" method="POST" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="workshop_id" value="{{ w.id }}">
+            <input type="hidden" name="participant_name" value="Maker Resident">
+            <input type="hidden" name="participant_email" value="maker@fablab.org">
+            <button type="submit" class="btn btn-sm btn-primary" style="padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; background: var(--text); color: var(--bg); border: none;">
+              S'inscrire
+            </button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted);">Aucun atelier programmé pour le moment.</div>
+    {% endfor %}
+  </div>
+</div>

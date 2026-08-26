@@ -1,0 +1,38 @@
+<div style="display: grid; gap: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Galerie des Projets Makers (Communs Wiki)</h1>
+      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Tutoriels, fichiers STL/CAD et projets open-source créés au sein du FabLab.</p>
+    </div>
+    <a href="{% url 'project_create' %}" class="btn btn-primary" style="padding: 10px 18px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); text-decoration: none;">
+      + Publier un Projet
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    {% for proj in projects %}
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+        <div style="padding: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span class="tenant-badge">{{ proj.category }}</span>
+            <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+              {{ proj.get_license_display }}
+            </span>
+          </div>
+
+          <h3 style="font-size: 18px; font-weight: 700; margin: 12px 0 6px 0;">{{ proj.title }}</h3>
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Par <strong>{{ proj.author_name }}</strong> • {{ proj.created_at|date:"d/m/Y" }}</div>
+
+          <p style="font-size: 13px; color: var(--text); line-height: 1.5;">{{ proj.description|truncatewords:25 }}</p>
+
+          <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; color: #10b981; font-weight: 600;">📥 Fichiers CAO Inclus</span>
+            <span style="font-size: 12px; font-weight: 600;">Consulter →</span>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted);">Aucun projet publié pour le moment.</div>
+    {% endfor %}
+  </div>
+</div>

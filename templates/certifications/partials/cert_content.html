@@ -1,0 +1,29 @@
+<div style="display: grid; gap: 24px;">
+  <div>
+    <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Habilitations & Arbre des Compétences</h1>
+    <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Gestion des badges et passeports de sécurité pour l'utilisation autonome des machines du FabLab.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    {% for cert in certifications %}
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="tenant-badge">{{ cert.category.name }}</span>
+          <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+            {{ cert.get_level_display }}
+          </span>
+        </div>
+
+        <h3 style="font-size: 18px; font-weight: 700; margin: 12px 0 6px 0;">{{ cert.name }}</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5;">{{ cert.description }}</p>
+
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+          <span style="color: #10b981; font-weight: 600;">✓ Inclus contrôle RFID</span>
+          <span style="color: var(--muted);">Valide 12 mois</span>
+        </div>
+      </div>
+    {% empty %}
+      <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--muted);">Aucune habilitation configurée.</div>
+    {% endfor %}
+  </div>
+</div>

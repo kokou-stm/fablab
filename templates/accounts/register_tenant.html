@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 20px 0;">
+  
+  <!-- Header Title -->
+  <div style="text-align: center; margin-bottom: 32px;">
+    <div style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: var(--text); color: var(--bg); border-radius: 12px; font-size: 24px; font-weight: 700; margin-bottom: 12px;">
+      ⚡
+    </div>
+    <h1 style="font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.02em;">Créer un Nouvel Espace FabLab / École</h1>
+    <p style="color: var(--muted); font-size: 15px; margin-top: 6px;">Initialisez votre environnement Multi-Tenant isolé avec son propre schéma PostgreSQL dédié.</p>
+  </div>
+
+  <!-- Form Box -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow);">
+    <form action="/register-lab/" method="POST" style="display: grid; gap: 24px;">
+      {% csrf_token %}
+
+      <!-- Section 1 : Information de l'Établissement -->
+      <div>
+        <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          1. Informations du FabLab / de l'École
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Nom du FabLab / École :</label>
+            <input type="text" name="lab_name" required placeholder="ex: FabLab Polytech Nantes" value="{{ lab_name|default:'' }}" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Identifiant Unique (Slug) :</label>
+            <input type="text" name="slug" placeholder="ex: polytech-nantes" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Sera utilisé pour votre schéma et votre sous-domaine.</div>
+          </div>
+
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Email Officiel de Contact :</label>
+            <input type="email" name="contact_email" required placeholder="contact@polytech-nantes.fr" value="{{ contact_email|default:'' }}" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Ville d'Implantation :</label>
+            <input type="text" name="city" required placeholder="Nantes" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 : Choix du Plan Tarifaire -->
+      <div>
+        <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          2. Type d'Établissement & Offre
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+          <label style="background: var(--panel); border: 2px solid var(--border); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: block;">
+            <input type="radio" name="plan" value="UNIVERSITY" checked style="margin-right: 6px;">
+            <strong style="font-size: 14px;">Universitaire & Éducation</strong>
+            <p style="font-size: 12px; color: var(--muted); margin: 6px 0 0 0;">Dédié aux universités, IUT, écoles d'ingénieurs et lycées.</p>
+          </label>
+
+          <label style="background: var(--panel); border: 2px solid var(--border); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: block;">
+            <input type="radio" name="plan" value="COMMUNITY" style="margin-right: 6px;">
+            <strong style="font-size: 14px;">Associatif / Open Space</strong>
+            <p style="font-size: 12px; color: var(--muted); margin: 6px 0 0 0;">Pour les FabLabs citoyens et espaces tiers-lieux libres.</p>
+          </label>
+
+          <label style="background: var(--panel); border: 2px solid var(--border); border-radius: var(--radius-md); padding: 16px; cursor: pointer; display: block;">
+            <input type="radio" name="plan" value="ENTERPRISE" style="margin-right: 6px;">
+            <strong style="font-size: 14px;">Entreprise & Prototypage Pro</strong>
+            <p style="font-size: 12px; color: var(--muted); margin: 6px 0 0 0;">FabLabs industriels et centres d'innovation R&D.</p>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 3 : Compte Administrateur / FabManager -->
+      <div>
+        <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          3. Compte Administrateur / FabManager
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Nom du Responsable :</label>
+            <input type="text" name="admin_name" required placeholder="ex: Prof. Marc Antoine" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Nom d'utilisateur (Identifiant) :</label>
+            <input type="text" name="admin_username" required placeholder="ex: marc_fabmanager" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Mot de passe de Connexion :</label>
+            <input type="password" name="password" required placeholder="••••••••••••" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 14px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="margin-top: 8px;">
+        <button type="submit" style="width: 100%; padding: 14px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>🚀 Créer mon Espace FabLab & Provisionner mon Schéma</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

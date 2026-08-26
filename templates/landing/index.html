@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FabOS — Le Système d'Exploitation pour FabLabs & Hackerspaces</title>
+  
+  <!-- Fonts Space Grotesk & Spectral -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Spectral:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- CSS Main Styles -->
+  <link rel="stylesheet" href="/static/css/main.css?v=2" />
+  
+  <style>
+    .tenant-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tenant-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    .machine-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-AVAILABLE { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+    .status-RESERVED { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+    .status-MAINTENANCE { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+    .status-OFFLINE { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+
+    /* Ultra-clean Professional Navbar CSS */
+    .landing-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 68px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .landing-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .landing-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .landing-title-box {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .landing-title {
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .landing-tagline {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .landing-nav-list {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .landing-nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: color 0.15s ease;
+    }
+    .landing-nav-link:hover {
+      color: var(--text);
+    }
+    .landing-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+    .landing-select {
+      max-width: 220px;
+      height: 38px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 9px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      font-family: inherit;
+    }
+    .landing-theme-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease;
+    }
+    .landing-theme-btn:hover {
+      background: var(--hover);
+    }
+    .landing-btn-sec {
+      height: 38px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      font-family: inherit;
+    }
+    .landing-btn-sec:hover {
+      background: var(--panel);
+      border-color: color-mix(in srgb, var(--border) 50%, var(--text));
+    }
+    .landing-btn-pri {
+      height: 38px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      border-radius: 9px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      text-decoration: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      font-family: inherit;
+    }
+    .landing-btn-pri:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      border-color: color-mix(in srgb, var(--border) 40%, var(--text));
+    }
+  </style>
+
+  <!-- HTMX Library -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body style="background: var(--app-bg); color: var(--text); margin: 0; padding: 0;">
+
+  <!-- ULTRA-CLEAN PROFESSIONAL LANDING NAVBAR -->
+  <header class="landing-header">
+    
+    <!-- Logo Branding -->
+    <a href="/" class="landing-brand">
+      <div class="landing-logo">⚡</div>
+      <div class="landing-title-box">
+        <span class="landing-title">FabOS</span>
+        <span class="landing-tagline">Space OS</span>
+      </div>
+    </a>
+
+    <!-- Center Nav Links -->
+    <ul class="landing-nav-list">
+      <li><a href="#features" class="landing-nav-link">Fonctionnalités</a></li>
+      <li><a href="/equipment/" class="landing-nav-link">Équipements</a></li>
+      <li><a href="/workshops/" class="landing-nav-link">Ateliers</a></li>
+      <li><a href="/projects/" class="landing-nav-link">Projets</a></li>
+      <li><a href="#tenants" class="landing-nav-link">Réseau</a></li>
+    </ul>
+
+    <!-- Right Action Controls -->
+    <div class="landing-actions">
+      
+      <!-- Compact Multi-tenant Switcher -->
+      <select class="landing-select" onchange="window.location.href='/switch-tenant/' + this.value + '/'" title="Changer d'espace FabLab">
+        {% for t in all_tenants %}
+          <option value="{{ t.slug }}" {% if tenant and tenant.slug == t.slug %}selected{% endif %}>
+            {{ t.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Dark/Light Theme Toggle -->
+      <button class="landing-theme-btn" onclick="toggleTheme()" title="Basculer le thème">
+        <span id="theme-icon">🌙</span>
+      </button>
+
+      <!-- App Access CTA Buttons -->
+      <a href="/dashboard/" class="landing-btn-sec">
+        Tableau de bord
+      </a>
+      
+      <a href="/register-lab/" class="landing-btn-pri">
+        + Créer un Espace
+      </a>
+    </div>
+
+  </header>
+
+  <!-- FULL WIDTH MAIN CONTENT CONTAINER -->
+  <main style="max-width: 1280px; margin: 32px auto 0 auto; padding: 0 24px;">
+    {% include "landing/partials/landing_content.html" %}
+  </main>
+
+  <!-- FULL WIDTH LANDING FOOTER -->
+  <footer style="background: var(--surface); border-top: 1px solid var(--border); padding: 56px 32px 36px 32px; margin-top: 80px;">
+    <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px;">
+          <div style="width: 34px; height: 34px; background: var(--text); color: var(--bg); border-radius: 8px; display: grid; place-items: center; font-size: 18px;">⚡</div>
+          FabOS
+        </div>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 14px; max-width: 320px;">
+          Le système d'exploitation multi-tenant conçu pour les FabLabs universitaires, Tiers-lieux et Hackerspaces.
+        </p>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 20px;">
+          © 2026 FabOS Platform • Propulsé par Django & HTMX
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); margin-bottom: 16px;">Plateforme</div>
+        <div style="display: grid; gap: 10px; font-size: 13px;">
+          <a href="/dashboard/" style="color: var(--muted); text-decoration: none;">Tableau de bord</a>
+          <a href="/equipment/" style="color: var(--muted); text-decoration: none;">Parc d'équipements</a>
+          <a href="/reservations/" style="color: var(--muted); text-decoration: none;">Réservations</a>
+          <a href="/certifications/" style="color: var(--muted); text-decoration: none;">Habilitations</a>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); margin-bottom: 16px;">Makers & Communauté</div>
+        <div style="display: grid; gap: 10px; font-size: 13px;">
+          <a href="/workshops/" style="color: var(--muted); text-decoration: none;">Ateliers & Formations</a>
+          <a href="/projects/" style="color: var(--muted); text-decoration: none;">Projets Wiki</a>
+          <a href="/inventory/" style="color: var(--muted); text-decoration: none;">Stocks & Consommables</a>
+          <a href="/maintenance/" style="color: var(--muted); text-decoration: none;">Ticketing Maintenance</a>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); margin-bottom: 16px;">Établissements</div>
+        <div style="display: grid; gap: 10px; font-size: 13px;">
+          <a href="/register-lab/" style="color: var(--muted); text-decoration: none;">Créer un FabLab</a>
+          <a href="#tenants" style="color: var(--muted); text-decoration: none;">Réseau des Écoles</a>
+          <a href="/admin/" style="color: var(--muted); text-decoration: none;">Administration Master</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Toggle Logic -->
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      document.getElementById('theme-icon').textContent = next === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('theme', next);
+    }
+
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      document.documentElement.setAttribute('data-theme', storedTheme);
+      document.getElementById('theme-icon').textContent = storedTheme === 'dark' ? '☀️' : '🌙';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<div style="display: grid; gap: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="font-size: 13px; color: var(--muted); text-decoration: none;">← Retour au catalogue</a>
+      <h1 style="font-size: 26px; font-weight: 700; margin: 8px 0 0 0;">{{ equipment.name }}</h1>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="machine-status-dot status-{{ equipment.status }}"></span>
+      <span style="font-weight: 700; font-size: 16px;">{{ equipment.get_status_display }}</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    
+    <!-- Specs & Safety -->
+    <div style="display: grid; gap: 20px;">
+      <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md);">
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Consignes de Sécurité & EPI Obligatoires</h3>
+        <p style="color: var(--muted); font-size: 14px; line-height: 1.6;">
+          {{ equipment.safety_instructions|default:"Lunettes de sécurité fermées, chaussures de sécurité et port de charlotte/cheveux attachés requis. Ne jamais laisser la machine tourner sans surveillance." }}
+        </p>
+
+        <div style="margin-top: 20px; padding: 16px; background: var(--panel); border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">Spécifications Techniques :</div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 13px;">
+            <div><strong>Modèle :</strong> {{ equipment.model_number }}</div>
+            <div><strong>Numéro de série :</strong> {{ equipment.serial_number|default:"N/A" }}</div>
+            <div><strong>Consommation électrique :</strong> {{ equipment.power_watts }} W</div>
+            <div><strong>Zone d'implantation :</strong> {{ equipment.location_zone }}</div>
+            <div><strong>Tarif horaire :</strong> {{ equipment.hourly_rate }} € / h</div>
+            <div><strong>Habilitation :</strong> {% if equipment.requires_certification %}Obligatoire (Badging RFID){% else %}Accès Libre{% endif %}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tickets de maintenance pour cette machine -->
+      <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md);">
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 16px 0;">Historique de Maintenance & Incident</h3>
+        <div style="display: grid; gap: 10px;">
+          {% for t in tickets %}
+            <div style="padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 600;">
+                <span>{{ t.issue_title }}</span>
+                <span>{{ t.get_status_display }}</span>
+              </div>
+              <div style="color: var(--muted); margin-top: 4px;">{{ t.description }}</div>
+            </div>
+          {% empty %}
+            <div style="color: var(--muted); font-size: 13px;">Aucun incident récent signalé sur cette machine.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking CTA Box -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md); height: fit-content;">
+      <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Réserver un Créneau</h3>
+      <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">{{ equipment.hourly_rate }} € <span style="font-size: 13px; font-weight: 400; color: var(--muted);">/ heure</span></div>
+
+      <form action="/reservations/" method="POST" style="display: grid; gap: 12px;">
+        {% csrf_token %}
+        <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
+        
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Nom du Réservateur :</label>
+          <input type="text" name="user_name" class="form-control" value="Maker Démo" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date & Début :</label>
+          <input type="datetime-local" name="start_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date & Fin :</label>
+          <input type="datetime-local" name="end_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description du Travail :</label>
+          <textarea name="project_description" rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);" placeholder="Prototypage carter robot..."></textarea>
+        </div>
+
+        <button type="submit" style="width: 100%; padding: 10px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; margin-top: 8px;">
+          Confirmer la Réservation
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>

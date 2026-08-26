@@ -1,0 +1,149 @@
+<div style="display: grid; gap: 24px;">
+  
+  <!-- Header Title -->
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.02em;">Tableau de bord — {{ tenant.name }}</h1>
+      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Vue d'ensemble de l'activité, des machines et des réservations du FabLab.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="/reservations/" class="btn btn-primary" style="padding: 8px 16px; background: var(--text); color: var(--bg); border-radius: var(--radius-md); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+        <span>+ Nouvelle Réservation</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Stats Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+    
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
+      <div style="font-size: 13px; color: var(--muted); font-weight: 500;">Parc Machines Total</div>
+      <div style="font-size: 28px; font-weight: 700; margin-top: 6px;">{{ total_machines }}</div>
+      <div style="font-size: 12px; color: #10b981; margin-top: 4px;">{{ active_machines }} disponibles de suite</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
+      <div style="font-size: 13px; color: var(--muted); font-weight: 500;">Machines en Réservation</div>
+      <div style="font-size: 28px; font-weight: 700; margin-top: 6px; color: #3b82f6;">{{ in_use_count }}</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Sessions actives en atelier</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
+      <div style="font-size: 13px; color: var(--muted); font-weight: 500;">Machines en Maintenance</div>
+      <div style="font-size: 28px; font-weight: 700; margin-top: 6px; color: #f59e0b;">{{ maintenance_count }}</div>
+      <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;">{{ tickets.count }} ticket(s) ouvert(s)</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
+      <div style="font-size: 13px; color: var(--muted); font-weight: 500;">Réservations Totales</div>
+      <div style="font-size: 28px; font-weight: 700; margin-top: 6px;">{{ total_reservations }}</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Historique global</div>
+    </div>
+
+  </div>
+
+  <!-- Main Grid Content: Machines & Reservations -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    
+    <!-- Left Column: Machines Status Grid -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 16px; font-weight: 700; margin: 0;">État des Équipements en Direct</h2>
+        <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="font-size: 13px; color: var(--muted); font-weight: 500;">Voir tout ({{ total_machines }}) →</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;">
+        {% for eq in equipments %}
+          <div style="background: var(--panel); border: 1px solid var(--border); padding: 14px; border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <span class="machine-status-dot status-{{ eq.status }}"></span>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; margin-left: 4px; color: var(--muted);">{{ eq.category.name }}</span>
+              </div>
+              <span style="font-size: 12px; font-weight: 700;">{{ eq.hourly_rate }} €/h</span>
+            </div>
+
+            <div style="font-weight: 700; font-size: 15px; margin-top: 8px;">
+              <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+                {{ eq.name }}
+              </a>
+            </div>
+
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+              📍 {{ eq.location_zone }} ({{ eq.power_watts }}W)
+            </div>
+
+            <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 12px; padding: 2px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); font-weight: 500;">
+                {{ eq.get_status_display }}
+              </span>
+              {% if eq.status == 'AVAILABLE' %}
+                <a href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true" style="font-size: 12px; font-weight: 600; color: var(--text);">Réserver →</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div style="color: var(--muted); padding: 20px; text-align: center;">Aucun équipement enregistré.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Reservations & Low Stock Alerts -->
+    <div style="display: grid; gap: 20px;">
+      
+      <!-- Recent Reservations Card -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h2 style="font-size: 16px; font-weight: 700; margin: 0;">Réservations Récents</h2>
+          <a href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true" style="font-size: 12px; color: var(--muted);">Voir tout</a>
+        </div>
+
+        <div style="display: grid; gap: 10px;">
+          {% for r in reservations %}
+            <div style="padding: 10px; background: var(--panel); border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-weight: 600; font-size: 13px;">{{ r.equipment.name }}</div>
+                <div style="font-size: 11px; color: var(--muted);">Par {{ r.user_full_name }} • {{ r.start_time|date:"d/m H:i" }}</div>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border);">
+                  {{ r.get_status_display }}
+                </span>
+              </div>
+            </div>
+          {% empty %}
+            <div style="font-size: 13px; color: var(--muted);">Aucune réservation récente.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Prochains Ateliers Card -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h2 style="font-size: 16px; font-weight: 700; margin: 0;">Ateliers & Formations</h2>
+          <a href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" style="font-size: 12px; color: var(--muted);">Catalogue</a>
+        </div>
+
+        <div style="display: grid; gap: 10px;">
+          {% for w in workshops %}
+            <div style="padding: 10px; background: var(--panel); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <div style="font-weight: 600; font-size: 13px;">{{ w.title }}</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+                👤 {{ w.instructor_name }} • {{ w.start_date|date:"d/m/Y à H:i" }}
+              </div>
+              <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+                <span style="color: #10b981; font-weight: 600;">{{ w.available_seats }} places libres</span>
+                <span style="font-weight: 700;">{% if w.price == 0 %}Gratuit{% else %}{{ w.price }} €{% endif %}</span>
+              </div>
+            </div>
+          {% empty %}
+            <div style="font-size: 13px; color: var(--muted);">Aucun atelier programmé.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

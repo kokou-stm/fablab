@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 20px auto; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Publier un Nouveau Projet Maker</h1>
+    <p style="color: var(--muted); font-size: 14px; margin: 4px 0 0 0;">Partagez vos tutoriels, modèles 3D, fichiers vectoriels et documentations Open Source avec la communauté.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" action="{% url 'project_create' %}">
+    {% csrf_token %}
+    <div style="margin-bottom: 18px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Titre du Projet</label>
+      <input type="text" name="title" required placeholder="ex: Boîtier Capteur IoT en Découpe Laser" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+      <div>
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Domaine / Spécialité</label>
+        <select name="category" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+          <option value="Impression 3D & Prototypage">Impression 3D & Prototypage</option>
+          <option value="Découpe Laser & Gravure">Découpe Laser & Gravure</option>
+          <option value="Usinage CNC & Bois">Usinage CNC & Bois</option>
+          <option value="Électronique & IoT">Électronique & IoT</option>
+          <option value="Design & Modélisation CAD">Design & Modélisation CAD</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Licence Open Source</label>
+        <select name="license" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+          <option value="CC-BY-SA">Creative Commons BY-SA 4.0</option>
+          <option value="CC-BY-NC">Creative Commons Non-Commercial</option>
+          <option value="MIT">Licence MIT (Open Source)</option>
+          <option value="CERN-OHL">CERN Open Hardware Licence</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 18px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Description & Étapes d'Assemblage</label>
+      <textarea name="description" rows="5" required placeholder="Décrivez les matériels nécessaires, le temps d'usinage, les paramètres de découpe/impression et la notice de montage..." class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);"></textarea>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Photo d'illustration de couverture</label>
+      <input type="file" name="cover_image" accept="image/*" class="form-input" style="width: 100%; padding: 8px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+    </div>
+
+    <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+      <input type="checkbox" name="is_public" id="is_public" checked style="width: 16px; height: 16px;" />
+      <label for="is_public" style="font-size: 14px; font-weight: 500;">Rendre ce projet public dans la Galerie Open Source</label>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <a href="{% url 'project_list' %}" class="btn btn-outline" style="padding: 10px 18px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
+        Annuler
+      </a>
+      <button type="submit" style="padding: 10px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
+        Publier le Projet
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

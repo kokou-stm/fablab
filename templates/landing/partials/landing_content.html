@@ -1,0 +1,395 @@
+<div style="display: grid; gap: 40px; padding-bottom: 40px;">
+  
+  <!-- HERO BANNER SECTION -->
+  <div style="background: linear-gradient(135deg, var(--surface) 0%, var(--panel) 100%); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 48px 36px; position: relative; overflow: hidden; box-shadow: var(--shadow);">
+    
+    <!-- Background Glow Accent Effect -->
+    <div style="position: absolute; top: -60px; right: -60px; width: 320px; height: 320px; background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, transparent 80%); pointer-events: none; border-radius: 50%; filter: blur(40px);"></div>
+    <div style="position: absolute; bottom: -80px; left: 10%; width: 280px; height: 280px; background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%); pointer-events: none; border-radius: 50%; filter: blur(40px);"></div>
+
+    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 36px; align-items: center; position: relative; z-index: 1;">
+      
+      <!-- Hero Text Column -->
+      <div>
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 8px #10b981;"></span>
+          <span>⚡ FabOS — Plateforme SaaS Multi-Tenant pour FabLabs</span>
+        </div>
+
+        <h1 style="font-size: clamp(28px, 4vw, 42px); font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin: 0 0 16px 0;">
+          Le Système d'Exploitation pour <span style="background: linear-gradient(90deg, var(--text) 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FabLabs & Makerspaces</span>.
+        </h1>
+
+        <p style="font-size: 16px; color: var(--muted); line-height: 1.6; margin: 0 0 28px 0; max-width: 580px;">
+          Pilotez vos équipements de fabrication numérique, gérez les habilitations de sécurité des makers, automatisez le suivi des consommables et l'organisation d'ateliers sur une seule plateforme dédiée.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+          <a href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
+            <span> Accéder au Tableau de Bord</span>
+          </a>
+
+          <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 12px 22px; font-size: 14px; font-weight: 700; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <span>✨ Créer mon Espace FabLab</span>
+          </a>
+        </div>
+
+        <!-- Trust Features Checklist -->
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 32px; font-size: 13px; font-weight: 600; color: var(--muted);">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Schémas isolés Postgres</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Interface HTMX réactive</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Habilitations & Badges</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Interactive Card -->
+      <div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); position: relative;">
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+              <span style="font-weight: 700; font-size: 13px; margin-left: 6px;">FabOS Control Panel</span>
+            </div>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); font-weight: 600;">
+              Tenant: {{ tenant.name|default:"FabLab Demo" }}
+            </span>
+          </div>
+
+          <!-- Live Equipment Status Widgets -->
+          <div style="display: grid; gap: 10px;">
+            <div style="padding: 12px; background: var(--panel); border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="machine-status-dot status-AVAILABLE"></span>
+                <div>
+                  <div style="font-weight: 700; font-size: 13px;">Laser CO2 Trotec Speedy 300</div>
+                  <div style="font-size: 11px; color: var(--muted);">Découpe Laser • Zone A</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; font-weight: 700; color: #10b981; padding: 2px 8px; background: rgba(16,185,129,0.1); border-radius: 10px;">Libre</span>
+            </div>
+
+            <div style="padding: 12px; background: var(--panel); border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="machine-status-dot status-RESERVED"></span>
+                <div>
+                  <div style="font-weight: 700; font-size: 13px;">Formlabs Form 3+ (SLA)</div>
+                  <div style="font-size: 11px; color: var(--muted);">Impression Résine • Zone B</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; font-weight: 700; color: #3b82f6; padding: 2px 8px; background: rgba(59,130,246,0.1); border-radius: 10px;">Réservée (Session en cours)</span>
+            </div>
+
+            <div style="padding: 12px; background: var(--panel); border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="machine-status-dot status-MAINTENANCE"></span>
+                <div>
+                  <div style="font-weight: 700; font-size: 13px;">Fraiseuse CNC ShopBot PRSAlpha</div>
+                  <div style="font-size: 11px; color: var(--muted);">Usinage Bois • Atelier CNC</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; font-weight: 700; color: #f59e0b; padding: 2px 8px; background: rgba(245,158,11,0.1); border-radius: 10px;">Maintenance</span>
+            </div>
+          </div>
+
+          <!-- Micro Analytics Mini Bar -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;">
+            <div style="padding: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 11px; color: var(--muted); font-weight: 500;">Taux d'utilisation</div>
+              <div style="font-size: 18px; font-weight: 800; margin-top: 2px;">84.2 %</div>
+            </div>
+            <div style="padding: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 11px; color: var(--muted); font-weight: 500;">Makers Habilités</div>
+              <div style="font-size: 18px; font-weight: 800; margin-top: 2px; color: #10b981;">142 Badges</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- KPI STATS COUNTER BAR -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+    
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; box-shadow: var(--shadow);">
+      <div style="font-font-size: 32px; font-weight: 800; letter-spacing: -0.03em;">{{ total_tenants|default:"1" }}</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px;">FabLabs & Écoles Actifs</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; box-shadow: var(--shadow);">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: #10b981;">{{ total_machines|default:"0" }}</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px;">Équipements Répertoriés</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; box-shadow: var(--shadow);">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: #3b82f6;">{{ total_reservations|default:"0" }}</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px;">Réservations Effectuées</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; text-align: center; box-shadow: var(--shadow);">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: #8b5cf6;">{{ total_workshops|default:"0" }}</div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px;">Ateliers & Formations</div>
+    </div>
+
+  </div>
+
+  <!-- MODULES & FEATURES GRID SECTION -->
+  <div>
+    <div style="text-align: center; max-width: 680px; margin: 0 auto 32px auto;">
+      <h2 style="font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 10px 0;">
+        Une Suite Complète pour la Gestion de votre FabLab
+      </h2>
+      <p style="font-size: 14px; color: var(--muted); margin: 0;">
+        Conçu spécifiquement pour répondre aux enjeux des FabLabs universitaires, hackerspaces et tiers-lieux de fabrication.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+      
+      <!-- Feature 1: Parc Machines -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          🖨️
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Réservation du Parc Machine</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Planning visuel interactif, créneaux personnalisés et prévention automatique des conflits de réservation pour vos imprimantes 3D, découpouses laser et fraiseuses CNC.
+        </p>
+        <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Explorer les Équipements →
+        </a>
+      </div>
+
+      <!-- Feature 2: Habilitations & Badges -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          🛡️
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Habilitations & Badges de Sécurité</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Assurez la sécurité en atelier : seules les personnes ayant validé la formation et obtenu leur badge peuvent réserver et utiliser les machines à risque.
+        </p>
+        <a href="/certifications/" hx-get="/certifications/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Voir les Habilitations →
+        </a>
+      </div>
+
+      <!-- Feature 3: Ateliers & Formations -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          🎓
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Ateliers & Catalogue de Formations</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Organisez facilement vos sessions d'initiation et de perfectionnement. Gestion de la billetterie, des jauges de participants et notification des makers.
+        </p>
+        <a href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Consulter le Catalogue →
+        </a>
+      </div>
+
+      <!-- Feature 4: Inventaire & Consommables -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          📦
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Gestion des Stocks & Consommables</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Suivi des stocks de filaments PLA/PETG, plaques de contreplaqué, résines et composants électroniques avec alertes automatiques en cas de seuil critique.
+        </p>
+        <a href="/inventory/" hx-get="/inventory/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Gérer l'Inventaire →
+        </a>
+      </div>
+
+      <!-- Feature 5: Maintenance & Incidents -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          🛠️
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Ticketing & Maintenance Incidents</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Signalement immédiat des busettes bouchées ou des pannes. Passage automatique de la machine en mode maintenance pour éviter les mauvaises surprises.
+        </p>
+        <a href="/maintenance/" hx-get="/maintenance/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Voir les Tickets Maintenance →
+        </a>
+      </div>
+
+      <!-- Feature 6: Projets & Communs Wiki -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.15s ease;" class="feature-card">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 20px; margin-bottom: 16px;">
+          📚
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Wiki Projets & Communs Open-Source</h3>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+          Valorisez le travail des étudiants et makers en documentant les projets créés en atelier avec étapes de fabrication, BOM et fichiers 3D partagés.
+        </p>
+        <a href="/projects/" hx-get="/projects/" hx-target="#content" hx-push-url="true" style="font-size: 13px; font-weight: 700; color: var(--text); text-decoration: none;">
+          Parcourir les Projets →
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LIVE SHOWCASE: MACHINES & WORKSHOPS PREVIEW -->
+  <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px;">
+    
+    <!-- Left: Featured Machines -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 800; margin: 0;">Machines Prêtes à l'Emploi</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">Aperçu du parc machine disponible actuellement dans l'espace.</p>
+        </div>
+        <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" class="btn btn-outline btn-sm" style="font-size: 12px; padding: 6px 12px; text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
+          Voir Tout →
+        </a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;">
+        {% for eq in equipments %}
+          <div style="background: var(--panel); border: 1px solid var(--border); padding: 14px; border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span class="machine-status-dot status-{{ eq.status }}"></span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--muted);">{{ eq.hourly_rate }} €/h</span>
+            </div>
+
+            <div style="font-weight: 700; font-size: 14px; margin-top: 8px; line-height: 1.3;">
+              <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+                {{ eq.name }}
+              </a>
+            </div>
+
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+              📍 {{ eq.location_zone }}
+            </div>
+
+            <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border);">
+                {{ eq.get_status_display }}
+              </span>
+              <a href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true" style="font-size: 11px; font-weight: 700; color: var(--text); text-decoration: none;">
+                Réserver →
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div style="font-size: 13px; color: var(--muted); padding: 20px;">Aucun équipement enregistré.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right: Upcoming Workshops -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 800; margin: 0;">Prochains Ateliers</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">Formations & sessions d'initiation.</p>
+        </div>
+        <a href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" style="font-size: 12px; color: var(--muted); font-weight: 600;">
+          Catalogue
+        </a>
+      </div>
+
+      <div style="display: grid; gap: 12px;">
+        {% for w in workshops %}
+          <div style="padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div style="font-weight: 700; font-size: 13px;">{{ w.title }}</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+              👤 Intervenant: {{ w.instructor_name }}
+            </div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+              📅 {{ w.start_date|date:"d/m/Y à H:i" }}
+            </div>
+            <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+              <span style="color: #10b981; font-weight: 700;">{{ w.available_seats }} places restantes</span>
+              <a href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" style="font-weight: 700; color: var(--text); text-decoration: none;">
+                S'inscrire →
+              </a>
+            </div>
+          </div>
+        {% empty %}
+          <div style="font-size: 13px; color: var(--muted); padding: 10px;">Aucun atelier programmé.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MULTI-TENANT NETWORK SHOWCASE SECTION -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h2 style="font-size: 22px; font-weight: 800; margin: 0;">Réseau des FabLabs & Écoles Universitaires</h2>
+        <p style="font-size: 13px; color: var(--muted); margin: 4px 0 0 0;">
+          Basculez d'un espace à l'autre en un clic grâce à l'architecture multi-tenant isolée de FabOS.
+        </p>
+      </div>
+      <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; color: var(--text);">
+        + Inscrire un nouveau FabLab
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+      {% for t in all_tenants %}
+        <div style="background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span class="tenant-dot"></span>
+              <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); text-transform: uppercase;">
+                {{ t.get_plan_display }}
+              </span>
+            </div>
+            <div style="font-weight: 800; font-size: 16px; margin-top: 10px;">{{ t.name }}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📍 {{ t.city }}</div>
+          </div>
+
+          <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; color: var(--muted);">Slug: <code>{{ t.slug }}</code></span>
+            <a href="/switch-tenant/{{ t.slug }}/" style="font-size: 12px; font-weight: 700; color: var(--text); text-decoration: none;">
+              Rejoindre →
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div style="font-size: 13px; color: var(--muted); padding: 10px;">Aucun tenant configuré.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CALL TO ACTION BANNER -->
+  <div style="background: var(--text); color: var(--bg); border-radius: var(--radius-xl); padding: 40px 32px; text-align: center; position: relative; overflow: hidden;">
+    <h2 style="font-size: 28px; font-weight: 800; margin: 0 0 12px 0; letter-spacing: -0.02em;">
+      Prêt à numériser l'expérience Maker de votre établissement ?
+    </h2>
+    <p style="font-size: 15px; opacity: 0.8; max-width: 620px; margin: 0 auto 24px auto; line-height: 1.5;">
+      Rejoignez le réseau FabOS et donnez à vos étudiants et makers les outils modernes d'un espace de fabrication d'élite.
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+      <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--bg); color: var(--text); border-radius: var(--radius-md); text-decoration: none;">
+        ⚡ Créer votre Instance FabLab
+      </a>
+      <a href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: transparent; color: var(--bg); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-md); text-decoration: none;">
+        📊 Explorer le Dashboard
+      </a>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,64 @@
+<div style="display: grid; gap: 20px;">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Catalogue des Équipements & Machines</h1>
+      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Machines d'usinage, d'impression 3D, découpe laser et d'électronique.</p>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-md);">
+    <span style="font-size: 13px; font-weight: 600; color: var(--muted);">Filtrer par catégorie :</span>
+    <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">Toutes</a>
+    {% for cat in categories %}
+      <a href="/equipment/?category={{ cat.slug }}" hx-get="/equipment/?category={{ cat.slug }}" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if current_category == cat.slug %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+        {{ cat.name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Grid of Equipments -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+    {% for eq in equipments %}
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
+        <div style="padding: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span class="tenant-badge" style="font-size: 11px;">{{ eq.category.name }}</span>
+            <span style="font-size: 13px; font-weight: 700; color: var(--text);">{{ eq.hourly_rate }} €/heure</span>
+          </div>
+
+          <h3 style="font-size: 18px; font-weight: 700; margin: 12px 0 4px 0;">
+            <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" style="color: inherit; text-decoration: none;">
+              {{ eq.name }}
+            </a>
+          </h3>
+
+          <div style="font-size: 12px; color: var(--muted);">Modèle : {{ eq.model_number|default:"Standard" }}</div>
+          
+          <div style="margin-top: 14px; padding: 10px; background: var(--panel); border-radius: var(--radius-sm); font-size: 12px;">
+            <div>📍 <strong>Zone :</strong> {{ eq.location_zone }}</div>
+            <div style="margin-top: 4px;">⚡ <strong>Puissance :</strong> {{ eq.power_watts }} Watts</div>
+            {% if eq.requires_certification %}
+              <div style="margin-top: 4px; color: #f59e0b; font-weight: 600;">🔒 Habilitation requise</div>
+            {% else %}
+              <div style="margin-top: 4px; color: #10b981; font-weight: 600;">🔓 Accès Libre</div>
+            {% endif %}
+          </div>
+
+          <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="machine-status-dot status-{{ eq.status }}"></span>
+              <span style="font-size: 12px; font-weight: 600;">{{ eq.get_status_display }}</span>
+            </div>
+            
+            <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; border: 1px solid var(--border); color: var(--text);">Fiche & Réserver →</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
+        Aucune machine correspondant aux filtres.
+      </div>
+    {% endfor %}
+  </div>
+</div>

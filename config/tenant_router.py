@@ -86,7 +86,7 @@ def ensure_tenant_db_registered(tenant_slug: str, db_path: Optional[str] = None)
         options = dict(default_cfg.get("OPTIONS", {}))
         options["options"] = f"-c search_path={schema},public"
         cfg["OPTIONS"] = options
-        cfg["CONN_MAX_AGE"] = 0
+        cfg["CONN_MAX_AGE"] = 60
         settings.DATABASES[alias] = cfg
         _ensure_pg_schema(schema)
         return alias

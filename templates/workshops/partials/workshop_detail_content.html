@@ -1,0 +1,336 @@
+<div style="display: flex; flex-direction: column; gap: 24px;">
+  
+  <!-- BREADCRUMB & BACK NAVIGATION -->
+  <div>
+    <a href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+      ← Retour aux Formations & Ateliers
+    </a>
+  </div>
+
+  <!-- HERO FORMATION CARD HEADER -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow); position: relative; overflow: hidden;">
+    
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+      
+      <div style="flex: 1; min-width: 280px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+          <span style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #2563eb;">
+            {{ workshop.get_category_display }}
+          </span>
+          {% if is_registered %}
+            <span style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981;">
+              Inscrit(e) 🟢
+            </span>
+          {% endif %}
+        </div>
+
+        <h1 style="font-size: 26px; font-weight: 800; margin: 0 0 10px 0; color: var(--text); line-height: 1.25;">
+          {{ workshop.title }}
+        </h1>
+
+        <p style="font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0 0 16px 0;">
+          {{ workshop.description }}
+        </p>
+
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text); font-weight: 600;">
+          <div>👨‍🏫 Formateur : <strong>{{ workshop.instructor_name|default:"Tuteur FabLab" }}</strong></div>
+          <div>📅 Date : <strong>{{ workshop.start_date|date:"d/m/Y à H:i" }}</strong></div>
+          <div>📍 Lieu : <strong>Zone de Formation FabLab</strong></div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE ACTION PANEL -->
+      <div style="background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; min-width: 220px; align-items: center; text-align: center;">
+        
+        <div style="font-size: 22px; font-weight: 800; color: var(--text);">
+          {% if workshop.price == 0 %}Gratuit{% else %}{{ workshop.price }} €{% endif %}
+        </div>
+
+        <div style="font-size: 12px; color: {% if workshop.available_seats > 0 %}#10b981{% else %}#ef4444{% endif %}; font-weight: 700;">
+          {{ workshop.available_seats }} place{{ workshop.available_seats|pluralize }} disponible{{ workshop.available_seats|pluralize }}
+        </div>
+
+        {% if not is_registered %}
+          {% if workshop.available_seats > 0 %}
+            <form method="POST" action="/workshops/{{ workshop.id }}/" style="width: 100%; margin: 0;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="register">
+              <button type="submit" style="width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 800; background: var(--text); color: var(--bg); border: none; cursor: pointer; box-shadow: var(--shadow);">
+                S'inscrire à la Formation
+              </button>
+            </form>
+          {% else %}
+            <button disabled style="width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; background: var(--border); color: var(--muted); border: none; cursor: not-allowed;">
+              Atelier Complet
+            </button>
+          {% endif %}
+        {% else %}
+          <div style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+            Accès complet débloqué
+          </div>
+        {% endif %}
+
+        {% if is_instructor_or_admin %}
+          <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); width: 100%; display: flex; flex-direction: column; gap: 6px;">
+            <button onclick="document.getElementById('add-lesson-modal').style.display='flex'" style="width: 100%; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 11.5px; font-weight: 700; background: var(--surface); color: var(--text); border: 1px solid var(--border); cursor: pointer;">
+              + Ajouter un Chapitre / Cours
+            </button>
+            <button onclick="document.getElementById('add-resource-modal').style.display='flex'" style="width: 100%; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 11.5px; font-weight: 700; background: var(--surface); color: var(--text); border: 1px solid var(--border); cursor: pointer;">
+              + Déposer un Fichier PDF
+            </button>
+          </div>
+        {% endif %}
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTENT ACCESS SECTION (UNLOCKED VS LOCKED) -->
+  {% if not is_registered and not is_instructor_or_admin %}
+    
+    <!-- LOCKED PREVIEW BANNER FOR UNENROLLED PARTICIPANTS -->
+    <div style="background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg); padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: var(--shadow);">
+      <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; font-size: 24px;">
+        🔒
+      </div>
+      <div>
+        <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 6px 0; color: var(--text);">Contenu de cours & ressources PDF réservés aux inscrits</h3>
+        <p style="font-size: 13.5px; color: var(--muted); max-width: 520px; margin: 0 auto; line-height: 1.5;">
+          Cette formation comprend <strong>{{ lessons.count }} chapitre{{ lessons.count|pluralize }}</strong> et des supports de cours PDF/3D à télécharger. Inscrivez-vous gratuitement pour débloquer immédiatement l'accès !
+        </p>
+      </div>
+
+      {% if workshop.available_seats > 0 %}
+        <form method="POST" action="/workshops/{{ workshop.id }}/" style="margin-top: 6px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="register">
+          <button type="submit" style="padding: 10px 24px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 800; background: var(--text); color: var(--bg); border: none; cursor: pointer; box-shadow: var(--shadow);">
+            S'inscrire pour débloquer les cours →
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+  {% else %}
+
+    <!-- UNLOCKED FULL COURSE SYLLABUS & PDF RESOURCES -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--text);">Programme de la Formation & Support de Cours</h2>
+        {% if is_instructor_or_admin %}
+          <div style="display: flex; gap: 10px;">
+            <button onclick="document.getElementById('add-lesson-modal').style.display='flex'" style="background: var(--text); color: var(--bg); border: none; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer;">
+              + Ajouter un Chapitre
+            </button>
+            <button onclick="document.getElementById('add-resource-modal').style.display='flex'" style="background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer;">
+              + Déposer un PDF / Fichier
+            </button>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- LESSONS LIST -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        {% for lesson in lessons %}
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow);">
+            
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-weight: 800; font-size: 12px; flex-shrink: 0;">
+                  {{ forloop.counter }}
+                </span>
+                <h3 style="font-size: 17px; font-weight: 800; margin: 0; color: var(--text);">{{ lesson.title }}</h3>
+              </div>
+
+              {% if is_instructor_or_admin %}
+                <form method="POST" action="/workshops/{{ workshop.id }}/" style="margin: 0;" onsubmit="return confirm('Supprimer ce chapitre ?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_lesson">
+                  <input type="hidden" name="lesson_id" value="{{ lesson.id }}">
+                  <button type="submit" style="background: none; border: none; color: #ef4444; font-size: 12px; font-weight: 700; cursor: pointer;">Supprimer</button>
+                </form>
+              {% endif %}
+            </div>
+
+            <!-- LESSON TEXT NOTES -->
+            {% if lesson.description %}
+              <div style="font-size: 13.5px; color: var(--text); line-height: 1.6; background: var(--panel); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 14px; white-space: pre-wrap;">
+                {{ lesson.description }}
+              </div>
+            {% endif %}
+
+            <!-- VIDEO TUTORIAL LINK (IF PRESENT) -->
+            {% if lesson.video_url %}
+              <div style="margin-bottom: 14px; padding: 10px 14px; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-sm); border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 12.5px; font-weight: 700; color: #2563eb;">🎥 Tutoriel Vidéo de la Leçon</span>
+                <a href="{{ lesson.video_url }}" target="_blank" style="font-size: 12px; font-weight: 800; color: #2563eb; text-decoration: underline;">
+                  Visionner le tutoriel ↗
+                </a>
+              </div>
+            {% endif %}
+
+            <!-- LESSON ATTACHED PDF / FILE RESOURCES -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+              <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">
+                Document(s) & Fichier(s) Téléchargeables :
+              </div>
+              
+              {% for res in lesson.resources.all %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 18px;">
+                      {% if res.resource_type == 'PDF' %}📄{% elif res.resource_type == 'ARCHIVE' %}📦{% else %}🔗{% endif %}
+                    </span>
+                    <div>
+                      <div style="font-size: 13px; font-weight: 700; color: var(--text);">{{ res.title }}</div>
+                      <div style="font-size: 11px; color: var(--muted);">{{ res.get_resource_type_display }}</div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    {% if res.file %}
+                      <a href="{{ res.file.url }}" download target="_blank" style="padding: 5px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        📥 Télécharger PDF / Fichier
+                      </a>
+                    {% elif res.external_url %}
+                      <a href="{{ res.external_url }}" target="_blank" style="padding: 5px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); text-decoration: none;">
+                        Ouvrir le lien ↗
+                      </a>
+                    {% endif %}
+
+                    {% if is_instructor_or_admin %}
+                      <form method="POST" action="/workshops/{{ workshop.id }}/" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_resource">
+                        <input type="hidden" name="resource_id" value="{{ res.id }}">
+                        <button type="submit" title="Retirer la ressource" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; font-weight: 800;">✕</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+              {% empty %}
+                <div style="font-size: 12px; color: var(--muted); font-style: italic;">Aucun fichier attaché à ce chapitre pour le moment.</div>
+              {% endfor %}
+            </div>
+
+          </div>
+        {% empty %}
+          <div style="padding: 40px; text-align: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);">
+            <div style="font-size: 15px; font-weight: 700; color: var(--text);">Aucun chapitre n'a encore été publié pour cette formation.</div>
+            {% if is_instructor_or_admin %}
+              <div style="font-size: 13px; margin-top: 6px;">Cliquez sur "+ Ajouter un Chapitre" pour publier les cours et déposer vos supports PDF !</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+  {% endif %}
+
+</div>
+
+<!-- MODAL D'AJOUT DE CHAPITRE / COURS (POUR FORMATEUR / TUTEUR) -->
+{% if is_instructor_or_admin %}
+  <div id="add-lesson-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 500px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;">
+      
+      <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text);">📚 Ajouter un Chapitre / Cours</h3>
+        <button onclick="document.getElementById('add-lesson-modal').style.display='none'" style="background: none; border: none; font-size: 18px; font-weight: 800; color: var(--muted); cursor: pointer;">✕</button>
+      </div>
+
+      <form method="POST" action="/workshops/{{ workshop.id }}/" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_lesson">
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Titre du Chapitre *</label>
+          <input type="text" name="title" required placeholder="Ex: Chapitre 1 - Préparation des fichiers STL & Réglages du Slicer" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Notes de cours & Instructions</label>
+          <textarea name="description" rows="3" placeholder="Expliquez la théorie, les étapes pratiques, conseils et règles de sécurité..." style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none; font-family: inherit;"></textarea>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">📑 Document PDF ou Support de Cours (optionnel)</label>
+          <input type="file" name="pdf_file" accept=".pdf,.doc,.docx,.zip,.stl,.dxf,.png,.jpg" style="width: 100%; font-size: 12px; color: var(--text);">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">🎥 Lien Vidéo Tutoriel (YouTube/Vimeo, optionnel)</label>
+          <input type="url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button type="button" onclick="document.getElementById('add-lesson-modal').style.display='none'" style="padding: 8px 16px; font-size: 12px; font-weight: 700; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;">Annuler</button>
+          <button type="submit" style="padding: 8px 18px; font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Publier le Chapitre</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL D'AJOUT DE RESSOURCE PDF / FICHIER (POUR FORMATEUR / TUTEUR) -->
+  <div id="add-resource-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 500px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;">
+      
+      <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text);">📄 Déposer une Ressource (PDF / Fichier)</h3>
+        <button onclick="document.getElementById('add-resource-modal').style.display='none'" style="background: none; border: none; font-size: 18px; font-weight: 800; color: var(--muted); cursor: pointer;">✕</button>
+      </div>
+
+      <form method="POST" action="/workshops/{{ workshop.id }}/" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_resource">
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Associer à un Chapitre (optionnel)</label>
+          <select name="lesson_id" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+            <option value="">Ressource Générale de la Formation</option>
+            {% for lesson in lessons %}
+              <option value="{{ lesson.id }}">Chapitre {{ forloop.counter }} : {{ lesson.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Titre de la ressource *</label>
+          <input type="text" name="title" required placeholder="Ex: Support PDF de cours - Guide de Sécurité & Cheatsheet" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Type de Ressource</label>
+            <select name="resource_type" style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+              <option value="PDF">Document PDF</option>
+              <option value="DOC">Fichier Texte / Doc</option>
+              <option value="ARCHIVE">Fichier CAD / ZIP / STL / DXF</option>
+              <option value="LINK">Lien Web Utile</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Fichier (PDF, ZIP, STL...)</label>
+            <input type="file" name="file" style="width: 100%; font-size: 12px; color: var(--text);">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Ou Lien Web Externe (si pas de fichier)</label>
+          <input type="url" name="external_url" placeholder="https://..." style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); outline: none;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button type="button" onclick="document.getElementById('add-resource-modal').style.display='none'" style="padding: 8px 16px; font-size: 12px; font-weight: 700; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;">Annuler</button>
+          <button type="submit" style="padding: 8px 18px; font-size: 12px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Publier le Document</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endif %}

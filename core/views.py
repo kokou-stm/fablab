@@ -8,7 +8,7 @@ from django.db.models import Sum, Count, Q
 from fablabs.models import FabLab
 from equipment.models import Equipment, EquipmentCategory, MaintenanceTicket
 from reservations.models import Reservation, Certification, UserCertification
-from workshops.models import Workshop
+from workshops.models import Workshop, WorkshopRegistration, CourseLesson, LessonResource
 from inventory.models import InventoryItem
 from projects.models import Project
 from accounts.decorators import role_required, fabmanager_required, approved_member_required
@@ -421,42 +421,239 @@ def certification_list_view(request):
 
 
 def workshop_list_view(request):
-    workshops = Workshop.objects.all()
+    from django.utils.text import slugify
+    category_filter = request.GET.get('category')
+    workshops = Workshop.objects.prefetch_related('registrations', 'lessons').all()
+
+    if category_filter and category_filter != 'ALL':
+        workshops = workshops.filter(category=category_filter)
 
     if request.method == 'POST':
+        action = request.POST.get('action', 'register')
+
         if not request.user.is_authenticated:
-            messages.warning(request, "Veuillez vous connecter pour vous inscrire à un atelier.")
+            messages.warning(request, "Veuillez vous connecter pour participer aux ateliers.")
             return redirect('login')
 
-        if not request.user.is_superuser and not request.user.is_fabmanager_user and not getattr(request.user, 'is_approved', False):
-            messages.error(request, "Votre compte est actuellement en attente de validation par le responsable du FabLab.")
-            return redirect('workshop_list')
-
-        workshop_id = request.POST.get('workshop_id')
-        if workshop_id:
-            ws = get_object_or_404(Workshop, id=workshop_id)
-
-            if ws.available_seats <= 0:
-                messages.error(request, f"L'atelier '{ws.title}' est complet (0 place disponible).")
+        if action == 'create_workshop':
+            # Autorisé pour Tuteurs / Enseignants, FabManagers, Superusers
+            if not (request.user.is_superuser or request.user.is_fabmanager_user or request.user.is_instructor_user):
+                messages.error(request, "Seuls les formateurs et responsables peuvent créer une formation.")
                 return redirect('workshop_list')
 
-            if ws.registrations.filter(user=request.user).exists():
-                messages.error(request, f"Vous êtes déjà inscrit à l'atelier '{ws.title}'.")
+            from django.utils.dateparse import parse_datetime
+            from django.utils import timezone
+            import datetime
+
+            title = request.POST.get('title')
+            category = request.POST.get('category', 'GENERAL')
+            description = request.POST.get('description')
+            start_date_raw = request.POST.get('start_date')
+            end_date_raw = request.POST.get('end_date')
+            price = request.POST.get('price', 0)
+            max_seats = request.POST.get('max_seats', 10)
+            image = request.FILES.get('image')
+
+            start_dt = parse_datetime(start_date_raw) if start_date_raw else None
+            end_dt = parse_datetime(end_date_raw) if end_date_raw else None
+
+            if not start_dt:
+                start_dt = timezone.now() + datetime.timedelta(days=1)
+            if not end_dt:
+                end_dt = start_dt + datetime.timedelta(hours=2)
+
+            if title:
+                slug_candidate = slugify(title)
+                if Workshop.objects.filter(slug=slug_candidate).exists():
+                    slug_candidate = f"{slug_candidate}-{Workshop.objects.count() + 1}"
+
+                ws = Workshop.objects.create(
+                    title=title,
+                    slug=slug_candidate,
+                    category=category,
+                    instructor=request.user,
+                    instructor_name=request.user.get_full_name() or request.user.username,
+                    description=description or '',
+                    start_date=start_dt,
+                    end_date=end_dt,
+                    price=price or 0,
+                    max_seats=max_seats or 10,
+                    image=image
+                )
+                messages.success(request, f"La formation '{ws.title}' a été créée avec succès !")
+                return redirect(f"/workshops/{ws.id}/")
+
+        elif action == 'register':
+            if not request.user.is_superuser and not request.user.is_fabmanager_user and not getattr(request.user, 'is_approved', False):
+                messages.error(request, "Votre compte est en attente de validation par le FabLab.")
                 return redirect('workshop_list')
 
-            ws.registrations.create(
-                user=request.user,
-                user_full_name=request.user.get_full_name() or request.user.username,
-                user_email=request.user.email,
-                payment_status='FREE' if ws.price == 0 else 'PAID'
-            )
-            messages.success(request, f"Inscription réussie à l'atelier '{ws.title}' !")
-            return redirect('workshop_list')
+            workshop_id = request.POST.get('workshop_id')
+            if workshop_id:
+                ws = get_object_or_404(Workshop, id=workshop_id)
 
-    context = {'workshops': workshops}
+                if ws.available_seats <= 0:
+                    messages.error(request, f"L'atelier '{ws.title}' est complet.")
+                    return redirect('workshop_list')
+
+                if ws.registrations.filter(user=request.user).exists():
+                    messages.error(request, f"Vous êtes déjà inscrit à l'atelier '{ws.title}'.")
+                    return redirect('workshop_list')
+
+                ws.registrations.create(
+                    user=request.user,
+                    user_full_name=request.user.get_full_name() or request.user.username,
+                    user_email=request.user.email,
+                    payment_status='FREE' if ws.price == 0 else 'PAID'
+                )
+                messages.success(request, f"Inscription réussie à la formation '{ws.title}' !")
+                return redirect(f"/workshops/{ws.id}/")
+
+    # Attacher l'état d'inscription de request.user sur chaque workshop
+    registered_workshop_ids = set()
+    if request.user.is_authenticated:
+        registered_workshop_ids = set(
+            WorkshopRegistration.objects.filter(user=request.user).values_list('workshop_id', flat=True)
+        )
+
+    for ws in workshops:
+        ws.user_is_registered = (ws.id in registered_workshop_ids)
+
+    context = {
+        'workshops': workshops,
+        'selected_category': category_filter or 'ALL',
+        'categories': Workshop.CATEGORY_CHOICES,
+    }
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         return render(request, 'workshops/partials/workshop_cards.html', context)
     return render(request, 'workshops/list.html', context)
+
+
+def workshop_detail_view(request, pk):
+    workshop = get_object_or_404(Workshop.objects.prefetch_related('lessons__resources', 'direct_resources', 'registrations'), id=pk)
+
+    is_registered = False
+    if request.user.is_authenticated:
+        is_registered = workshop.registrations.filter(user=request.user).exists()
+
+    is_instructor_or_admin = False
+    if request.user.is_authenticated:
+        is_instructor_or_admin = (
+            request.user.is_superuser or 
+            request.user.is_fabmanager_user or 
+            request.user.is_instructor_user or 
+            (workshop.instructor and workshop.instructor == request.user)
+        )
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.warning(request, "Veuillez vous connecter.")
+            return redirect('login')
+
+        action = request.POST.get('action')
+
+        if action == 'add_lesson':
+            if not is_instructor_or_admin:
+                messages.error(request, "Seul le tuteur/formateur peut ajouter des cours.")
+                return redirect(f"/workshops/{pk}/")
+
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            video_url = request.POST.get('video_url')
+            order = request.POST.get('order', 1)
+            pdf_file = request.FILES.get('pdf_file')
+
+            if title:
+                lesson = CourseLesson.objects.create(
+                    workshop=workshop,
+                    title=title,
+                    description=description or '',
+                    video_url=video_url or None,
+                    order=order or 1
+                )
+                if pdf_file:
+                    res_type = 'PDF'
+                    fname = pdf_file.name.lower()
+                    if fname.endswith('.zip') or fname.endswith('.stl') or fname.endswith('.dxf'):
+                        res_type = 'ARCHIVE'
+                    elif fname.endswith('.doc') or fname.endswith('.docx'):
+                        res_type = 'DOC'
+
+                    LessonResource.objects.create(
+                        lesson=lesson,
+                        title=f"Document PDF / Support - {lesson.title}",
+                        file=pdf_file,
+                        resource_type=res_type
+                    )
+                messages.success(request, f"Le chapitre '{lesson.title}' et ses ressources ont été publiés !")
+                return redirect(f"/workshops/{pk}/")
+
+        elif action == 'add_resource':
+            if not is_instructor_or_admin:
+                messages.error(request, "Seul le tuteur/formateur peut ajouter des ressources.")
+                return redirect(f"/workshops/{pk}/")
+
+            title = request.POST.get('title')
+            lesson_id = request.POST.get('lesson_id')
+            resource_type = request.POST.get('resource_type', 'PDF')
+            file = request.FILES.get('file')
+            external_url = request.POST.get('external_url')
+
+            lesson = None
+            if lesson_id:
+                lesson = CourseLesson.objects.filter(id=lesson_id, workshop=workshop).first()
+
+            if title and (file or external_url):
+                res_obj = LessonResource.objects.create(
+                    workshop=workshop if not lesson else None,
+                    lesson=lesson,
+                    title=title,
+                    file=file,
+                    external_url=external_url or None,
+                    resource_type=resource_type
+                )
+                messages.success(request, f"La ressource '{res_obj.title}' a été publiée !")
+                return redirect(f"/workshops/{pk}/")
+
+        elif action == 'delete_lesson':
+            if not is_instructor_or_admin:
+                messages.error(request, "Action non autorisée.")
+                return redirect(f"/workshops/{pk}/")
+            lesson_id = request.POST.get('lesson_id')
+            CourseLesson.objects.filter(id=lesson_id, workshop=workshop).delete()
+            messages.success(request, "Cours supprimé.")
+            return redirect(f"/workshops/{pk}/")
+
+        elif action == 'delete_resource':
+            if not is_instructor_or_admin:
+                messages.error(request, "Action non autorisée.")
+                return redirect(f"/workshops/{pk}/")
+            resource_id = request.POST.get('resource_id')
+            LessonResource.objects.filter(id=resource_id).delete()
+            messages.success(request, "Ressource supprimée.")
+            return redirect(f"/workshops/{pk}/")
+
+        elif action == 'register':
+            if not is_registered and workshop.available_seats > 0:
+                workshop.registrations.create(
+                    user=request.user,
+                    user_full_name=request.user.get_full_name() or request.user.username,
+                    user_email=request.user.email,
+                    payment_status='FREE' if workshop.price == 0 else 'PAID'
+                )
+                messages.success(request, f"Félicitations, vous êtes désormais inscrit(e) à la formation '{workshop.title}' !")
+                return redirect(f"/workshops/{pk}/")
+
+    context = {
+        'workshop': workshop,
+        'lessons': workshop.lessons.all(),
+        'direct_resources': workshop.direct_resources.all(),
+        'is_registered': is_registered,
+        'is_instructor_or_admin': is_instructor_or_admin,
+    }
+    if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
+        return render(request, 'workshops/partials/workshop_detail_content.html', context)
+    return render(request, 'workshops/detail.html', context)
 
 
 @approved_member_required

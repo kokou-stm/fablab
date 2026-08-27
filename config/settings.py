@@ -15,6 +15,10 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
+# Le conteneur ACI ne fait que du HTTP ; quand il est servi derrière un proxy TLS
+# (ex: Cloudflare en mode Flexible), celui-ci indique le vrai protocole via cet en-tête.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -87,7 +91,7 @@ if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=0,
+            conn_max_age=60,
             ssl_require=True,
         )
     }

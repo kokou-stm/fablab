@@ -41,6 +41,7 @@ urlpatterns = [
 
     # Ateliers, Formations & Événements
     path('workshops/', views.workshop_list_view, name='workshop_list'),
+    path('workshops/<int:pk>/', views.workshop_detail_view, name='workshop_detail'),
 
     # Inventaire & Consommables
     path('inventory/', views.inventory_list_view, name='inventory_list'),

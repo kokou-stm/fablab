@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  # Base de données PostgreSQL 16
+  db:
+    image: postgres:16
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fablab_db}
+      POSTGRES_USER: ${POSTGRES_USER:-sekponakokou}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fablab_secret_2026}
+    ports:
+      - "5432:5432"
+
+  # Serveur de Cache en Mémoire Vive Redis 7
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # Serveur Web Django Multi-Workers Gunicorn
+  web:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    command: ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 4 --timeout 120"]
+    volumes:
+      - .:/app
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  # Worker Celery pour traitement asynchrone d'arrière-plan
+  celery:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    command: ["celery", "-A", "config", "worker", "-l", "info"]
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  # Planificateur de tâches récurrentes Celery Beat
+  celery-beat:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    command: ["celery", "-A", "config", "beat", "-l", "info"]
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:

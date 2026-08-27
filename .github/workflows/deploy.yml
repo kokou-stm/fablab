@@ -66,6 +66,9 @@ jobs:
               DJANGO_DEBUG=0 \
               DJANGO_ALLOWED_HOSTS="*" \
               DJANGO_DATA_DIR="/home/data" \
+              USE_LOCAL_DB=1 \
+              USE_PROD_POSTGRES=0 \
+              USE_POSTGRES=0 \
             --secure-environment-variables \
               DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"

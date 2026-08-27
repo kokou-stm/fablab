@@ -114,10 +114,14 @@ else:
             }
         }
     else:
+        # Si un volume persistant est monté (ex: Azure File Share en prod), la base
+        # SQLite y est stockée pour survivre aux redéploiements ; sinon fichier local.
+        _data_dir = os.environ.get('DJANGO_DATA_DIR')
+        sqlite_path = Path(_data_dir) / 'db.sqlite3' if _data_dir else BASE_DIR / 'db.sqlite3'
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
+                'NAME': sqlite_path,
                 'ATOMIC_REQUESTS': True,
             }
         }

@@ -105,11 +105,11 @@ else:
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': 'fablab_db',
+                'NAME': os.environ.get('POSTGRES_DB', 'fablab_db'),
                 'USER': os.environ.get('POSTGRES_USER', os.environ.get('USER', 'sekponakokou')),
-                'PASSWORD': '',
-                'HOST': 'localhost',
-                'PORT': '5432',
+                'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+                'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+                'PORT': os.environ.get('POSTGRES_PORT', '5432'),
                 'ATOMIC_REQUESTS': True,
             }
         }

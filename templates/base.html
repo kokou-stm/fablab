@@ -542,6 +542,7 @@
     });
 
     function fetchNotifications() {
+      if (document.hidden) return;
       fetch('/api/notifications/')
         .then(res => res.json())
         .then(data => {

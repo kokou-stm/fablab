@@ -71,8 +71,24 @@
             </span>
           </div>
 
+          <style>
+            .hero-carousel-frame {
+              position: relative;
+              width: 100%;
+              height: 320px;
+              border-radius: var(--radius-md);
+              overflow: hidden;
+              border: 1px solid var(--border);
+            }
+            @media (max-width: 640px) {
+              .hero-carousel-frame {
+                height: 230px;
+              }
+            }
+          </style>
+
           <!-- Dynamic Machine Image Slider Container -->
-          <div id="hero-machine-carousel" style="position: relative; width: 100%; height: 320px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border);">
+          <div id="hero-machine-carousel" class="hero-carousel-frame">
             
             <!-- Slide 1: Prusa i3 MK4 -->
             <div class="hero-slide active" style="position: absolute; inset: 0; opacity: 1; transition: opacity 1.2s ease-in-out;">

@@ -17,19 +17,19 @@
   </div>
 
   <!-- CATEGORY FILTER TABS -->
-  <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
-    <a href="/workshops/?category=ALL" hx-get="/workshops/?category=ALL" hx-target="#content" hx-push-url="true" style="padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; text-decoration: none; transition: background 0.15s; {% if selected_category == 'ALL' or not selected_category %}background: var(--text); color: var(--bg);{% else %}background: var(--surface); color: var(--text); border: 1px solid var(--border);{% endif %}">
+  <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; scrollbar-width: none;">
+    <a href="/workshops/?category=ALL" hx-get="/workshops/?category=ALL" hx-target="#content" hx-push-url="true" style="padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background 0.15s; {% if selected_category == 'ALL' or not selected_category %}background: var(--text); color: var(--bg);{% else %}background: var(--surface); color: var(--text); border: 1px solid var(--border);{% endif %}">
       Tous les Ateliers
     </a>
     {% for cat_code, cat_label in categories %}
-      <a href="/workshops/?category={{ cat_code }}" hx-get="/workshops/?category={{ cat_code }}" hx-target="#content" hx-push-url="true" style="padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; text-decoration: none; transition: background 0.15s; {% if selected_category == cat_code %}background: var(--text); color: var(--bg);{% else %}background: var(--surface); color: var(--text); border: 1px solid var(--border);{% endif %}">
+      <a href="/workshops/?category={{ cat_code }}" hx-get="/workshops/?category={{ cat_code }}" hx-target="#content" hx-push-url="true" style="padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background 0.15s; {% if selected_category == cat_code %}background: var(--text); color: var(--bg);{% else %}background: var(--surface); color: var(--text); border: 1px solid var(--border);{% endif %}">
         {{ cat_label }}
       </a>
     {% endfor %}
   </div>
 
   <!-- WORKSHOPS GRID CARDS -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
     {% for w in workshops %}
       <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
         

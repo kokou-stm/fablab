@@ -76,6 +76,14 @@
       width: min(680px, 94vw); background: var(--surface); color: var(--text);
       border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px;
       box-shadow: var(--shadow);
+    @media (max-width: 640px) {
+      .modal-box, div[id$="-modal"] > div {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        padding: 16px !important;
+      }
     }
   </style>
 

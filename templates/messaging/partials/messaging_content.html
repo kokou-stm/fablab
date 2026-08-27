@@ -1,7 +1,25 @@
-<div style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; height: calc(100vh - 120px); min-height: 600px;">
+<style>
+  .messaging-container-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    height: calc(100vh - 120px);
+    min-height: 550px;
+  }
+  @media (max-width: 768px) {
+    .messaging-container-grid {
+      grid-template-columns: 1fr;
+      height: auto;
+      min-height: auto;
+      gap: 14px;
+    }
+  }
+</style>
+
+<div class="messaging-container-grid">
 
   <!-- LEFT COLUMN: SIDEBAR CANAUX & CONTACTS -->
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow);">
+  <div id="messaging-sidebar" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow); max-height: calc(100vh - 140px);">
     
     <!-- Header Sidebar -->
     <div style="padding: 16px; border-bottom: 1px solid var(--border); background: var(--panel);">

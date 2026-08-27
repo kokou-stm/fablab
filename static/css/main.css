@@ -50,26 +50,26 @@ html[data-theme="light"] {
   --chart-4: #d1d5db;
 }
 
-/* ── Dark mode (opt-in) ─────────────────────────────────────────────────── */
+/* ── Dark mode (opt-in: Soft high-end Slate & Charcoal) ───────────────── */
 html[data-theme="dark"] {
-  --bg: #0b0c0e;
-  --surface: #0f1115;
-  --panel: #14171c;
-  --text: #f5f5f5;
-  --muted: #9ca3af;
-  --accent: #f5f5f5;
-  --accent-2: #f5f5f5;
-  --border: #242833;
-  --app-bg: #0b0c0e;
-  --sidebar-bg: #0f1115;
-  --sidebar-border: #1c1f24;
-  --hover: #161a21;
-  --shadow: 0 16px 44px rgba(0,0,0,.34);
-  --ring: 0 0 0 3px rgba(245,245,245,0.08);
-  --chart-1: #f5f5f5;
-  --chart-2: #9ca3af;
-  --chart-3: #6b7280;
-  --chart-4: #374151;
+  --bg: #16181d;
+  --surface: #1d2026;
+  --panel: #232730;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #f8fafc;
+  --accent-2: #f8fafc;
+  --border: #2e3442;
+  --app-bg: #16181d;
+  --sidebar-bg: #1a1d24;
+  --sidebar-border: #282d38;
+  --hover: #292e3a;
+  --shadow: 0 16px 44px rgba(0,0,0,.28);
+  --ring: 0 0 0 3px rgba(248,250,252,0.08);
+  --chart-1: #f8fafc;
+  --chart-2: #94a3b8;
+  --chart-3: #64748b;
+  --chart-4: #334155;
 }
 
 * { box-sizing: border-box; }

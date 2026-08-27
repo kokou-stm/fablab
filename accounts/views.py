@@ -119,12 +119,12 @@ def signup_view(request):
         
         return redirect('signup_pending')
 
+    return render(request, 'accounts/signup.html', {'tenant': tenant, 'all_tenants': all_tenants})
+
 
 def signup_pending_view(request):
     """Page d'information et de confirmation post-inscription (compte en attente de validation)."""
     return render(request, 'accounts/signup_pending.html')
-
-    return render(request, 'accounts/signup.html', {'tenant': tenant, 'all_tenants': all_tenants})
 
 
 def profile_view(request):

@@ -84,10 +84,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Configuration Multi-tenant Database Router
 DATABASE_ROUTERS = ['config.tenant_router.TenantRouter']
 
-# Base de Données : DATABASE_URL (prod, ex: Azure Postgres) si fourni, sinon Postgres/SQLite local
+# Configuration Base de Données :
+# Mode Local (Postgres local / SQLite local) activé par défaut pour le déploiement courant.
+# Pour basculer sur la base Postgres Cloud Prod plus tard : définir USE_PROD_POSTGRES=1 et DATABASE_URL
+USE_PROD_POSTGRES = os.environ.get('USE_PROD_POSTGRES', '0') == '1'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL:
+if USE_PROD_POSTGRES and DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -98,7 +101,6 @@ if DATABASE_URL:
     DATABASES['default']['ATOMIC_REQUESTS'] = True
 else:
     USE_POSTGRES = os.environ.get('USE_POSTGRES', '1') == '1'
-
     if USE_POSTGRES:
         DATABASES = {
             'default': {

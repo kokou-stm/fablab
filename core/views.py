@@ -1114,7 +1114,6 @@ def messaging_view(request):
         members_qs = User.objects.filter(is_approved=True).exclude(id=request.user.id)
 
     # 4. Calcul des notifications / badges de messages non lus (Style Discord / WhatsApp)
-    # A) Messages directs (DMs) non lus par expéditeur
     from django.db.models import Count
     unread_dm_qs = Message.objects.filter(recipient=request.user, is_read=False).values('sender_id').annotate(count=Count('id'))
     unread_dm_counts = {item['sender_id']: item['count'] for item in unread_dm_qs}
@@ -1123,17 +1122,31 @@ def messaging_view(request):
     for m in members:
         m.unread_count = unread_dm_counts.get(m.id, 0)
 
-    # B) Messages non lus par canal de discussion
-    read_statuses = {rs.channel_id: rs.last_read_message_id for rs in ChannelReadStatus.objects.filter(user=request.user)}
-    for ch in channels:
-        if active_channel and ch.id == active_channel.id and not active_dm_user:
-            ch.unread_count = 0
-        else:
-            last_read_id = read_statuses.get(ch.id)
-            if last_read_id:
-                ch.unread_count = Message.objects.filter(channel=ch, id__gt=last_read_id).exclude(sender=request.user).count()
+    # B) Messages non lus par canal de discussion (uniquement si requete complete ou navigation)
+    thread_only = request.GET.get('thread_only') == '1' or request.headers.get('HX-Target') == 'message-thread'
+    
+    if not thread_only:
+        read_statuses = {rs.channel_id: rs.last_read_message_id for rs in ChannelReadStatus.objects.filter(user=request.user)}
+        channel_ids = [ch.id for ch in channels]
+        
+        # Aggrégation en 1 seule requête pour tous les canaux au lieu de N requêtes
+        all_channel_msgs = Message.objects.filter(channel_id__in=channel_ids).exclude(sender=request.user).values('channel_id', 'id')
+        channel_unreads = {}
+        for msg in all_channel_msgs:
+            c_id = msg['channel_id']
+            m_id = msg['id']
+            last_read_id = read_statuses.get(c_id, 0)
+            if m_id > last_read_id:
+                channel_unreads[c_id] = channel_unreads.get(c_id, 0) + 1
+
+        for ch in channels:
+            if active_channel and ch.id == active_channel.id and not active_dm_user:
+                ch.unread_count = 0
             else:
-                ch.unread_count = Message.objects.filter(channel=ch).exclude(sender=request.user).count()
+                ch.unread_count = channel_unreads.get(ch.id, 0)
+    else:
+        for ch in channels:
+            ch.unread_count = 0
 
     context = {
         'tenant': current_lab or getattr(request, 'tenant', None),

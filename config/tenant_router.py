@@ -24,10 +24,13 @@ _thread_locals = threading.local()
 
 @receiver(connection_created)
 def _disable_sqlite_fk_for_tenants(sender, connection, **kwargs):
-    """Désactive la contrainte FK stricte SQLite pour les liaisons tenant -> master."""
-    if connection.vendor == "sqlite" and connection.alias != DEFAULT_DB_ALIAS:
+    """Optimise SQLite pour haute performance et désactive la contrainte FK stricte tenant -> master."""
+    if connection.vendor == "sqlite":
         with connection.cursor() as cursor:
-            cursor.execute("PRAGMA foreign_keys = OFF;")
+            cursor.execute("PRAGMA journal_mode = WAL;")
+            cursor.execute("PRAGMA synchronous = NORMAL;")
+            if connection.alias != DEFAULT_DB_ALIAS:
+                cursor.execute("PRAGMA foreign_keys = OFF;")
 
 
 def set_current_tenant(tenant_slug: Optional[str]) -> None:

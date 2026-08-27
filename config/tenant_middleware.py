@@ -9,18 +9,29 @@ from fablabs.models import FabLab
 RESERVED_SUBDOMAINS = {"app", "www", "api", "admin", "static", "media", "localhost", "127"}
 
 
+_TENANT_CACHE = {}
+
 class TenantMiddleware(MiddlewareMixin):
     def process_request(self, request):
         tenant_slug = None
         user = getattr(request, "user", None)
 
-        # 1. Priorité N°1 : Nom de domaine personnalisé exact (ex: monfablab.fr)
         host = request.get_host().split(":")[0].lower()
-        matched_lab = FabLab.objects.filter(domain__iexact=host).first()
-        if matched_lab:
-            tenant_slug = matched_lab.slug
 
-        # 1bis. Sinon, sous-domaine HTTP de la plateforme (ex: fablab-polytech-nantes.localhost:8000, polytech-nantes.localhost:8000)
+        # 1. Verification cache in-memory
+        if host in _TENANT_CACHE:
+            matched_lab = _TENANT_CACHE[host]
+            if matched_lab:
+                tenant_slug = matched_lab.slug
+
+        # 1bis. Priorité N°1 : Nom de domaine personnalisé exact (ex: monfablab.fr)
+        if not tenant_slug:
+            matched_lab = FabLab.objects.filter(domain__iexact=host).first()
+            if matched_lab:
+                tenant_slug = matched_lab.slug
+                _TENANT_CACHE[host] = matched_lab
+
+        # 1ter. Sinon, sous-domaine HTTP de la plateforme (ex: polytech-nantes.localhost:8000)
         if not tenant_slug:
             host_parts = host.split(".")
             if len(host_parts) >= 2 and host_parts[0] not in RESERVED_SUBDOMAINS:
@@ -31,6 +42,7 @@ class TenantMiddleware(MiddlewareMixin):
                     matched_lab = FabLab.objects.filter(slug=clean_subdomain).first()
                 if matched_lab:
                     tenant_slug = matched_lab.slug
+                    _TENANT_CACHE[host] = matched_lab
 
         # 2. Si pas de sous-domaine dans l'URL, priorité à l'utilisateur connecté non-SuperAdmin
         if not tenant_slug and user and user.is_authenticated and not (user.is_superuser or getattr(user, 'role', '') == 'ADMIN'):
@@ -55,7 +67,15 @@ class TenantMiddleware(MiddlewareMixin):
         if tenant_slug:
             ensure_tenant_db_registered(tenant_slug)
             set_current_tenant(tenant_slug)
-            request.tenant = FabLab.objects.filter(slug=tenant_slug).first()
+            
+            # Utiliser cache si disponible pour eviter requete repetitive
+            tenant_obj = _TENANT_CACHE.get(f"slug:{tenant_slug}")
+            if not tenant_obj:
+                tenant_obj = FabLab.objects.filter(slug=tenant_slug).first()
+                if tenant_obj:
+                    _TENANT_CACHE[f"slug:{tenant_slug}"] = tenant_obj
+
+            request.tenant = tenant_obj
             request.session["tenant_slug"] = tenant_slug
         else:
             set_current_tenant(None)

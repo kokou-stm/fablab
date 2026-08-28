@@ -358,8 +358,9 @@ def password_reset_view(request):
             uid = urlsafe_base64_encode(force_bytes(user_obj.pk))
             token = default_token_generator.make_token(user_obj)
             
-            host_domain = f"{user_obj.fablab.slug}.localhost:8000" if user_obj.fablab else "127.0.0.1:8000"
-            reset_link = f"http://{host_domain}/password-reset/confirm/{uid}/{token}/"
+            from core.emails import get_base_url
+            base_url = get_base_url(user_obj.fablab)
+            reset_link = f"{base_url}/password-reset/confirm/{uid}/{token}/"
 
             subject = "[LabOS] Réinitialisation de votre mot de passe"
             message = (

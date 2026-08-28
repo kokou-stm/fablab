@@ -1,13 +1,24 @@
+import os
 import logging
 from django.core.mail import send_mail
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+def get_base_url(tenant=None):
+    """Génère l'URL de base propre (https://fablab.aidubber.fr en prod, localhost en dev)."""
+    base_domain = os.environ.get('DJANGO_BASE_DOMAIN', 'fablab.aidubber.fr')
+    if not getattr(settings, 'DEBUG', True):
+        if tenant and getattr(tenant, 'domain', None):
+            return f"https://{tenant.domain}"
+        return f"https://{base_domain}"
+    else:
+        if tenant and getattr(tenant, 'slug', None):
+            return f"http://{tenant.slug}.localhost:8000"
+        return "http://127.0.0.1:8000"
+
 def get_tenant_login_url(tenant):
-    if tenant and getattr(tenant, 'slug', None):
-        return f"http://{tenant.slug}.localhost:8000/login/ (ou http://127.0.0.1:8000/login/)"
-    return "http://127.0.0.1:8000/login/"
+    return f"{get_base_url(tenant)}/login/"
 
 
 def send_tenant_registered_email(fablab, user):
@@ -17,7 +28,7 @@ def send_tenant_registered_email(fablab, user):
     message = (
         f"Bonjour {user.get_full_name() or user.username},\n\n"
         f"Votre demande de création de l'espace FabLab '{fablab.name}' a été enregistrée avec succès.\n"
-        f"Votre document justificatif a été transmitted à l'équipe SuperAdmin pour vérification.\n\n"
+        f"Votre document justificatif a été transmis à l'équipe SuperAdmin pour vérification.\n\n"
         f"Identifiant de l'espace (slug) : {fablab.slug}\n"
         f"Plan tarifaire : {fablab.get_plan_display()}\n"
         f"Nom d'utilisateur administrateur : {user.username}\n\n"
@@ -41,6 +52,7 @@ def send_tenant_registered_email(fablab, user):
 def send_member_signup_notification(user, tenant):
     """Notification initiale d'inscription envoyée au membre et au FabManager."""
     lab_name = tenant.name if tenant else "LabOS"
+    members_url = f"{get_base_url(tenant)}/members/"
     
     # 1. Email d'attente pour le nouveau membre (dossier en cours d'examen)
     member_subject = f"[LabOS] Inscription enregistrée - En cours d'examen"
@@ -59,7 +71,7 @@ def send_member_signup_notification(user, tenant):
         f"Un nouveau membre ({user.get_full_name() or user.username} - {user.email}) s'est inscrit sur l'espace {lab_name}.\n"
         f"Profil demandé : {user.get_role_display()}\n\n"
         f"Veuillez vous rendre dans l'annuaire des membres pour examiner son dossier et valider sa demande :\n"
-        f"http://127.0.0.1:8000/members/\n\n"
+        f"{members_url}\n\n"
         f"Plateforme LabOS."
     )
     
@@ -71,6 +83,7 @@ def send_member_signup_notification(user, tenant):
         logger.error(f"Erreur d'envoi d'email membre: {e}")
 
 
+
 def send_member_approved_email(user):
     """Notification d'approbation finale / Confirmation d'inscription envoyée lors de la validation par le FabManager."""
     lab_name = user.fablab.name if user.fablab else "LabOS"
@@ -80,7 +93,7 @@ def send_member_approved_email(user):
     message = (
         f"Félicitations {user.get_full_name() or user.username} !\n\n"
         f"Votre compte membre a été validé avec succès par le responsable du FabLab '{lab_name}'.\n\n"
-        f"📌 Vos Identifiants de Connexion :\n"
+        f" Vos Identifiants de Connexion :\n"
         f"• Nom d'utilisateur : {user.username}\n"
         f"• Adresse Email : {user.email}\n\n"
         f"🔗 Lien de connexion direct à votre FabLab :\n"

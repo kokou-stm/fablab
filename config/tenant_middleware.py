@@ -6,7 +6,7 @@ from django.utils.deprecation import MiddlewareMixin
 from config.tenant_router import set_current_tenant, ensure_tenant_db_registered, get_current_tenant
 from fablabs.models import FabLab
 
-RESERVED_SUBDOMAINS = {"app", "www", "api", "admin", "static", "media", "localhost", "127"}
+RESERVED_SUBDOMAINS = {"app", "www", "api", "admin", "static", "media", "localhost", "127", "fablab", "autodiscover"}
 
 
 _TENANT_CACHE = {}

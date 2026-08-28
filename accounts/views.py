@@ -70,7 +70,6 @@ def signup_view(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
@@ -87,10 +86,12 @@ def signup_view(request):
 
         dossier_doc = request.FILES.get('dossier_document')
 
+        # Aucun mot de passe à l'inscription : le membre en définit un lui-même
+        # via un lien à usage unique, une fois son compte validé par le FabManager.
         user = User.objects.create_user(
             username=username,
             email=email,
-            password=password,
+            password=None,
             first_name=first_name,
             last_name=last_name,
             phone=phone,

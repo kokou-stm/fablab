@@ -786,7 +786,6 @@ def register_tenant_view(request):
         plan = request.POST.get('plan', 'UNIVERSITY')
         admin_username = request.POST.get('admin_username')
         admin_name = request.POST.get('admin_name')
-        password = request.POST.get('password')
 
         # Validation unicité slug
         if FabLab.objects.filter(slug=clean_slug).exists():
@@ -813,11 +812,13 @@ def register_tenant_view(request):
             justification_document=justification_doc
         )
 
-        # 2. Création de l'utilisateur Admin/FabManager lié (en attente de validation SuperAdmin)
+        # 2. Création de l'utilisateur Admin/FabManager lié (en attente de validation SuperAdmin).
+        # Aucun mot de passe à l'inscription : il sera défini via un lien à usage
+        # unique envoyé une fois le compte validé par le SuperAdmin.
         user = User.objects.create_user(
             username=admin_username,
             email=contact_email,
-            password=password,
+            password=None,
             first_name=admin_name,
             role='FABMANAGER',
             fablab=fablab,

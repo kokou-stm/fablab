@@ -2,12 +2,15 @@ import os
 import logging
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 
 logger = logging.getLogger(__name__)
 
 def get_base_url(tenant=None):
-    """Génère l'URL de base propre avec sous-domaine (https://polytech-lome.fablab.aidubber.fr en prod)."""
-    base_domain = os.environ.get('DJANGO_BASE_DOMAIN', 'fablab.aidubber.fr')
+    """Génère l'URL de base propre avec sous-domaine (https://polytech-lome.aidubber.fr en prod)."""
+    base_domain = os.environ.get('DJANGO_BASE_DOMAIN', 'aidubber.fr')
     if not getattr(settings, 'DEBUG', True):
         if tenant and getattr(tenant, 'domain', None):
             return f"https://{tenant.domain}"
@@ -87,20 +90,27 @@ def send_member_signup_notification(user, tenant):
 
 
 def send_member_approved_email(user):
-    """Notification d'approbation finale / Confirmation d'inscription envoyée lors de la validation par le FabManager."""
+    """Notification d'approbation finale envoyée lors de la validation : invite à créer son mot de passe.
+
+    Le compte est créé sans mot de passe lors de l'inscription ; ce n'est qu'après
+    validation par le FabManager (ou le SuperAdmin pour un FabManager) que le
+    membre peut en définir un, via un lien de création à usage unique.
+    """
     lab_name = user.fablab.name if user.fablab else "LabOS"
-    login_url = get_tenant_login_url(user.fablab)
-    
-    subject = f"[LabOS] Confirmation d'inscription - {lab_name}"
+    base_url = get_base_url(user.fablab)
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    set_password_url = f"{base_url}/password-reset/confirm/{uid}/{token}/"
+
+    subject = f"[LabOS] Compte validé — Créez votre mot de passe - {lab_name}"
     message = (
         f"Félicitations {user.get_full_name() or user.username} !\n\n"
         f"Votre compte membre a été validé avec succès par le responsable du FabLab '{lab_name}'.\n\n"
-        f" Vos Identifiants de Connexion :\n"
-        f"• Nom d'utilisateur : {user.username}\n"
-        f"• Adresse Email : {user.email}\n\n"
-        f"🔗 Lien de connexion direct à votre FabLab :\n"
-        f"{login_url}\n\n"
-        f"Vous pouvez désormais vous connecter et réserver les machines et équipements disponibles.\n\n"
+        f"📌 Votre identifiant de connexion : {user.username}\n\n"
+        f"🔗 Dernière étape : créez votre mot de passe pour activer votre compte :\n"
+        f"{set_password_url}\n\n"
+        f"Vous pourrez ensuite vous connecter et réserver les machines et équipements disponibles.\n\n"
         f"Bienvenue et bonne création !\n\n"
         f"L'équipe {lab_name}."
     )

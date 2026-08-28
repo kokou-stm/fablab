@@ -9,6 +9,16 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Chargement automatique du fichier .env si présent
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-fabos-multitenant-fablab-key-super-secret-local-dev')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'

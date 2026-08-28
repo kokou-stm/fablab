@@ -271,7 +271,8 @@
       </a>
     </div>
 
-    <!-- Center Nav Links -->
+    <!-- Center Nav Links (Affichés uniquement si l'utilisateur est connecté) -->
+    {% if request.user.is_authenticated %}
     <ul class="landing-nav-list">
       <li><a href="#features" class="landing-nav-link">Fonctionnalités</a></li>
       <li><a href="/equipment/" class="landing-nav-link">Équipements</a></li>
@@ -279,6 +280,7 @@
       <li><a href="/projects/" class="landing-nav-link">Projets</a></li>
       <li><a href="#tenants" class="landing-nav-link">Réseau</a></li>
     </ul>
+    {% endif %}
 
     <!-- Right Action Controls -->
     <div class="landing-actions">
@@ -342,12 +344,14 @@
         <button onclick="toggleLandingMobileMenu()" style="background: none; border: none; font-size: 20px; font-weight: 800; color: var(--muted); cursor: pointer;">✕</button>
       </div>
 
+      {% if request.user.is_authenticated %}
       <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 600;">
         <a href="#features" onclick="toggleLandingMobileMenu()" style="color: var(--text); text-decoration: none; padding: 10px 12px; border-radius: 6px; background: var(--panel);">Fonctionnalités</a>
         <a href="/equipment/" style="color: var(--text); text-decoration: none; padding: 10px 12px; border-radius: 6px;">Équipements & Machines</a>
         <a href="/workshops/" style="color: var(--text); text-decoration: none; padding: 10px 12px; border-radius: 6px;">Ateliers & Formations</a>
         <a href="/projects/" style="color: var(--text); text-decoration: none; padding: 10px 12px; border-radius: 6px;">Projets & Communs</a>
       </div>
+      {% endif %}
 
       {% if request.user.is_authenticated %}
         <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px;">

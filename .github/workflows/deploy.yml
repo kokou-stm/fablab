@@ -69,9 +69,12 @@ jobs:
               USE_LOCAL_DB=0 \
               USE_PROD_POSTGRES=1 \
               USE_POSTGRES=0 \
+              EMAIL_HOST_USER="voicetranslator0@gmail.com" \
+              DEFAULT_FROM_EMAIL="LabOS Platform <voicetranslator0@gmail.com>" \
             --secure-environment-variables \
               DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}"
+              DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+              EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}"
 
       - name: Verify Live Deployment
         run: |

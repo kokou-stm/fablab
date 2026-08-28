@@ -13,7 +13,38 @@ class Command(BaseCommand):
         self._seed_equipment_categories()
         self._seed_channels()
         self._seed_message_tags()
+        self._seed_admin_user()
         self.stdout.write(self.style.SUCCESS("✓ Données par défaut initialisées avec succès."))
+
+    def _seed_admin_user(self):
+        import os
+        from accounts.models import User
+
+        username = os.environ.get('DJANGO_ADMIN_USERNAME', 'admin')
+        email = os.environ.get('DJANGO_ADMIN_EMAIL', 'admin@labos.com')
+        password = os.environ.get('DJANGO_ADMIN_PASSWORD', 'AdminFabLab2026!')
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={
+                'email': email,
+                'role': 'ADMIN',
+                'is_staff': True,
+                'is_superuser': True,
+                'is_approved': True,
+                'first_name': 'Super',
+                'last_name': 'Admin',
+            }
+        )
+        user.set_password(password)
+        user.email = email
+        user.role = 'ADMIN'
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_approved = True
+        user.save()
+        action = "créé" if created else "mis à jour"
+        self.stdout.write(f"  Compte Administrateur : '{username}' {action}")
 
     def _seed_equipment_categories(self):
         from equipment.models import EquipmentCategory

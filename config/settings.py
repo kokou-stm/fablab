@@ -192,6 +192,7 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_URL = '/media/'
 DJANGO_DATA_DIR = os.environ.get('DJANGO_DATA_DIR')
 MEDIA_ROOT = Path(DJANGO_DATA_DIR) / 'media' if DJANGO_DATA_DIR else BASE_DIR / 'media'
+os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

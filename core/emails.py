@@ -6,11 +6,13 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 def get_base_url(tenant=None):
-    """Génère l'URL de base propre (https://fablab.aidubber.fr en prod, localhost en dev)."""
+    """Génère l'URL de base propre avec sous-domaine (https://polytech-lome.fablab.aidubber.fr en prod)."""
     base_domain = os.environ.get('DJANGO_BASE_DOMAIN', 'fablab.aidubber.fr')
     if not getattr(settings, 'DEBUG', True):
         if tenant and getattr(tenant, 'domain', None):
             return f"https://{tenant.domain}"
+        if tenant and getattr(tenant, 'slug', None):
+            return f"https://{tenant.slug}.{base_domain}"
         return f"https://{base_domain}"
     else:
         if tenant and getattr(tenant, 'slug', None):

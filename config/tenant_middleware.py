@@ -2,11 +2,15 @@
 Middleware de détection et d'activation du Tenant courant (FabLab).
 """
 
+import os
+
+from django.http import HttpResponseNotFound
 from django.utils.deprecation import MiddlewareMixin
 from config.tenant_router import set_current_tenant, ensure_tenant_db_registered, get_current_tenant
 from fablabs.models import FabLab
 
 RESERVED_SUBDOMAINS = {"app", "www", "api", "admin", "static", "media", "localhost", "127", "fablab", "autodiscover"}
+BASE_DOMAIN = os.environ.get('DJANGO_BASE_DOMAIN', 'aidubber.fr')
 
 
 _TENANT_CACHE = {}
@@ -43,6 +47,14 @@ class TenantMiddleware(MiddlewareMixin):
                 if matched_lab:
                     tenant_slug = matched_lab.slug
                     _TENANT_CACHE[host] = matched_lab
+                elif host.endswith("." + BASE_DOMAIN):
+                    # Sous-domaine de notre propre domaine (ex: <typo>.aidubber.fr) qui ne
+                    # correspond à aucun FabLab connu : on n'affiche surtout pas un autre
+                    # tenant par erreur, on renvoie une 404 explicite.
+                    return HttpResponseNotFound(
+                        "Aucun espace FabLab ne correspond à cette adresse. "
+                        "Vérifiez le sous-domaine ou contactez le responsable de votre établissement."
+                    )
 
         # 2. Si pas de sous-domaine dans l'URL, priorité à l'utilisateur connecté non-SuperAdmin
         if not tenant_slug and user and user.is_authenticated and not (user.is_superuser or getattr(user, 'role', '') == 'ADMIN'):

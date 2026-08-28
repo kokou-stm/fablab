@@ -21,4 +21,4 @@ RUN mkdir -p /home/data /app/staticfiles /app/media
 
 EXPOSE 80
 
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:80 config.wsgi:application"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py seed_defaults && gunicorn --bind 0.0.0.0:80 --workers 3 --threads 2 --timeout 120 config.wsgi:application"]

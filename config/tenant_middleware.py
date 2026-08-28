@@ -26,7 +26,7 @@ class TenantMiddleware(MiddlewareMixin):
 
         # 1bis. Priorité N°1 : Nom de domaine personnalisé exact (ex: monfablab.fr)
         if not tenant_slug:
-            matched_lab = FabLab.objects.filter(domain__iexact=host).first()
+            matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(domain__iexact=host).first()
             if matched_lab:
                 tenant_slug = matched_lab.slug
                 _TENANT_CACHE[host] = matched_lab
@@ -36,10 +36,10 @@ class TenantMiddleware(MiddlewareMixin):
             host_parts = host.split(".")
             if len(host_parts) >= 2 and host_parts[0] not in RESERVED_SUBDOMAINS:
                 subdomain = host_parts[0]
-                matched_lab = FabLab.objects.filter(slug=subdomain).first()
+                matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(slug=subdomain).first()
                 if not matched_lab:
                     clean_subdomain = subdomain.replace("fablab-", "").replace("lab-", "")
-                    matched_lab = FabLab.objects.filter(slug=clean_subdomain).first()
+                    matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(slug=clean_subdomain).first()
                 if matched_lab:
                     tenant_slug = matched_lab.slug
                     _TENANT_CACHE[host] = matched_lab
@@ -60,7 +60,7 @@ class TenantMiddleware(MiddlewareMixin):
 
         # 5. Fallback au premier FabLab existant en base si aucun spécifié
         if not tenant_slug:
-            first_lab = FabLab.objects.first()
+            first_lab = FabLab.objects.only('id', 'slug', 'name').first()
             if first_lab:
                 tenant_slug = first_lab.slug
 
@@ -71,7 +71,7 @@ class TenantMiddleware(MiddlewareMixin):
             # Utiliser cache si disponible pour eviter requete repetitive
             tenant_obj = _TENANT_CACHE.get(f"slug:{tenant_slug}")
             if not tenant_obj:
-                tenant_obj = FabLab.objects.filter(slug=tenant_slug).first()
+                tenant_obj = FabLab.objects.only('id', 'slug', 'name', 'domain', 'is_active', 'logo', 'contact_email').filter(slug=tenant_slug).first()
                 if tenant_obj:
                     _TENANT_CACHE[f"slug:{tenant_slug}"] = tenant_obj
 

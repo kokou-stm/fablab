@@ -3,7 +3,8 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F, ExpressionWrapper, DurationField
+from django.core.cache import cache
 
 from fablabs.models import FabLab
 from equipment.models import Equipment, EquipmentCategory, MaintenanceTicket
@@ -17,29 +18,34 @@ from core.models import Channel, MessageTag, Message, ChannelReadStatus
 
 def landing_view(request):
     """Vue de la page d'accueil (Landing Page) institutionnelle et vitrine FabOS."""
-    equipments = Equipment.objects.all()[:6]
+    equipments = Equipment.objects.select_related('category').all()[:6]
     workshops = Workshop.objects.all()[:3]
     recent_projects = Project.objects.filter(is_public=True)[:3]
     all_tenants = FabLab.objects.all()
 
-    total_machines = Equipment.objects.count()
-    active_machines = Equipment.objects.filter(status='AVAILABLE').count()
-    total_reservations = Reservation.objects.count()
-    total_workshops = Workshop.objects.count()
-    total_projects = Project.objects.count()
-    total_tenants = FabLab.objects.count()
+    # Statistiques agrégées avec cache Redis (60 secondes)
+    stats = cache.get('landing_stats')
+    if stats is None:
+        eq_stats = Equipment.objects.aggregate(
+            total=Count('id'),
+            available=Count('id', filter=Q(status='AVAILABLE'))
+        )
+        stats = {
+            'total_machines': eq_stats['total'],
+            'active_machines': eq_stats['available'],
+            'total_reservations': Reservation.objects.count(),
+            'total_workshops': Workshop.objects.count(),
+            'total_projects': Project.objects.count(),
+            'total_tenants': FabLab.objects.count(),
+        }
+        cache.set('landing_stats', stats, 60)
 
     context = {
         'equipments': equipments,
         'workshops': workshops,
         'recent_projects': recent_projects,
         'all_tenants': all_tenants,
-        'total_machines': total_machines,
-        'active_machines': active_machines,
-        'total_reservations': total_reservations,
-        'total_workshops': total_workshops,
-        'total_projects': total_projects,
-        'total_tenants': total_tenants,
+        **stats,
     }
 
     response = render(request, 'landing/index.html', context)
@@ -51,18 +57,24 @@ def landing_view(request):
 @approved_member_required
 def dashboard_view(request):
     """Vue principale du Tableau de bord (compatible HTMX)."""
-    equipments = Equipment.objects.all()
-    reservations = Reservation.objects.all()[:5]
+    equipments = Equipment.objects.select_related('category').all()
+    reservations = Reservation.objects.select_related('equipment').all()[:5]
     workshops = Workshop.objects.all()[:4]
     inventory_alerts = InventoryItem.objects.filter(quantity__lte=5)
     recent_projects = Project.objects.all()[:3]
-    tickets = MaintenanceTicket.objects.filter(status__in=['OPEN', 'IN_PROGRESS'])
+    tickets = MaintenanceTicket.objects.select_related('equipment').filter(status__in=['OPEN', 'IN_PROGRESS'])
 
-    # KPI Analytics
-    total_machines = equipments.count()
-    active_machines = equipments.filter(status='AVAILABLE').count()
-    maintenance_count = equipments.filter(status='MAINTENANCE').count()
-    in_use_count = equipments.filter(status='RESERVED').count()
+    # KPI Analytics — une seule requête agrégée au lieu de 4 count() séparés
+    eq_stats = equipments.aggregate(
+        total=Count('id'),
+        available=Count('id', filter=Q(status='AVAILABLE')),
+        maintenance=Count('id', filter=Q(status='MAINTENANCE')),
+        in_use=Count('id', filter=Q(status='RESERVED'))
+    )
+    total_machines = eq_stats['total']
+    active_machines = eq_stats['available']
+    maintenance_count = eq_stats['maintenance']
+    in_use_count = eq_stats['in_use']
     total_reservations = Reservation.objects.count()
 
     context = {
@@ -106,14 +118,9 @@ def equipment_list_view(request):
     status_filter = request.GET.get('status')
     search_query = (request.GET.get('q') or request.GET.get('search') or '').strip()
 
-    # Initialisation des catégories par défaut incluant "Autre"
-    EquipmentCategory.objects.get_or_create(slug="impression-3d", defaults={"name": "Impression 3D", "icon": "printer"})
-    EquipmentCategory.objects.get_or_create(slug="decoupe-laser", defaults={"name": "Découpe Laser", "icon": "zap"})
-    EquipmentCategory.objects.get_or_create(slug="usinage-cnc", defaults={"name": "Usinage CNC", "icon": "settings"})
-    EquipmentCategory.objects.get_or_create(slug="electronique", defaults={"name": "Électronique & IoT", "icon": "cpu"})
-    EquipmentCategory.objects.get_or_create(slug="autre", defaults={"name": "Autre", "icon": "box"})
+    # Les catégories par défaut sont initialisées via `python manage.py seed_defaults`
 
-    equipments = Equipment.objects.all()
+    equipments = Equipment.objects.select_related('category').all()
     categories = EquipmentCategory.objects.all()
 
     if category_slug:
@@ -219,8 +226,8 @@ def equipment_detail_view(request, slug):
         messages.success(request, f"La fiche de la machine '{equipment.name}' a été mise à jour avec succès !")
         return redirect('equipment_detail', slug=equipment.slug)
 
-    tickets = equipment.maintenance_tickets.all()
-    recent_reservations = equipment.reservations.all()[:5]
+    tickets = equipment.maintenance_tickets.select_related('equipment').all()
+    recent_reservations = equipment.reservations.select_related('equipment').all()[:5]
     categories = EquipmentCategory.objects.all()
 
     context = {
@@ -235,8 +242,8 @@ def equipment_detail_view(request, slug):
 
 
 def reservation_list_view(request):
-    reservations = Reservation.objects.all()
-    equipments = Equipment.objects.filter(status='AVAILABLE')
+    reservations = Reservation.objects.select_related('equipment').all()
+    equipments = Equipment.objects.select_related('category').filter(status='AVAILABLE')
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
@@ -343,7 +350,7 @@ def reservation_calendar_view(request):
 @approved_member_required
 def reservation_calendar_api(request):
     """API renvoyant les réservations au format JSON pour le composant calendrier."""
-    reservations = Reservation.objects.exclude(status='CANCELLED')
+    reservations = Reservation.objects.select_related('equipment').exclude(status='CANCELLED')
     events = []
     for r in reservations:
         color = '#10B981' if r.status == 'APPROVED' else ('#3B82F6' if r.status == 'ACTIVE' else '#F59E0B')
@@ -361,19 +368,24 @@ def reservation_calendar_api(request):
 @approved_member_required
 def usage_history_view(request):
     """Rapport et suivi d'historique d'utilisation réelle des machines."""
-    reservations = Reservation.objects.all().order_by('-start_time')
-    total_cost_sum = reservations.aggregate(total=Sum('total_cost'))['total'] or 0
-    total_hours = 0
-    for r in reservations:
-        if r.start_time and r.end_time:
-            delta = r.end_time - r.start_time
-            total_hours += round(delta.total_seconds() / 3600, 1)
+    reservations = Reservation.objects.select_related('equipment').all().order_by('-start_time')
+
+    # Agrégation SQL au lieu d'une boucle Python sur toutes les réservations
+    agg = reservations.aggregate(
+        total_cost=Sum('total_cost'),
+        total_duration=Sum(
+            ExpressionWrapper(F('end_time') - F('start_time'), output_field=DurationField())
+        ),
+        total_sessions=Count('id')
+    )
+    total_cost_sum = agg['total_cost'] or 0
+    total_hours = round(agg['total_duration'].total_seconds() / 3600, 1) if agg['total_duration'] else 0
 
     context = {
         'reservations': reservations,
         'total_cost_sum': total_cost_sum,
         'total_hours': total_hours,
-        'total_sessions': reservations.count(),
+        'total_sessions': agg['total_sessions'],
     }
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         return render(request, 'reservations/partials/history_content.html', context)
@@ -723,8 +735,8 @@ def project_create_view(request):
 
 @approved_member_required
 def maintenance_list_view(request):
-    tickets = MaintenanceTicket.objects.all()
-    equipments = Equipment.objects.all()
+    tickets = MaintenanceTicket.objects.select_related('equipment').all()
+    equipments = Equipment.objects.select_related('category').all()
 
     if request.method == 'POST':
         eq_id = request.POST.get('equipment_id')
@@ -817,11 +829,8 @@ def register_tenant_view(request):
         set_current_tenant(clean_slug)
 
         # 4. Populer les catégories par défaut dans le nouveau schéma
-        EquipmentCategory.objects.get_or_create(slug="impression-3d", defaults={"name": "Impression 3D", "icon": "printer"})
-        EquipmentCategory.objects.get_or_create(slug="decoupe-laser", defaults={"name": "Découpe Laser", "icon": "zap"})
-        EquipmentCategory.objects.get_or_create(slug="usinage-cnc", defaults={"name": "Usinage CNC", "icon": "settings"})
-        EquipmentCategory.objects.get_or_create(slug="electronique", defaults={"name": "Électronique & IoT", "icon": "cpu"})
-        EquipmentCategory.objects.get_or_create(slug="autre", defaults={"name": "Autre", "icon": "box"})
+        from django.core.management import call_command
+        call_command('seed_defaults', verbosity=0)
 
         # 5. Notification Email de confirmation d'inscription d'espace
         send_tenant_registered_email(fablab, user)
@@ -850,8 +859,8 @@ def notifications_api_view(request):
 
     # 1. Pour les FabManagers et SuperAdmins : Réservations en attente
     if request.user.is_superuser or request.user.is_fabmanager_user:
-        pending_res = Reservation.objects.filter(status='PENDING')
-        for r in pending_res[:5]:
+        pending_res = Reservation.objects.select_related('equipment').filter(status='PENDING')[:5]
+        for r in pending_res:
             items.append({
                 'id': f"res-{r.id}",
                 'icon': '⏳',
@@ -862,8 +871,8 @@ def notifications_api_view(request):
             })
 
         # 2. Pour les FabManagers : Membres en attente d'approbation
-        pending_members = User.objects.filter(is_approved=False, is_superuser=False)
-        for m in pending_members[:5]:
+        pending_members = User.objects.filter(is_approved=False, is_superuser=False)[:5]
+        for m in pending_members:
             items.append({
                 'id': f"mem-{m.id}",
                 'icon': '👤',
@@ -874,8 +883,8 @@ def notifications_api_view(request):
             })
 
         # 3. Tickets de maintenance ouverts
-        open_tickets = MaintenanceTicket.objects.filter(status='OPEN')
-        for t in open_tickets[:3]:
+        open_tickets = MaintenanceTicket.objects.select_related('equipment').filter(status='OPEN')[:3]
+        for t in open_tickets:
             items.append({
                 'id': f"maint-{t.id}",
                 'icon': '🛠️',
@@ -886,7 +895,7 @@ def notifications_api_view(request):
             })
     else:
         # Pour les membres réguliers : Leurs réservations validées
-        my_res = Reservation.objects.filter(user=request.user, status='APPROVED')[:5]
+        my_res = Reservation.objects.select_related('equipment').filter(user=request.user, status='APPROVED')[:5]
         for r in my_res:
             items.append({
                 'id': f"myres-{r.id}",
@@ -898,25 +907,25 @@ def notifications_api_view(request):
             })
 
     # Notifications pour les messages reçus et mentions @username
-    unread_dms = Message.objects.filter(recipient=request.user, is_read=False)[:3]
+    unread_dms = Message.objects.select_related('sender', 'channel').filter(recipient=request.user, is_read=False)[:3]
     for msg in unread_dms:
         items.append({
             'id': f"dm-{msg.id}",
             'icon': '💬',
             'title': f"Message privé de {msg.sender_username}",
             'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
-            'url': f"/messaging/?dm={msg.sender.id}",
+            'url': f"/messaging/?dm={msg.sender_id}",
             'time': msg.created_at.strftime('%H:%M')
         })
 
-    mention_msgs = Message.objects.filter(content__icontains=f"@{request.user.username}").exclude(sender=request.user).order_by('-created_at')[:3]
+    mention_msgs = Message.objects.select_related('sender', 'channel').filter(content__icontains=f"@{request.user.username}").exclude(sender=request.user).order_by('-created_at')[:3]
     for msg in mention_msgs:
         items.append({
             'id': f"mention-{msg.id}",
             'icon': '💬',
             'title': f"Mention par @{msg.sender_username}",
             'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
-            'url': f"/messaging/?channel={msg.channel.slug}" if msg.channel else f"/messaging/?dm={msg.sender.id}",
+            'url': f"/messaging/?channel={msg.channel.slug}" if msg.channel else f"/messaging/?dm={msg.sender_id}",
             'time': msg.created_at.strftime('%H:%M')
         })
 
@@ -932,20 +941,8 @@ from accounts.models import User
 @approved_member_required
 def messaging_view(request):
     """Messagerie Interne Collaborative Multi-tenant (Style ikiu/Slack)."""
-    # 1. Initialiser les canaux par défaut pour le tenant s'ils n'existent pas encore
-    Channel.objects.get_or_create(slug="general", defaults={"name": "Général & Discussion", "icon": "", "channel_type": "PUBLIC", "description": "Échanges libres et actualités du FabLab"})
-    Channel.objects.get_or_create(slug="annonces", defaults={"name": "Annonces Officielles", "icon": "", "channel_type": "PUBLIC", "description": "Communications officielles de l'équipe"})
-    Channel.objects.get_or_create(slug="entraide", defaults={"name": "Entraide & Projets", "icon": "", "channel_type": "HELP", "description": "Questions techniques, fichiers 3D, conseils découpe & électronique"})
-    Channel.objects.get_or_create(slug="maintenance", defaults={"name": "Pannes & Signalements", "icon": "", "channel_type": "HELP", "description": "Informations sur l'état des machines et incidents"})
-    Channel.objects.get_or_create(slug="fabmanagers", defaults={"name": "Espace FabManagers", "icon": "", "channel_type": "FABMANAGER", "description": "Canal restreint pour l'équipe d'administration"})
-
-    # Initialiser les tags par défaut
-    MessageTag.objects.get_or_create(slug="projet", defaults={"name": "Projet", "color": "#3b82f6"})
-    MessageTag.objects.get_or_create(slug="panne", defaults={"name": "Panne / Maintenance", "color": "#ef4444"})
-    MessageTag.objects.get_or_create(slug="question", defaults={"name": "Question", "color": "#f59e0b"})
-    MessageTag.objects.get_or_create(slug="urgent", defaults={"name": "Urgent", "color": "#dc2626"})
-    MessageTag.objects.get_or_create(slug="habilitation", defaults={"name": "Habilitation", "color": "#8b5cf6"})
-    MessageTag.objects.get_or_create(slug="formation", defaults={"name": "Formation", "color": "#10b981"})
+    # Les canaux et tags par défaut sont initialisés via `python manage.py seed_defaults`
+    # (exécuté au déploiement, pas à chaque requête HTTP)
 
     tags = MessageTag.objects.all()
 
@@ -1128,16 +1125,17 @@ def messaging_view(request):
     if not thread_only:
         read_statuses = {rs.channel_id: rs.last_read_message_id for rs in ChannelReadStatus.objects.filter(user=request.user)}
         channel_ids = [ch.id for ch in channels]
-        
-        # Aggrégation en 1 seule requête pour tous les canaux au lieu de N requêtes
-        all_channel_msgs = Message.objects.filter(channel_id__in=channel_ids).exclude(sender=request.user).values('channel_id', 'id')
+
+        # Agrégation SQL au lieu d'itérer sur tous les messages en Python
+        from django.db.models import Max
         channel_unreads = {}
-        for msg in all_channel_msgs:
-            c_id = msg['channel_id']
-            m_id = msg['id']
-            last_read_id = read_statuses.get(c_id, 0)
-            if m_id > last_read_id:
-                channel_unreads[c_id] = channel_unreads.get(c_id, 0) + 1
+        for ch_id in channel_ids:
+            last_read_id = read_statuses.get(ch_id, 0) or 0
+            unread_count = Message.objects.filter(
+                channel_id=ch_id, id__gt=last_read_id
+            ).exclude(sender=request.user).count()
+            if unread_count > 0:
+                channel_unreads[ch_id] = unread_count
 
         for ch in channels:
             if active_channel and ch.id == active_channel.id and not active_dm_user:

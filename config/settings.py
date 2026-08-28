@@ -62,22 +62,46 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'config.context_processors.tenant_context',
-            ],
+# En production, activer le cache des templates compilés pour éviter la relecture disque
+if DEBUG:
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [BASE_DIR / 'templates'],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'config.context_processors.tenant_context',
+                ],
+            },
         },
-    },
-]
+    ]
+else:
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [BASE_DIR / 'templates'],
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'config.context_processors.tenant_context',
+                ],
+                'loaders': [
+                    ('django.template.loaders.cached.Loader', [
+                        'django.template.loaders.filesystem.Loader',
+                        'django.template.loaders.app_directories.Loader',
+                    ]),
+                ],
+            },
+        },
+    ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -94,7 +118,7 @@ if USE_PROD_POSTGRES and DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=60,
+            conn_max_age=600,
             ssl_require=True,
         )
     }
@@ -111,6 +135,7 @@ else:
                 'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
                 'PORT': os.environ.get('POSTGRES_PORT', '5432'),
                 'ATOMIC_REQUESTS': True,
+                'CONN_MAX_AGE': 600,
             }
         }
     else:
@@ -144,7 +169,9 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        # ManifestStaticFilesStorage ajoute un hash au nom de fichier pour le cache-busting
+        # et permet des headers Cache-Control: max-age=31536000 (1 an)
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
@@ -166,3 +193,30 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'voicetranslator0@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'LabOS Platform <voicetranslator0@gmail.com>')
+
+# ─── Cache Redis (déjà déployé via docker-compose, câblé ici) ───
+REDIS_URL = os.environ.get('REDIS_URL')
+
+if REDIS_URL and not DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'TIMEOUT': 300,  # 5 minutes par défaut
+            'OPTIONS': {
+                'db': '1',
+            },
+            'KEY_PREFIX': 'fabos',
+        }
+    }
+    # Sessions stockées en cache Redis au lieu de la base de données
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+else:
+    # En local / test : cache en mémoire (pas besoin de Redis)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'fabos-cache',
+        }
+    }

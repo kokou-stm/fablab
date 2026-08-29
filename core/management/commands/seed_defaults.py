@@ -18,11 +18,12 @@ class Command(BaseCommand):
 
     def _seed_admin_user(self):
         import os
+        import secrets
         from accounts.models import User
 
         username = os.environ.get('DJANGO_ADMIN_USERNAME', 'admin')
         email = os.environ.get('DJANGO_ADMIN_EMAIL', 'admin@labos.com')
-        password = os.environ.get('DJANGO_ADMIN_PASSWORD', 'AdminFabLab2026!')
+        explicit_password = os.environ.get('DJANGO_ADMIN_PASSWORD')
 
         user, created = User.objects.get_or_create(
             username=username,
@@ -36,12 +37,29 @@ class Command(BaseCommand):
                 'last_name': 'Admin',
             }
         )
-        user.set_password(password)
         user.email = email
         user.role = 'ADMIN'
         user.is_staff = True
         user.is_superuser = True
         user.is_approved = True
+
+        if explicit_password:
+            # DJANGO_ADMIN_PASSWORD fourni explicitement : rotation volontaire, on l'applique toujours.
+            user.set_password(explicit_password)
+            self.stdout.write(f"  Compte Administrateur : mot de passe de '{username}' appliqué depuis DJANGO_ADMIN_PASSWORD.")
+        elif created:
+            # Première création sans mot de passe fourni : on en génère un et on
+            # l'affiche UNE SEULE FOIS dans les logs de déploiement.
+            generated = secrets.token_urlsafe(16)
+            user.set_password(generated)
+            self.stdout.write(self.style.WARNING(
+                f"  ⚠️  Aucun DJANGO_ADMIN_PASSWORD fourni : mot de passe généré pour '{username}' : {generated}\n"
+                f"      Notez-le maintenant : il ne sera plus jamais réaffiché, et ne sera plus modifié aux prochains déploiements."
+            ))
+        # Sinon (compte déjà existant, aucun mot de passe fourni explicitement) : on
+        # ne touche surtout pas au mot de passe actuel, qu'il ait été changé
+        # manuellement ou déjà généré lors d'un déploiement précédent.
+
         user.save()
         action = "créé" if created else "mis à jour"
         self.stdout.write(f"  Compte Administrateur : '{username}' {action}")

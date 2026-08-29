@@ -74,7 +74,8 @@ jobs:
             --secure-environment-variables \
               DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
-              EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}"
+              EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
+              DJANGO_ADMIN_PASSWORD="${{ secrets.DJANGO_ADMIN_PASSWORD }}"
 
       - name: Verify Live Deployment
         run: |

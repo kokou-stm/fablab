@@ -61,10 +61,12 @@ urlpatterns = [
 ]
 
 from django.urls import re_path
-from django.views.static import serve
+from core.media_views import protected_media_view
 
-# Service des fichiers médias (justificatifs, photos de machines, documents) en prod et dev
+# Service des fichiers médias (justificatifs, photos de machines, documents) en prod et dev.
+# Les dossiers sensibles (pièces d'identité, justificatifs, pièces jointes de chat,
+# supports de cours) exigent un compte connecté et approuvé — voir core/media_views.py.
 urlpatterns += [
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^media/(?P<path>.*)$', protected_media_view),
 ]
 

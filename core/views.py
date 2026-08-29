@@ -5,6 +5,8 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.db.models import Sum, Count, Q, F, ExpressionWrapper, DurationField
 from django.core.cache import cache
+from django.utils import timezone as dj_timezone
+from django.utils.dateparse import parse_datetime
 
 from fablabs.models import FabLab
 from equipment.models import Equipment, EquipmentCategory, MaintenanceTicket
@@ -283,6 +285,23 @@ def reservation_list_view(request):
         if equipment_id and start_time and end_time:
             eq = get_object_or_404(Equipment, id=equipment_id)
 
+            parsed_start = parse_datetime(start_time)
+            parsed_end = parse_datetime(end_time)
+            if not parsed_start or not parsed_end:
+                messages.error(request, "Format de date/heure invalide.")
+                return redirect('reservation_list')
+            if dj_timezone.is_naive(parsed_start):
+                parsed_start = dj_timezone.make_aware(parsed_start)
+            if dj_timezone.is_naive(parsed_end):
+                parsed_end = dj_timezone.make_aware(parsed_end)
+
+            if parsed_end <= parsed_start:
+                messages.error(request, "L'heure de fin doit être postérieure à l'heure de début.")
+                return redirect('reservation_list')
+            if parsed_start < dj_timezone.now():
+                messages.error(request, "Impossible de réserver un créneau déjà passé.")
+                return redirect('reservation_list')
+
             # Vérification de l'habilitation obligatoire sur la machine
             if eq.requires_certification and not (request.user.is_superuser or request.user.is_fabmanager_user):
                 has_cert = UserCertification.objects.filter(
@@ -295,16 +314,30 @@ def reservation_list_view(request):
                     messages.error(request, f"La machine '{eq.name}' nécessite une habilitation/formation active pour la catégorie '{eq.category.name}'. Veuillez contacter un Formateur.")
                     return redirect('reservation_list')
 
+            # Empêche deux réservations actives de se chevaucher sur la même machine
+            overlap = Reservation.objects.filter(
+                equipment=eq,
+                status__in=['PENDING', 'APPROVED', 'ACTIVE'],
+                start_time__lt=parsed_end,
+                end_time__gt=parsed_start,
+            ).exists()
+            if overlap:
+                messages.error(request, f"Ce créneau est déjà réservé sur '{eq.name}'. Merci de choisir un autre horaire.")
+                return redirect('reservation_list')
+
+            duration_hours = (parsed_end - parsed_start).total_seconds() / 3600
+            total_cost = round(float(eq.hourly_rate) * duration_hours, 2)
+
             Reservation.objects.create(
                 equipment=eq,
                 user=request.user,
                 user_username=request.user.username,
                 user_full_name=request.user.get_full_name() or request.user.username,
-                start_time=start_time,
-                end_time=end_time,
+                start_time=parsed_start,
+                end_time=parsed_end,
                 project_description=project_desc,
                 status='PENDING',
-                total_cost=eq.hourly_rate * 2
+                total_cost=total_cost
             )
             messages.success(request, f"⏳ Votre demande de réservation sur {eq.name} a été enregistrée avec succès ! Elle est en attente de validation par le FabManager.")
             return redirect('reservation_list')

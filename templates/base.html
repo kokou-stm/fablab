@@ -324,26 +324,25 @@
               <span>LabOS</span>
             </a>
           {% else %}
-            <!-- Selecteur / Badge Multi-tenant -->
+            <!-- Badge du FabLab actif uniquement — jamais de liste des autres écoles ici -->
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="topbar-tenant-label" style="font-size: 13px; color: var(--muted); font-weight: 500;">FabLab / Espace :</span>
-              {% if not request.user.is_authenticated or is_superadmin %}
-                <select class="form-select" style="padding: 6px 10px; font-size: 12.5px; border-radius: var(--radius-sm); font-weight: 600; max-width: 180px;" onchange="window.location.href='/switch-tenant/' + this.value + '/'">
-                  {% for t in all_tenants %}
-                    <option value="{{ t.slug }}" {% if tenant and tenant.slug == t.slug %}selected{% endif %}>
-                      {{ t.name }}
-                    </option>
-                  {% endfor %}
-                </select>
-                {% if not request.user.is_authenticated %}
-                  <a href="/register-lab/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
-                    + Créer un Espace
-                  </a>
-                {% endif %}
+              {% if tenant %}
+                <span class="topbar-tenant-label" style="font-size: 13px; color: var(--muted); font-weight: 500;">FabLab / Espace :</span>
                 <div class="topbar-tenant-badge" style="padding: 6px 14px; font-size: 13px; border-radius: var(--radius-sm); font-weight: 700; background: var(--panel); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px;">
                   <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{% if tenant %}{{ tenant.name }}{% elif request.user.fablab %}{{ request.user.fablab.name }}{% else %}LabOS Space{% endif %}</span>
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant.name }}</span>
                 </div>
+              {% elif request.user.is_authenticated and request.user.fablab %}
+                <span class="topbar-tenant-label" style="font-size: 13px; color: var(--muted); font-weight: 500;">FabLab / Espace :</span>
+                <div class="topbar-tenant-badge" style="padding: 6px 14px; font-size: 13px; border-radius: var(--radius-sm); font-weight: 700; background: var(--panel); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ request.user.fablab.name }}</span>
+                </div>
+              {% endif %}
+              {% if not request.user.is_authenticated %}
+                <a href="/register-lab/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
+                  + Créer un Espace
+                </a>
               {% endif %}
             </div>
           {% endif %}

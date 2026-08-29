@@ -107,8 +107,8 @@ def send_member_approved_email(user):
     message = (
         f"Félicitations {user.get_full_name() or user.username} !\n\n"
         f"Votre compte membre a été validé avec succès par le responsable du FabLab '{lab_name}'.\n\n"
-        f"📌 Votre identifiant de connexion : {user.username}\n\n"
-        f"🔗 Dernière étape : créez votre mot de passe pour activer votre compte :\n"
+        f" Votre identifiant de connexion : {user.username}\n\n"
+        f" Dernière étape : créez votre mot de passe pour activer votre compte :\n"
         f"{set_password_url}\n\n"
         f"Vous pourrez ensuite vous connecter et réserver les machines et équipements disponibles.\n\n"
         f"Bienvenue et bonne création !\n\n"

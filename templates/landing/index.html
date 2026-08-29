@@ -285,19 +285,16 @@
     <!-- Right Action Controls -->
     <div class="landing-actions">
       
-      <!-- Compact Multi-tenant Switcher -->
-      {% if not request.user.is_authenticated or is_superadmin %}
-        <select class="landing-select" onchange="window.location.href='/switch-tenant/' + this.value + '/'" title="Changer d'espace FabLab">
-          {% for t in all_tenants %}
-            <option value="{{ t.slug }}" {% if tenant and tenant.slug == t.slug %}selected{% endif %}>
-              {{ t.name }}
-            </option>
-          {% endfor %}
-        </select>
-      {% else %}
+      <!-- Badge du FabLab actif uniquement — jamais de liste des autres écoles ici -->
+      {% if tenant %}
         <div class="landing-select" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; cursor: default;">
           <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-          <span>{{ tenant.name|default:request.user.fablab.name }}</span>
+          <span>{{ tenant.name }}</span>
+        </div>
+      {% elif request.user.is_authenticated and request.user.fablab %}
+        <div class="landing-select" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; cursor: default;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <span>{{ request.user.fablab.name }}</span>
         </div>
       {% endif %}
 

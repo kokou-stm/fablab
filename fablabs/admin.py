@@ -3,8 +3,8 @@ from fablabs.models import FabLab
 
 @admin.register(FabLab)
 class FabLabAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'city', 'plan', 'is_approved', 'is_active', 'justification_document', 'created_at')
-    list_filter = ('is_approved', 'is_active', 'plan', 'city')
+    list_display = ('name', 'slug', 'city', 'plan', 'is_approved', 'is_active', 'domain', 'domain_verified', 'justification_document', 'created_at')
+    list_filter = ('is_approved', 'is_active', 'plan', 'city', 'domain_verified')
     search_fields = ('name', 'slug', 'contact_email', 'city')
     actions = ['approve_selected_fablabs']
 

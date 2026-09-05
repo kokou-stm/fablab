@@ -12,7 +12,7 @@ def get_base_url(tenant=None):
     """Génère l'URL de base propre avec sous-domaine (https://polytech-lome.aidubber.fr en prod)."""
     base_domain = os.environ.get('DJANGO_BASE_DOMAIN', 'aidubber.fr')
     if not getattr(settings, 'DEBUG', True):
-        if tenant and getattr(tenant, 'domain', None):
+        if tenant and getattr(tenant, 'domain', None) and getattr(tenant, 'domain_verified', False):
             return f"https://{tenant.domain}"
         if tenant and getattr(tenant, 'slug', None):
             return f"https://{tenant.slug}.{base_domain}"

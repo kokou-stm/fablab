@@ -29,9 +29,9 @@ class TenantMiddleware(MiddlewareMixin):
             if matched_lab:
                 tenant_slug = matched_lab.slug
 
-        # 1bis. Priorité N°1 : Nom de domaine personnalisé exact (ex: monfablab.fr)
+        # 1bis. Priorité N°1 : Nom de domaine personnalisé exact et vérifié (ex: monfablab.fr)
         if not tenant_slug:
-            matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(domain__iexact=host).first()
+            matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(domain__iexact=host, domain_verified=True).first()
             if matched_lab:
                 tenant_slug = matched_lab.slug
                 _TENANT_CACHE[host] = matched_lab

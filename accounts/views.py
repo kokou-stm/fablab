@@ -16,7 +16,9 @@ from core.emails import send_member_signup_notification, send_member_approved_em
 def login_view(request):
     """Vue de connexion membre (par Username ou par Email)."""
     if request.user.is_authenticated:
-        if request.user.is_superuser or request.user.role == 'FABMANAGER' or request.user.is_approved:
+        if request.user.is_superuser or request.user.role == 'ADMIN':
+            return redirect('superadmin_dashboard')
+        if request.user.role == 'FABMANAGER' or request.user.is_approved:
             return redirect('dashboard')
         return redirect('landing')
 
@@ -39,7 +41,11 @@ def login_view(request):
 
             if user.is_superuser or user.role == 'FABMANAGER' or user.is_approved:
                 messages.success(request, f"Bienvenue, {user.get_full_name() or user.username} !")
-                next_url = request.GET.get('next') or 'dashboard'
+                if user.is_superuser or user.role == 'ADMIN':
+                    default_next = 'superadmin_dashboard'
+                else:
+                    default_next = 'dashboard'
+                next_url = request.GET.get('next') or default_next
                 return redirect(next_url)
             else:
                 messages.info(request, f"Bienvenue {user.get_full_name() or user.username} ! Votre compte a été créé mais est en attente de validation par le FabManager. L'accès au Tableau de bord sera débloqué après validation.")

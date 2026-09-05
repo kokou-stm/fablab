@@ -329,6 +329,11 @@ def superadmin_dashboard_view(request):
             messages.info(request, f"L'espace FabLab '{lab.name}' a été {status_str}.")
             return redirect('superadmin_dashboard')
 
+    # Vue globale, non rattachée à un FabLab en particulier : on efface tout
+    # contexte de tenant "collé" en session (ex: suite à un switch-tenant
+    # précédent) pour que la barre du haut n'affiche pas une école au hasard.
+    request.session.pop('tenant_slug', None)
+
     context = {
         'all_fablabs': all_fablabs,
         'all_users': all_users,
@@ -339,6 +344,7 @@ def superadmin_dashboard_view(request):
         'total_users': total_users,
         'total_subscriptions': total_subscriptions,
         'total_revenue': total_revenue,
+        'tenant': None,
     }
 
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):

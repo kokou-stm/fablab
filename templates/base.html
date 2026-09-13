@@ -340,9 +340,15 @@
                 </div>
               {% endif %}
               {% if not request.user.is_authenticated %}
-                <a href="/register-lab/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
-                  + Créer un Espace
-                </a>
+                {% if tenant_from_host %}
+                  <a href="/signup/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
+                    S'inscrire
+                  </a>
+                {% else %}
+                  <a href="/register-lab/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
+                    + Créer un Espace
+                  </a>
+                {% endif %}
               {% endif %}
             </div>
           {% endif %}

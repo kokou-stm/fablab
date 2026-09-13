@@ -19,6 +19,13 @@ _TENANT_CACHE = {}
 class TenantMiddleware(MiddlewareMixin):
     def process_request(self, request):
         tenant_slug = None
+        # Vrai seulement si CE nom d'hôte identifie explicitement le tenant
+        # (domaine personnalisé ou sous-domaine reconnu) — jamais via la
+        # session, l'utilisateur connecté ou le repli sur le 1er FabLab.
+        # Sert à distinguer "on est réellement chez telle école" (ex: pour
+        # proposer "S'inscrire" plutôt que "Créer un espace") d'un simple
+        # contexte de convenance choisi par ailleurs.
+        tenant_from_host = False
         user = getattr(request, "user", None)
 
         host = request.get_host().split(":")[0].lower()
@@ -28,12 +35,14 @@ class TenantMiddleware(MiddlewareMixin):
             matched_lab = _TENANT_CACHE[host]
             if matched_lab:
                 tenant_slug = matched_lab.slug
+                tenant_from_host = True
 
         # 1bis. Priorité N°1 : Nom de domaine personnalisé exact et vérifié (ex: monfablab.fr)
         if not tenant_slug:
             matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(domain__iexact=host, domain_verified=True).first()
             if matched_lab:
                 tenant_slug = matched_lab.slug
+                tenant_from_host = True
                 _TENANT_CACHE[host] = matched_lab
 
         # 1ter. Sinon, sous-domaine HTTP de la plateforme (ex: polytech-nantes.localhost:8000)
@@ -47,6 +56,7 @@ class TenantMiddleware(MiddlewareMixin):
                     matched_lab = FabLab.objects.only('id', 'slug', 'name', 'domain').filter(slug=clean_subdomain).first()
                 if matched_lab:
                     tenant_slug = matched_lab.slug
+                    tenant_from_host = True
                     _TENANT_CACHE[host] = matched_lab
                 elif host.endswith("." + BASE_DOMAIN):
                     # Sous-domaine de notre propre domaine (ex: <typo>.aidubber.fr) qui ne
@@ -90,10 +100,12 @@ class TenantMiddleware(MiddlewareMixin):
                     _TENANT_CACHE[f"slug:{tenant_slug}"] = tenant_obj
 
             request.tenant = tenant_obj
+            request.tenant_from_host = tenant_from_host
             request.session["tenant_slug"] = tenant_slug
         else:
             set_current_tenant(None)
             request.tenant = None
+            request.tenant_from_host = False
 
     def process_response(self, request, response):
         set_current_tenant(None)

@@ -322,9 +322,15 @@
         <a href="/login/" class="landing-btn-sec">
           Connexion
         </a>
-        <a href="/register-lab/" class="landing-btn-pri">
-          + Créer un Espace
-        </a>
+        {% if tenant_from_host %}
+          <a href="/signup/" class="landing-btn-pri">
+            S'inscrire
+          </a>
+        {% else %}
+          <a href="/register-lab/" class="landing-btn-pri">
+            + Créer un Espace
+          </a>
+        {% endif %}
       {% endif %}
     </div>
 
@@ -365,7 +371,11 @@
       {% else %}
         <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px;">
           <a href="/login/" class="landing-btn-sec" style="width: 100%; text-align: center; justify-content: center; box-sizing: border-box;">Se connecter</a>
-          <a href="/register-lab/" class="landing-btn-pri" style="width: 100%; text-align: center; justify-content: center; box-sizing: border-box;">+ Créer un Espace FabLab</a>
+          {% if tenant_from_host %}
+            <a href="/signup/" class="landing-btn-pri" style="width: 100%; text-align: center; justify-content: center; box-sizing: border-box;">S'inscrire</a>
+          {% else %}
+            <a href="/register-lab/" class="landing-btn-pri" style="width: 100%; text-align: center; justify-content: center; box-sizing: border-box;">+ Créer un Espace FabLab</a>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -394,7 +404,7 @@
           LabOS
         </div>
         <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 14px; max-width: 320px;">
-          Le système d'exploitation multi-tenant conçu pour les FabLabs universitaires, Tiers-lieux et Hackerspaces.
+          Le système de gestion des FabLab, conçu pour les FabLabs lycées, universitaires et Hackerspaces.
         </p>
         <div style="font-size: 12px; color: var(--muted); margin-top: 20px;">
           © 2026 LabOS Platform • Propulsé par Django & HTMX

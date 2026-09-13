@@ -21,4 +21,5 @@ def tenant_context(request):
         'tenant': active_tenant,
         'all_tenants': all_tenants,
         'is_superadmin': is_superadmin,
+        'tenant_from_host': getattr(request, 'tenant_from_host', False),
     }

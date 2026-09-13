@@ -49,9 +49,15 @@
 
         <!-- CTA Action Buttons -->
         <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
-          <a href="/register-lab/" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
-            <span>+  Créer mon Espace FabLab</span>
-          </a>
+          {% if tenant_from_host %}
+            <a href="/signup/" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
+              <span>S'inscrire{% if tenant %} chez {{ tenant.name }}{% endif %}</span>
+            </a>
+          {% else %}
+            <a href="/register-lab/" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: transform 0.15s ease;">
+              <span>+  Créer mon Espace FabLab</span>
+            </a>
+          {% endif %}
 
           <!--a href="/equipment/" class="btn btn-outline" style="padding: 12px 22px; font-size: 14px; font-weight: 700; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
             <span>🛠️ Découvrir les Équipements & Ateliers</span>
@@ -434,9 +440,15 @@
           Basculez d'un espace à l'autre en un clic grâce à l'architecture multi-tenant isolée de LabOS.
         </p>
       </div>
-      <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; color: var(--text);">
-        + Inscrire un nouveau FabLab
-      </a>
+      {% if tenant_from_host %}
+        <a href="/signup/" hx-get="/signup/" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; color: var(--text);">
+          S'inscrire
+        </a>
+      {% else %}
+        <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md); text-decoration: none; color: var(--text);">
+          + Inscrire un nouveau FabLab
+        </a>
+      {% endif %}
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
@@ -476,9 +488,15 @@
     </p>
 
     <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-      <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--bg); color: var(--text); border-radius: var(--radius-md); text-decoration: none;">
-        ⚡ Créer votre Instance FabLab
-      </a>
+      {% if tenant_from_host %}
+        <a href="/signup/" hx-get="/signup/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--bg); color: var(--text); border-radius: var(--radius-md); text-decoration: none;">
+          ⚡ Rejoindre {{ tenant.name|default:"cet espace" }}
+        </a>
+      {% else %}
+        <a href="/register-lab/" hx-get="/register-lab/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: var(--bg); color: var(--text); border-radius: var(--radius-md); text-decoration: none;">
+          ⚡ Créer votre Instance FabLab
+        </a>
+      {% endif %}
       <a href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true" class="btn" style="padding: 12px 24px; font-size: 14px; font-weight: 700; background: transparent; color: var(--bg); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-md); text-decoration: none;">
         📊 Explorer le Dashboard
       </a>

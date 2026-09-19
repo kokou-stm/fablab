@@ -1,0 +1,54 @@
+# Blueprint Render — LabOS (Django multi-tenant)
+# Render → New → Blueprint → sélectionner ce dépôt.
+# Les variables marquées "sync: false" sont demandées à la création.
+
+databases:
+  - name: labos-db
+    # Les bases Postgres gratuites de Render expirent : plan payant pour des données de prod.
+    plan: basic-256mb
+    region: frankfurt
+    postgresMajorVersion: "16"
+    databaseName: fablab_db
+    user: fablab
+
+services:
+  - type: web
+    name: labos
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Plan payant requis pour attacher un disque persistant (fichiers uploadés).
+    plan: starter
+    region: frankfurt
+    autoDeploy: true
+    healthCheckPath: /
+    disk:
+      name: labos-data
+      mountPath: /home/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: labos-db
+          property: connectionString
+      - key: USE_PROD_POSTGRES
+        value: "1"
+      - key: USE_POSTGRES
+        value: "0"
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: DJANGO_DATA_DIR
+        value: /home/data
+      - key: DJANGO_BASE_DOMAIN
+        value: aidubber.fr
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false
+      - key: EMAIL_HOST_USER
+        value: voicetranslator0@gmail.com
+      - key: DEFAULT_FROM_EMAIL
+        value: LabOS Platform <voicetranslator0@gmail.com>
+      - key: EMAIL_HOST_PASSWORD
+        sync: false

@@ -129,7 +129,7 @@ if USE_PROD_POSTGRES and DATABASE_URL:
         'default': dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
+            ssl_require=os.environ.get('DB_SSL_REQUIRE', '1') == '1',
         )
     }
     DATABASES['default']['ATOMIC_REQUESTS'] = True

@@ -1,10 +1,8 @@
 name: Deploy FabOS to Azure ACI
 
+# Déploiement automatique désactivé : l'abonnement Azure est suspendu et
+# l'hébergement passe sur Render (voir render.yaml). Reste déclenchable à la main.
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 jobs:

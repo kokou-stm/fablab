@@ -1,6 +1,10 @@
 .git
 .gitignore
 .venv
+
+# Jamais dans l'image : contient la config de dev (Redis/Postgres locaux) et des
+# secrets. La config de production passe uniquement par les variables d'environnement.
+.env
 __pycache__
 *.pyc
 *.pyo

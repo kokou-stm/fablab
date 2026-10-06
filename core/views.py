@@ -273,7 +273,7 @@ def reservation_list_view(request):
             return redirect('reservation_list')
 
         # Nouvelles demandes de réservation
-        if not request.user.is_superuser and not request.user.is_fabmanager_user and not getattr(request.user, 'is_approved', False):
+        if not request.user.is_admin_user and not getattr(request.user, 'is_approved', False):
             messages.error(request, "Votre compte est actuellement en attente de validation par le responsable du FabLab. Vous ne pouvez pas encore effectuer de réservations.")
             return redirect('reservation_list')
 
@@ -529,7 +529,7 @@ def workshop_list_view(request):
                 return redirect(f"/workshops/{ws.id}/")
 
         elif action == 'register':
-            if not request.user.is_superuser and not request.user.is_fabmanager_user and not getattr(request.user, 'is_approved', False):
+            if not request.user.is_admin_user and not getattr(request.user, 'is_approved', False):
                 messages.error(request, "Votre compte est en attente de validation par le FabLab.")
                 return redirect('workshop_list')
 

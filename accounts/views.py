@@ -18,9 +18,9 @@ def login_view(request):
     if request.user.is_authenticated:
         if request.user.is_superuser or request.user.role == 'ADMIN':
             return redirect('superadmin_dashboard')
-        if request.user.role == 'FABMANAGER' or request.user.is_approved:
+        if request.user.is_approved:
             return redirect('dashboard')
-        return redirect('landing')
+        return redirect('signup_pending')
 
     if request.method == 'POST':
         login_input = request.POST.get('username', '').strip()
@@ -39,7 +39,7 @@ def login_view(request):
             if user.fablab:
                 request.session['tenant_slug'] = user.fablab.slug
 
-            if user.is_superuser or user.role == 'FABMANAGER' or user.is_approved:
+            if user.is_superuser or user.role == 'ADMIN' or user.is_approved:
                 messages.success(request, f"Bienvenue, {user.get_full_name() or user.username} !")
                 if user.is_superuser or user.role == 'ADMIN':
                     default_next = 'superadmin_dashboard'
@@ -66,9 +66,9 @@ def logout_view(request):
 def signup_view(request):
     """Inscription d'un nouveau membre rattaché au FabLab actif (ou choisi dans la liste)."""
     if request.user.is_authenticated:
-        if request.user.is_superuser or request.user.role == 'FABMANAGER' or request.user.is_approved:
+        if request.user.is_superuser or request.user.is_approved:
             return redirect('dashboard')
-        return redirect('landing')
+        return redirect('signup_pending')
 
     tenant = getattr(request, 'tenant', None)
     all_tenants = FabLab.objects.all()

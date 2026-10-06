@@ -10,7 +10,13 @@ def role_required(*allowed_roles):
             if not request.user.is_authenticated:
                 messages.warning(request, "Veuillez vous connecter pour accéder à cette page.")
                 return redirect('login')
-            if request.user.is_superuser or request.user.role in allowed_roles:
+            if request.user.is_admin_user:
+                return view_func(request, *args, **kwargs)
+            # Un rôle ne donne ses droits qu'une fois le compte validé.
+            if not getattr(request.user, 'is_approved', False):
+                messages.error(request, "Votre compte est en attente de validation.")
+                return redirect('signup_pending')
+            if request.user.role in allowed_roles:
                 return view_func(request, *args, **kwargs)
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette fonctionnalité.")
             return redirect('dashboard')
@@ -30,10 +36,12 @@ def approved_member_required(view_func):
         if not request.user.is_authenticated:
             messages.warning(request, "Veuillez vous connecter pour effectuer cette action.")
             return redirect('login')
-        if request.user.is_superuser or request.user.is_fabmanager_user or getattr(request.user, 'is_approved', False):
+        # Un FabManager non encore validé n'a pas plus de droits qu'un membre
+        # en attente : seul le SuperAdmin est exempté de validation.
+        if request.user.is_admin_user or getattr(request.user, 'is_approved', False):
             return view_func(request, *args, **kwargs)
         messages.error(request, "Votre compte est actuellement en attente de validation par le responsable de votre FabLab.")
-        return redirect('landing')
+        return redirect('signup_pending')
     return _wrapped_view
 
 

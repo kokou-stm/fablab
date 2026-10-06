@@ -89,6 +89,7 @@ body {
   display: grid;
   grid-template-columns: 280px 1fr;
   min-height: 100vh;
+  transition: grid-template-columns 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .main { min-width: 0; }
@@ -113,13 +114,180 @@ body {
   font-size: 12px;
 }
 
-/* Sidebar collapse (ChatGPT-like) */
+/* ── Sidebar Styles (Modern & Sleek) ───────────────────────── */
+.sidebar-top-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: padding 0.2s ease;
+}
+
+.sidebar-brand-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-info {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-brand-title {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.sidebar-brand-sub {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.sidebar-toggle-chevron {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-tenant-wrapper {
+  margin-top: 14px;
+}
+
+/* ── Sidebar collapse (ChatGPT / Modern IDE style) ────────── */
 body[data-sidebar="collapsed"] .app-shell {
-  grid-template-columns: 78px 1fr;
+  grid-template-columns: 72px 1fr !important;
 }
 
 body[data-sidebar="collapsed"] .sidebar {
-  padding: 14px 10px;
+  width: 72px !important;
+  padding: 0 !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-top-section {
+  padding: 12px 6px !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-brand-wrapper {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-brand {
+  justify-content: center !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-brand-info,
+body[data-sidebar="collapsed"] .sidebar-brand-title,
+body[data-sidebar="collapsed"] .sidebar-brand-sub {
+  display: none !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-toggle-chevron {
+  transform: rotate(180deg) !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-tenant-wrapper {
+  margin-top: 8px !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-tenant-wrapper .tenant-badge {
+  padding: 6px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-tenant-wrapper .tenant-badge .tenant-label {
+  display: none !important;
+}
+
+body[data-sidebar="collapsed"] .sidebar-tenant-wrapper .tenant-badge .tenant-dot {
+  margin: 0 !important;
+}
+
+body[data-sidebar="collapsed"] .nav {
+  padding: 10px 8px !important;
+}
+
+body[data-sidebar="collapsed"] .nav-section-title {
+  font-size: 0 !important;
+  height: 1px !important;
+  background: var(--border) !important;
+  margin: 12px 6px !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  color: transparent !important;
+}
+
+body[data-sidebar="collapsed"] .nav-item {
+  justify-content: center !important;
+  padding: 10px 0 !important;
+  margin: 4px 0 !important;
+  border-radius: 12px !important;
+  gap: 0 !important;
+}
+
+body[data-sidebar="collapsed"] .nav-item .nav-label,
+body[data-sidebar="collapsed"] .nav-item > span:not(.nav-ico) {
+  display: none !important;
+}
+
+body[data-sidebar="collapsed"] .nav-ico {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 body[data-sidebar="collapsed"] .brand-title,
@@ -131,57 +299,6 @@ body[data-sidebar="collapsed"] .nav-section,
 body[data-sidebar="collapsed"] .nav-group-items,
 body[data-sidebar="collapsed"] #sidebar-classes {
   display: none !important;
-}
-
-body[data-sidebar="collapsed"] .workspace-pill {
-  grid-template-columns: 34px;
-  justify-content: center;
-}
-
-body[data-sidebar="collapsed"] .nav-item {
-  justify-content: center;
-  padding: 10px 10px;
-}
-
-body[data-sidebar="collapsed"] .nav-item > span:not(.nav-ico) {
-  display: none;
-}
-
-body[data-sidebar="collapsed"] .nav-item.sub {
-  display: none;
-}
-
-body[data-sidebar="collapsed"] .nav-group-summary {
-  justify-content: center;
-  padding: 10px 10px;
-}
-
-body[data-sidebar="collapsed"] .nav-group-summary > span:not(.nav-ico) {
-  display: none;
-}
-
-body[data-sidebar="collapsed"] .nav-group-caret {
-  display: none;
-}
-
-/* ── Évite la double apparition du bouton toggle ───────────────────────── */
-@media (min-width: 981px) {
-  /* Topbar toggle : caché quand sidebar ouverte, visible quand réduite */
-  .topbar [data-sidebar-toggle] {
-    display: none;
-  }
-  body[data-sidebar="collapsed"] .topbar [data-sidebar-toggle] {
-    display: grid;
-  }
-  /* Sidebar toggle : caché quand sidebar réduite (topbar prend le relais) */
-  body[data-sidebar="collapsed"] .brand .sidebar-toggle {
-    display: none;
-  }
-  /* Logo centré seul dans la sidebar réduite */
-  body[data-sidebar="collapsed"] .brand {
-    justify-content: center;
-    padding: 8px 0;
-  }
 }
 
 /* Mobile off-canvas sidebar */

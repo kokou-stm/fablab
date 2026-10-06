@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- CSS Main Styles -->
-  <link rel="stylesheet" href="/static/css/main.css?v=2" />
+  <link rel="stylesheet" href="/static/css/main.css?v=3" />
   
   <style>
     {% if hide_sidebar or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'signup' or request.resolver_match.url_name == 'signup_pending' or request.resolver_match.url_name == 'password_reset' or request.resolver_match.url_name == 'password_reset_confirm' or request.resolver_match.url_name == 'register_tenant' %}
@@ -147,154 +147,152 @@
     {% if not hide_sidebar and request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'signup' and request.resolver_match.url_name != 'signup_pending' and request.resolver_match.url_name != 'password_reset' and request.resolver_match.url_name != 'password_reset_confirm' and request.resolver_match.url_name != 'register_tenant' %}
     <!-- Sidebar Left Navigation -->
     <aside class="sidebar">
-      <div style="padding: 16px; border-bottom: 1px solid var(--border);">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; background: var(--text); color: var(--bg); border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 18px;">
-              ⚡
-            </div>
-            <div>
-              <div style="font-weight: 700; font-size: 16px; letter-spacing: -0.02em;">LabOS</div>
-              <div style="font-size: 11px; color: var(--muted);">Space Management</div>
+      <div class="sidebar-top-section">
+        <div class="sidebar-brand-wrapper">
+          <div class="sidebar-brand">
+            <div class="sidebar-logo">⚡</div>
+            <div class="sidebar-brand-info">
+              <div class="sidebar-brand-title">LabOS</div>
+              <div class="sidebar-brand-sub">Space Management</div>
             </div>
           </div>
-          <button onclick="toggleSidebar()" style="background: none; border: none; cursor: pointer; color: var(--muted);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Plier/Déplier le menu" title="Plier / Déplier le menu">
+            <svg class="sidebar-toggle-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
         </div>
 
         {% if tenant %}
-        <div style="margin-top: 14px;">
-          <div class="tenant-badge">
+        <div class="sidebar-tenant-wrapper">
+          <div class="tenant-badge" title="FabLab : {{ tenant.name }}">
             <span class="tenant-dot"></span>
-            <span>{{ tenant.name }}</span>
+            <span class="tenant-label">{{ tenant.name }}</span>
           </div>
         </div>
         {% endif %}
       </div>
 
-      <nav class="nav" style="padding: 12px;">
+      <nav class="nav">
         <div class="nav-section-title">Espace FabLab</div>
         
-        <a class="nav-item {% if request.resolver_match.url_name == 'landing' %}active{% endif %}" href="/" target="_top">
+        <a class="nav-item {% if request.resolver_match.url_name == 'landing' %}active{% endif %}" href="/" target="_top" title="Accueil">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           </span>
-          <span>Accueil</span>
+          <span class="nav-label">Accueil</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true" title="Tableau de bord">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           </span>
-          <span>Tableau de bord</span>
+          <span class="nav-label">Tableau de bord</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'equipment_list' or request.resolver_match.url_name == 'equipment_detail' %}active{% endif %}" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'equipment_list' or request.resolver_match.url_name == 'equipment_detail' %}active{% endif %}" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" title="Équipements & Machines">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>
           </span>
-          <span>Équipements & Machines</span>
+          <span class="nav-label">Équipements & Machines</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_list' %}active{% endif %}" href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_list' %}active{% endif %}" href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true" title="Demandes de Réservation">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </span>
-          <span>Demandes de Réservation</span>
+          <span class="nav-label">Demandes de Réservation</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_calendar' %}active{% endif %}" href="/reservations/calendar/" hx-get="/reservations/calendar/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_calendar' %}active{% endif %}" href="/reservations/calendar/" hx-get="/reservations/calendar/" hx-target="#content" hx-push-url="true" title="Planning Centralisé">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
           </span>
-          <span>Planning Centralisé</span>
+          <span class="nav-label">Planning Centralisé</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'usage_history' %}active{% endif %}" href="/reservations/history/" hx-get="/reservations/history/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'usage_history' %}active{% endif %}" href="/reservations/history/" hx-get="/reservations/history/" hx-target="#content" hx-push-url="true" title="Historique d'Utilisation">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </span>
-          <span>Historique d'Utilisation</span>
+          <span class="nav-label">Historique d'Utilisation</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'certification_list' %}active{% endif %}" href="/certifications/" hx-get="/certifications/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'certification_list' %}active{% endif %}" href="/certifications/" hx-get="/certifications/" hx-target="#content" hx-push-url="true" title="Habilitations & Badges">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
           </span>
-          <span>Habilitations & Badges</span>
+          <span class="nav-label">Habilitations & Badges</span>
         </a>
 
         {% if user.is_authenticated and user.is_fabmanager_user %}
-        <a class="nav-item {% if request.resolver_match.url_name == 'member_list' %}active{% endif %}" href="/members/" hx-get="/members/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'member_list' %}active{% endif %}" href="/members/" hx-get="/members/" hx-target="#content" hx-push-url="true" title="Annuaire des Membres">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </span>
-          <span>Annuaire des Membres</span>
+          <span class="nav-label">Annuaire des Membres</span>
         </a>
         {% endif %}
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'messaging' %}active{% endif %}" href="/messaging/" hx-get="/messaging/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'messaging' %}active{% endif %}" href="/messaging/" hx-get="/messaging/" hx-target="#content" hx-push-url="true" title="Messagerie">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </span>
-          <span>Messagerie </span>
+          <span class="nav-label">Messagerie</span>
         </a>
 
         <div class="nav-section-title">Communs & Activités</div>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'workshop_list' %}active{% endif %}" href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'workshop_list' %}active{% endif %}" href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" title="Ateliers & Formations">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           </span>
-          <span>Ateliers & Formations</span>
+          <span class="nav-label">Ateliers & Formations</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}" href="/inventory/" hx-get="/inventory/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}" href="/inventory/" hx-get="/inventory/" hx-target="#content" hx-push-url="true" title="Stocks & Consommables">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           </span>
-          <span>Stocks & Consommables</span>
+          <span class="nav-label">Stocks & Consommables</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'project_list' or request.resolver_match.url_name == 'project_create' %}active{% endif %}" href="/projects/" hx-get="/projects/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'project_list' or request.resolver_match.url_name == 'project_create' %}active{% endif %}" href="/projects/" hx-get="/projects/" hx-target="#content" hx-push-url="true" title="Projets & Communs">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </span>
-          <span>Projets & Communs</span>
+          <span class="nav-label">Projets & Communs</span>
         </a>
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}" href="/maintenance/" hx-get="/maintenance/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}" href="/maintenance/" hx-get="/maintenance/" hx-target="#content" hx-push-url="true" title="Maintenance & Pannes">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           </span>
-          <span>Maintenance & Pannes</span>
+          <span class="nav-label">Maintenance & Pannes</span>
         </a>
 
         {% if user.is_authenticated %}
         <div class="nav-section-title">Compte & Session</div>
 
         {% if is_superadmin or request.user.is_superuser %}
-        <a class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}" href="/superadmin/" hx-get="/superadmin/" hx-target="#content" hx-push-url="true" style="color: #8b5cf6; font-weight: 700;">
+        <a class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}" href="/superadmin/" hx-get="/superadmin/" hx-target="#content" hx-push-url="true" style="color: #8b5cf6; font-weight: 700;" title="SuperAdmin Center">
           <span class="nav-ico" style="color: #8b5cf6;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           </span>
-          <span>👑 SuperAdmin Center</span>
+          <span class="nav-label">👑 SuperAdmin Center</span>
         </a>
         {% endif %}
 
-        <a class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="/profile/" hx-get="/profile/" hx-target="#content" hx-push-url="true">
+        <a class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="/profile/" hx-get="/profile/" hx-target="#content" hx-push-url="true" title="Mon Profil">
           <span class="nav-ico">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </span>
-          <span>Mon Profil</span>
+          <span class="nav-label">Mon Profil</span>
         </a>
 
-        <a class="nav-item" href="/logout/" style="color: #ef4444;">
+        <a class="nav-item" href="/logout/" style="color: #ef4444;" title="Se déconnecter">
           <span class="nav-ico" style="color: #ef4444;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </span>
-          <span>Se déconnecter</span>
+          <span class="nav-label">Se déconnecter</span>
         </a>
         {% endif %}
       </nav>
@@ -503,8 +501,20 @@
     function toggleSidebar() {
       const body = document.body;
       const collapsed = body.getAttribute('data-sidebar') === 'collapsed';
-      body.setAttribute('data-sidebar', collapsed ? 'expanded' : 'collapsed');
+      const nextState = collapsed ? 'expanded' : 'collapsed';
+      body.setAttribute('data-sidebar', nextState);
+      try {
+        localStorage.setItem('sidebar_state', nextState);
+      } catch(e) {}
     }
+
+    // Init stored sidebar state on desktop
+    try {
+      const storedSidebar = localStorage.getItem('sidebar_state');
+      if (storedSidebar && window.innerWidth > 980) {
+        document.body.setAttribute('data-sidebar', storedSidebar);
+      }
+    } catch(e) {}
 
     function toggleMobileSidebar() {
       const body = document.body;

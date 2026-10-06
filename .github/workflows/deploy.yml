@@ -1,9 +1,21 @@
-name: Deploy FabOS to Azure ACI
+name: Deploy LabOS to Azure ACI
 
-# Déploiement automatique désactivé : l'abonnement Azure est suspendu et
-# l'hébergement passe sur Render (voir render.yaml). Reste déclenchable à la main.
 on:
+  push:
+    branches:
+      - main
+      - master
   workflow_dispatch:
+
+# Noms des ressources Azure (non sensibles) — secrets réservés aux identifiants.
+env:
+  RESOURCE_GROUP: rg-labos
+  LOCATION: francecentral
+  ACR_NAME: labosacrzrlsfo
+  STORAGE_ACCOUNT: labosdatazrlsfo
+  SHARE_NAME: labos-data
+  CONTAINER_NAME: aci-labos
+  DNS_LABEL: labos-app
 
 jobs:
   build-and-deploy:
@@ -20,35 +32,25 @@ jobs:
 
       - name: Build & Push Image to Azure Container Registry
         run: |
-          IMAGE_TAG="${{ github.sha }}"
-          ACR_NAME="${{ secrets.ACR_NAME }}"
-          echo "Building image fabos:${IMAGE_TAG} and tagging as latest..."
-          az acr build --registry "$ACR_NAME" --image fabos:${IMAGE_TAG} --image fabos:latest .
+          az acr build --registry "$ACR_NAME" \
+            --image "labos:${{ github.sha }}" \
+            --image labos:latest .
 
-      - name: Deploy to Azure Container Instances (ACI)
+      - name: Deploy to Azure Container Instances
         run: |
-          IMAGE_TAG="${{ github.sha }}"
-          RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP }}"
-          CONTAINER_NAME="${{ secrets.AZURE_CONTAINER_NAME || 'aci-fabos' }}"
-          ACR_NAME="${{ secrets.ACR_NAME }}"
-          STORAGE_ACCOUNT="${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          SHARE_NAME="${{ secrets.AZURE_SHARE_NAME || 'fabos-data' }}"
-          DNS_LABEL="${{ secrets.AZURE_DNS_LABEL || 'fabos-app' }}"
-
-          echo "Retrieving credentials..."
-          ST_KEY=$(az storage account keys list -g "$RESOURCE_GROUP" -n "$STORAGE_ACCOUNT" --query "[0].value" -o tsv)
           ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query "passwords[0].value" -o tsv)
+          ST_KEY=$(az storage account keys list -g "$RESOURCE_GROUP" -n "$STORAGE_ACCOUNT" --query "[0].value" -o tsv)
 
-          echo "Removing old container..."
+          echo "Suppression de l'ancien conteneur..."
           az container delete -g "$RESOURCE_GROUP" -n "$CONTAINER_NAME" --yes || true
 
-          echo "Creating container with image fabos:${IMAGE_TAG}..."
+          echo "Création du conteneur avec l'image ${{ github.sha }}..."
           az container create \
             --resource-group "$RESOURCE_GROUP" \
             --name "$CONTAINER_NAME" \
-            --location francecentral \
+            --location "$LOCATION" \
             --os-type Linux \
-            --image "${ACR_NAME}.azurecr.io/fabos:${IMAGE_TAG}" \
+            --image "${ACR_NAME}.azurecr.io/labos:${{ github.sha }}" \
             --registry-login-server "${ACR_NAME}.azurecr.io" \
             --registry-username "$ACR_NAME" \
             --registry-password "$ACR_PASS" \
@@ -64,25 +66,27 @@ jobs:
               DJANGO_DEBUG=0 \
               DJANGO_ALLOWED_HOSTS="*" \
               DJANGO_DATA_DIR="/home/data" \
-              USE_LOCAL_DB=0 \
               USE_PROD_POSTGRES=1 \
               USE_POSTGRES=0 \
+              DJANGO_BASE_DOMAIN="aidubber.fr" \
               EMAIL_HOST_USER="voicetranslator0@gmail.com" \
               DEFAULT_FROM_EMAIL="LabOS Platform <voicetranslator0@gmail.com>" \
             --secure-environment-variables \
               DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
-              EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
-              DJANGO_ADMIN_PASSWORD="${{ secrets.DJANGO_ADMIN_PASSWORD }}"
+              DJANGO_ADMIN_PASSWORD="${{ secrets.DJANGO_ADMIN_PASSWORD }}" \
+              EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}"
 
       - name: Verify Live Deployment
         run: |
-          echo "Waiting 15 seconds for container startup..."
-          sleep 15
-          CONTAINER_FQDN=$(az container show -g "${{ secrets.AZURE_RESOURCE_GROUP }}" -n "${{ secrets.AZURE_CONTAINER_NAME || 'aci-fabos' }}" --query "ipAddress.fqdn" -o tsv || echo "")
-          echo "Container FQDN: $CONTAINER_FQDN"
-          if [ -n "$CONTAINER_FQDN" ]; then
-            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${CONTAINER_FQDN}/" || echo "000")
-            echo "HTTP Status Code: $STATUS_CODE"
-          fi
-          echo "Deployment verified successfully."
+          FQDN=$(az container show -g "$RESOURCE_GROUP" -n "$CONTAINER_NAME" --query "ipAddress.fqdn" -o tsv)
+          echo "URL : http://${FQDN}"
+          for i in $(seq 1 20); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "http://${FQDN}/login/" || echo 000)
+            echo "tentative $i : HTTP $CODE"
+            [ "$CODE" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "L'application n'a pas répondu 200 après 5 minutes."
+          az container logs -g "$RESOURCE_GROUP" -n "$CONTAINER_NAME" | tail -40
+          exit 1

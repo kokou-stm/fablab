@@ -120,18 +120,31 @@ def signup_view(request):
         # Notification email d'inscription
         send_member_signup_notification(user, target_tenant)
 
-        login(request, user)
+        # Pas de connexion automatique : le compte reste en attente de validation.
+        # On mémorise seulement l'identifiant pour afficher le suivi du dossier.
+        request.session['pending_user_id'] = user.id
         if target_tenant:
             request.session['tenant_slug'] = target_tenant.slug
-        
+
         return redirect('signup_pending')
 
     return render(request, 'accounts/signup.html', {'tenant': tenant, 'all_tenants': all_tenants})
 
 
 def signup_pending_view(request):
-    """Page d'information et de confirmation post-inscription (compte en attente de validation)."""
-    return render(request, 'accounts/signup_pending.html')
+    """Suivi du dossier d'inscription, sans que le compte soit connecté."""
+    pending_user = None
+    if request.user.is_authenticated and not request.user.is_approved:
+        pending_user = request.user
+    else:
+        pending_id = request.session.get('pending_user_id')
+        if pending_id:
+            pending_user = User.objects.filter(id=pending_id, is_approved=False).first()
+
+    if not pending_user:
+        return redirect('landing')
+
+    return render(request, 'accounts/signup_pending.html', {'pending_user': pending_user})
 
 
 def profile_view(request):

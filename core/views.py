@@ -15,8 +15,15 @@ from workshops.models import Workshop, WorkshopRegistration, CourseLesson, Lesso
 from inventory.models import InventoryItem
 from projects.models import Project
 from accounts.decorators import role_required, fabmanager_required, approved_member_required
-from core.emails import send_tenant_registered_email, send_member_signup_notification, send_member_approved_email
-from core.models import Channel, MessageTag, Message, ChannelReadStatus
+from core.emails import (
+    send_tenant_registered_email,
+    send_member_signup_notification,
+    send_member_approved_email,
+    send_reservation_request_email,
+    send_reservation_decision_email,
+)
+import json
+from core.models import Channel, MessageTag, Message, ChannelReadStatus, NotificationReadStatus
 
 def landing_view(request):
     """Vue de la page d'accueil (Landing Page) institutionnelle et vitrine FabOS."""
@@ -243,6 +250,20 @@ def equipment_detail_view(request, slug):
     return render(request, 'equipment/detail.html', context)
 
 
+def _release_equipment_if_free(equipment):
+    """Repasse une machine en disponible s'il ne lui reste aucune réservation confirmée.
+
+    Sans ça, une machine mise en « Réservé » à la validation d'un créneau y
+    resterait bloquée après l'annulation de ce créneau.
+    """
+    if equipment.status != 'RESERVED':
+        return
+    still_booked = equipment.reservations.filter(status__in=['APPROVED', 'ACTIVE']).exists()
+    if not still_booked:
+        equipment.status = 'AVAILABLE'
+        equipment.save(update_fields=['status'])
+
+
 def reservation_list_view(request):
     reservations = Reservation.objects.select_related('equipment').all()
     equipments = Equipment.objects.select_related('category').filter(status='AVAILABLE')
@@ -265,10 +286,16 @@ def reservation_list_view(request):
             if action == 'approve_reservation':
                 res_obj.status = 'APPROVED'
                 res_obj.save()
-                messages.success(request, f"✓ La réservation #{res_obj.id} pour {res_obj.user_full_name} a été confirmée !")
+                # La machine n'est plus réservable tant que ce créneau est confirmé.
+                res_obj.equipment.status = 'RESERVED'
+                res_obj.equipment.save(update_fields=['status'])
+                send_reservation_decision_email(res_obj, approved=True)
+                messages.success(request, f"✓ La réservation #{res_obj.id} pour {res_obj.user_full_name} a été confirmée ! La machine '{res_obj.equipment.name}' passe en « En Utilisation / Réservé ».")
             elif action == 'reject_reservation':
                 res_obj.status = 'CANCELLED'
                 res_obj.save()
+                _release_equipment_if_free(res_obj.equipment)
+                send_reservation_decision_email(res_obj, approved=False)
                 messages.info(request, f"✕ La réservation #{res_obj.id} a été refusée.")
             return redirect('reservation_list')
 
@@ -328,7 +355,7 @@ def reservation_list_view(request):
             duration_hours = (parsed_end - parsed_start).total_seconds() / 3600
             total_cost = round(float(eq.hourly_rate) * duration_hours, 2)
 
-            Reservation.objects.create(
+            reservation = Reservation.objects.create(
                 equipment=eq,
                 user=request.user,
                 user_username=request.user.username,
@@ -339,6 +366,7 @@ def reservation_list_view(request):
                 status='PENDING',
                 total_cost=total_cost
             )
+            send_reservation_request_email(reservation, getattr(request, 'tenant', None) or request.user.fablab)
             messages.success(request, f"⏳ Votre demande de réservation sur {eq.name} a été enregistrée avec succès ! Elle est en attente de validation par le FabManager.")
             return redirect('reservation_list')
 
@@ -366,6 +394,7 @@ def reservation_cancel_view(request, pk):
 
         reservation.status = 'CANCELLED'
         reservation.save()
+        _release_equipment_if_free(reservation.equipment)
         messages.success(request, f"La réservation #{reservation.id} a été annulée avec succès.")
     return redirect('reservation_list')
 
@@ -869,9 +898,10 @@ def register_tenant_view(request):
         # 5. Notification Email de confirmation d'inscription d'espace
         send_tenant_registered_email(fablab, user)
 
-        # 6. Connexion & Redirection avec notification d'examen par le SuperAdmin
+        # 6. Redirection vers le suivi de dossier, sans connecter le compte :
+        # il reste en attente de validation par le SuperAdmin.
         request.session['tenant_slug'] = clean_slug
-        login(request, user)
+        request.session['pending_user_id'] = user.id
 
         messages.info(
             request, 
@@ -885,83 +915,100 @@ def register_tenant_view(request):
 from django.http import JsonResponse
 
 def notifications_api_view(request):
-    """API de notifications en temps réel pour la cloche du topbar."""
+    """API de notifications en temps réel pour la cloche du topbar avec filtrage des alertes déjà lues."""
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0, 'items': []})
+
+    # Récupérer l'ensemble des clés de notifications déjà acquittées par l'utilisateur
+    read_keys = set(
+        NotificationReadStatus.objects.filter(user=request.user).values_list('notification_key', flat=True)
+    )
 
     items = []
 
     # 1. Pour les FabManagers et SuperAdmins : Réservations en attente
     if request.user.is_superuser or request.user.is_fabmanager_user:
-        pending_res = Reservation.objects.select_related('equipment').filter(status='PENDING')[:5]
+        pending_res = Reservation.objects.select_related('equipment').filter(status='PENDING')[:10]
         for r in pending_res:
-            items.append({
-                'id': f"res-{r.id}",
-                'icon': '⏳',
-                'title': 'Réservation à valider',
-                'text': f"{r.user_full_name} a demandé la machine {r.equipment.name}",
-                'url': '/reservations/',
-                'time': r.created_at.strftime('%H:%M')
-            })
+            key = f"res-{r.id}"
+            if key not in read_keys:
+                items.append({
+                    'id': key,
+                    'icon': '⏳',
+                    'title': 'Réservation à valider',
+                    'text': f"{r.user_full_name} a demandé la machine {r.equipment.name}",
+                    'url': '/reservations/',
+                    'time': r.created_at.strftime('%H:%M')
+                })
 
         # 2. Pour les FabManagers : Membres en attente d'approbation
-        pending_members = User.objects.filter(is_approved=False, is_superuser=False)[:5]
+        pending_members = User.objects.filter(is_approved=False, is_superuser=False)[:10]
         for m in pending_members:
-            items.append({
-                'id': f"mem-{m.id}",
-                'icon': '👤',
-                'title': 'Nouvel inscrit en attente',
-                'text': f"{m.get_full_name() or m.username} ({m.get_role_display()}) attend votre validation.",
-                'url': '/members/',
-                'time': m.date_joined.strftime('%H:%M')
-            })
+            key = f"mem-{m.id}"
+            if key not in read_keys:
+                items.append({
+                    'id': key,
+                    'icon': '👤',
+                    'title': 'Nouvel inscrit en attente',
+                    'text': f"{m.get_full_name() or m.username} ({m.get_role_display()}) attend votre validation.",
+                    'url': '/members/',
+                    'time': m.date_joined.strftime('%H:%M')
+                })
 
         # 3. Tickets de maintenance ouverts
-        open_tickets = MaintenanceTicket.objects.select_related('equipment').filter(status='OPEN')[:3]
+        open_tickets = MaintenanceTicket.objects.select_related('equipment').filter(status='OPEN')[:5]
         for t in open_tickets:
-            items.append({
-                'id': f"maint-{t.id}",
-                'icon': '🛠️',
-                'title': 'Incident signalé',
-                'text': f"{t.equipment.name} : {t.issue_title}",
-                'url': '/maintenance/',
-                'time': t.created_at.strftime('%H:%M')
-            })
+            key = f"maint-{t.id}"
+            if key not in read_keys:
+                items.append({
+                    'id': key,
+                    'icon': '🛠️',
+                    'title': 'Incident signalé',
+                    'text': f"{t.equipment.name} : {t.issue_title}",
+                    'url': '/maintenance/',
+                    'time': t.created_at.strftime('%H:%M')
+                })
     else:
         # Pour les membres réguliers : Leurs réservations validées
-        my_res = Reservation.objects.select_related('equipment').filter(user=request.user, status='APPROVED')[:5]
+        my_res = Reservation.objects.select_related('equipment').filter(user=request.user, status='APPROVED')[:10]
         for r in my_res:
+            key = f"myres-{r.id}"
+            if key not in read_keys:
+                items.append({
+                    'id': key,
+                    'icon': '✓',
+                    'title': 'Réservation Confirmée',
+                    'text': f"Votre créneau sur {r.equipment.name} est validé.",
+                    'url': '/reservations/',
+                    'time': r.created_at.strftime('%H:%M')
+                })
+
+    # 4. Notifications pour les messages reçus et mentions @username
+    unread_dms = Message.objects.select_related('sender', 'channel').filter(recipient=request.user, is_read=False)[:5]
+    for msg in unread_dms:
+        key = f"dm-{msg.id}"
+        if key not in read_keys:
             items.append({
-                'id': f"myres-{r.id}",
-                'icon': '✓',
-                'title': 'Réservation Confirmée',
-                'text': f"Votre créneau sur {r.equipment.name} est validé.",
-                'url': '/reservations/',
-                'time': r.created_at.strftime('%H:%M')
+                'id': key,
+                'icon': '💬',
+                'title': f"Message privé de {msg.sender_username}",
+                'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
+                'url': f"/messaging/?dm={msg.sender_id}",
+                'time': msg.created_at.strftime('%H:%M')
             })
 
-    # Notifications pour les messages reçus et mentions @username
-    unread_dms = Message.objects.select_related('sender', 'channel').filter(recipient=request.user, is_read=False)[:3]
-    for msg in unread_dms:
-        items.append({
-            'id': f"dm-{msg.id}",
-            'icon': '💬',
-            'title': f"Message privé de {msg.sender_username}",
-            'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
-            'url': f"/messaging/?dm={msg.sender_id}",
-            'time': msg.created_at.strftime('%H:%M')
-        })
-
-    mention_msgs = Message.objects.select_related('sender', 'channel').filter(content__icontains=f"@{request.user.username}").exclude(sender=request.user).order_by('-created_at')[:3]
+    mention_msgs = Message.objects.select_related('sender', 'channel').filter(content__icontains=f"@{request.user.username}").exclude(sender=request.user).order_by('-created_at')[:5]
     for msg in mention_msgs:
-        items.append({
-            'id': f"mention-{msg.id}",
-            'icon': '💬',
-            'title': f"Mention par @{msg.sender_username}",
-            'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
-            'url': f"/messaging/?channel={msg.channel.slug}" if msg.channel else f"/messaging/?dm={msg.sender_id}",
-            'time': msg.created_at.strftime('%H:%M')
-        })
+        key = f"mention-{msg.id}"
+        if key not in read_keys:
+            items.append({
+                'id': key,
+                'icon': '💬',
+                'title': f"Mention par @{msg.sender_username}",
+                'text': msg.content[:55] + ('...' if len(msg.content) > 55 else ''),
+                'url': f"/messaging/?channel={msg.channel.slug}" if msg.channel else f"/messaging/?dm={msg.sender_id}",
+                'time': msg.created_at.strftime('%H:%M')
+            })
 
     return JsonResponse({
         'count': len(items),
@@ -969,7 +1016,43 @@ def notifications_api_view(request):
     })
 
 
-from core.models import Channel, MessageTag, Message
+def mark_notification_read_api_view(request):
+    """Marque une ou plusieurs notifications comme lues pour l'utilisateur connecté."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        data = {}
+
+    notif_id = data.get('id')
+    mark_all = data.get('mark_all', False)
+    all_ids = data.get('ids', [])
+
+    if mark_all or all_ids:
+        ids_to_mark = all_ids or []
+        for nid in ids_to_mark:
+            if nid:
+                NotificationReadStatus.objects.get_or_create(user=request.user, notification_key=str(nid))
+                if str(nid).startswith('dm-'):
+                    msg_id = str(nid).replace('dm-', '')
+                    Message.objects.filter(id=msg_id, recipient=request.user).update(is_read=True)
+        return JsonResponse({'status': 'ok', 'marked_all': True})
+
+    if notif_id:
+        NotificationReadStatus.objects.get_or_create(user=request.user, notification_key=str(notif_id))
+        if str(notif_id).startswith('dm-'):
+            msg_id = str(notif_id).replace('dm-', '')
+            Message.objects.filter(id=msg_id, recipient=request.user).update(is_read=True)
+        return JsonResponse({'status': 'ok', 'id': notif_id})
+
+    return JsonResponse({'error': 'Missing notification id'}, status=400)
+
+
 from accounts.models import User
 
 @approved_member_required

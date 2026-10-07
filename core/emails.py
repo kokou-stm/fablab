@@ -70,7 +70,7 @@ def send_member_signup_notification(user, tenant):
     )
     
     # 2. Email de notification pour le FabManager
-    manager_subject = f"[LabOS Notification] Nouveauté : Inscription en attente de validation"
+    manager_subject = f"[LabOS] Inscription en attente de validation"
     manager_message = (
         f"Bonjour,\n\n"
         f"Un nouveau membre ({user.get_full_name() or user.username} - {user.email}) s'est inscrit sur l'espace {lab_name}.\n"
@@ -158,3 +158,81 @@ def send_member_info_request_email(user, custom_message):
         send_mail(subject, message, getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@labos.com'), [user.email], fail_silently=True)
     except Exception as e:
         logger.error(f"Erreur d'envoi d'email de demande d'informations: {e}")
+
+
+def send_reservation_request_email(reservation, tenant):
+    """Prévient les responsables du FabLab qu'une réservation attend leur validation."""
+    lab_name = tenant.name if tenant else "LabOS"
+    reservations_url = f"{get_base_url(tenant)}/reservations/"
+
+    # Responsables du FabLab + adresse de contact de l'espace, sans doublon.
+    recipients = []
+    if tenant:
+        from accounts.models import User
+        recipients = list(
+            User.objects.filter(
+                fablab=tenant, role__in=['FABMANAGER', 'ADMIN'], is_approved=True
+            ).exclude(email='').values_list('email', flat=True)
+        )
+        if tenant.contact_email:
+            recipients.append(tenant.contact_email)
+    recipients = sorted(set(r for r in recipients if r))
+    if not recipients:
+        return
+
+    subject = f"[LabOS] Nouvelle demande de réservation - {reservation.equipment.name}"
+    message = (
+        f"Bonjour,\n\n"
+        f"Une nouvelle demande de réservation attend votre validation sur l'espace '{lab_name}'.\n\n"
+        f"• Machine : {reservation.equipment.name}\n"
+        f"• Demandeur : {reservation.user_full_name}\n"
+        f"• Créneau : du {reservation.start_time.strftime('%d/%m/%Y à %H:%M')} "
+        f"au {reservation.end_time.strftime('%d/%m/%Y à %H:%M')}\n"
+        f"• Coût estimé : {reservation.total_cost} €\n"
+        + (f"• Description du travail : {reservation.project_description}\n" if reservation.project_description else "")
+        + f"\n🔗 Valider ou refuser la demande :\n{reservations_url}\n\n"
+        f"L'équipe {lab_name}."
+    )
+    try:
+        send_mail(subject, message, getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@labos.com'), recipients, fail_silently=True)
+    except Exception as e:
+        logger.error(f"Erreur d'envoi d'email de demande de réservation: {e}")
+
+
+def send_reservation_decision_email(reservation, approved):
+    """Informe le membre que sa réservation a été confirmée ou refusée."""
+    user = reservation.user
+    if not user or not user.email:
+        return
+    tenant = getattr(user, 'fablab', None)
+    lab_name = tenant.name if tenant else "LabOS"
+    reservations_url = f"{get_base_url(tenant)}/reservations/"
+
+    creneau = (
+        f"du {reservation.start_time.strftime('%d/%m/%Y à %H:%M')} "
+        f"au {reservation.end_time.strftime('%d/%m/%Y à %H:%M')}"
+    )
+    if approved:
+        subject = f"[LabOS] Réservation confirmée - {reservation.equipment.name}"
+        message = (
+            f"Bonjour {user.get_full_name() or user.username},\n\n"
+            f"Votre réservation a été confirmée par le responsable du FabLab '{lab_name}'.\n\n"
+            f"• Machine : {reservation.equipment.name}\n"
+            f"• Créneau : {creneau}\n\n"
+            f"🔗 Voir vos réservations :\n{reservations_url}\n\n"
+            f"L'équipe {lab_name}."
+        )
+    else:
+        subject = f"[LabOS] Réservation refusée - {reservation.equipment.name}"
+        message = (
+            f"Bonjour {user.get_full_name() or user.username},\n\n"
+            f"Votre demande de réservation n'a pas été retenue par le responsable du FabLab '{lab_name}'.\n\n"
+            f"• Machine : {reservation.equipment.name}\n"
+            f"• Créneau demandé : {creneau}\n\n"
+            f"Vous pouvez proposer un autre créneau depuis votre espace :\n{reservations_url}\n\n"
+            f"L'équipe {lab_name}."
+        )
+    try:
+        send_mail(subject, message, getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@labos.com'), [user.email], fail_silently=True)
+    except Exception as e:
+        logger.error(f"Erreur d'envoi d'email de décision de réservation: {e}")

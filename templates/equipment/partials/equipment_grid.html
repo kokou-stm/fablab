@@ -124,10 +124,15 @@
   <!-- Grid of Equipments -->
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
     {% for eq in equipments %}
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; const img=this.querySelector('img'); if(img) img.style.transform='scale(1.04)';" onmouseout="this.style.transform='translateY(0)'; const img=this.querySelector('img'); if(img) img.style.transform='scale(1)';">
         {% if eq.image %}
-          <div style="width: 100%; height: 160px; overflow: hidden; border-bottom: 1px solid var(--border); background: var(--panel);">
-            <img src="{{ eq.image.url }}" alt="{{ eq.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+          <div style="width: 100%; height: 210px; overflow: hidden; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: center; position: relative;">
+            <img src="{{ eq.image.url }}" alt="{{ eq.name }}" style="max-width: 100%; max-height: 100%; width: auto; height: 100%; object-fit: contain; padding: 12px; transition: transform 0.25s ease;" loading="lazy">
+          </div>
+        {% else %}
+          <div style="width: 100%; height: 150px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted);">
+            <span style="font-size: 32px;">⚙️</span>
+            <span style="font-size: 11px; font-weight: 600;">Photo de la machine</span>
           </div>
         {% endif %}
         <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
@@ -145,12 +150,12 @@
           <div style="font-size: 12px; color: var(--muted);">Modèle : {{ eq.model_number|default:"Standard" }}</div>
           
           <div style="margin-top: 14px; padding: 10px; background: var(--panel); border-radius: var(--radius-sm); font-size: 12px;">
-            <div>📍 <strong>Zone :</strong> {{ eq.location_zone }}</div>
-            <div style="margin-top: 4px;">⚡ <strong>Puissance :</strong> {{ eq.power_watts }} Watts</div>
+            <div> <strong>Zone :</strong> {{ eq.location_zone }}</div>
+            <div style="margin-top: 4px;"> <strong>Puissance :</strong> {{ eq.power_watts }} Watts</div>
             {% if eq.requires_certification %}
-              <div style="margin-top: 4px; color: #f59e0b; font-weight: 600;">🔒 Habilitation requise</div>
+              <div style="margin-top: 4px; color: #f59e0b; font-weight: 600;"> Habilitation requise</div>
             {% else %}
-              <div style="margin-top: 4px; color: #10b981; font-weight: 600;">🔓 Accès Libre</div>
+              <div style="margin-top: 4px; color: #10b981; font-weight: 600;"> Accès Libre</div>
             {% endif %}
           </div>
 

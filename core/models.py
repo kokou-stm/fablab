@@ -77,3 +77,19 @@ class ChannelReadStatus(models.Model):
         unique_together = ('user', 'channel')
         verbose_name = "Statut de Lecture Canal"
         verbose_name_plural = "Statuts de Lecture Canaux"
+
+
+class NotificationReadStatus(models.Model):
+    """Suivi des notifications lues / acquittées par chaque utilisateur."""
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name="read_notifications")
+    notification_key = models.CharField("Clé de la notification", max_length=100, db_index=True)
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'notification_key')
+        verbose_name = "Notification Lue"
+        verbose_name_plural = "Notifications Lues"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.notification_key}"
+

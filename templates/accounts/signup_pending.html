@@ -14,7 +14,7 @@
       Votre Inscription est en cours d'Étude par l'Administration
     </h1>
     <p style="color: var(--muted); font-size: 15px; margin: 0; line-height: 1.5;">
-      Merci <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> ! Votre demande de compte a été enregistrée avec succès.
+      Merci <strong>{{ pending_user.get_full_name|default:pending_user.username }}</strong> ! Votre demande de compte a été enregistrée avec succès.
     </p>
   </div>
 
@@ -24,36 +24,36 @@
       📌 Détails de votre Demande :
     </div>
 
-  {% if request.user.bio and '[Demande de précision' in request.user.bio %}
+  {% if pending_user.bio and '[Demande de précision' in pending_user.bio %}
     <!-- Alerte Message du FabManager -->
     <div style="background: rgba(59, 130, 246, 0.1); border: 2px solid #2563eb; border-radius: var(--radius-md); padding: 18px; margin-bottom: 28px;">
       <div style="font-size: 14px; font-weight: 800; color: #2563eb; display: flex; align-items: center; gap: 8px;">
         ✉️ Demande de précision du FabManager :
       </div>
       <div style="font-size: 13.5px; color: var(--text); margin-top: 8px; font-style: italic; line-height: 1.5; background: var(--surface); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-        {{ request.user.bio }}
+        {{ pending_user.bio }}
       </div>
       <div style="font-size: 12px; color: var(--muted); margin-top: 10px;">
-        Vous avez également reçu cette demande par e-mail à l'adresse {{ request.user.email }}.
+        Vous avez également reçu cette demande par e-mail à l'adresse {{ pending_user.email }}.
       </div>
     </div>
   {% endif %}
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
       <div>
         <span style="color: var(--muted);">Identifiant :</span>
-        <strong style="color: var(--text); display: block; margin-top: 2px;">@{{ request.user.username }}</strong>
+        <strong style="color: var(--text); display: block; margin-top: 2px;">@{{ pending_user.username }}</strong>
       </div>
       <div>
         <span style="color: var(--muted);">Adresse Email :</span>
-        <strong style="color: var(--text); display: block; margin-top: 2px;">{{ request.user.email }}</strong>
+        <strong style="color: var(--text); display: block; margin-top: 2px;">{{ pending_user.email }}</strong>
       </div>
       <div>
         <span style="color: var(--muted);">FabLab Rattaché :</span>
-        <strong style="color: var(--text); display: block; margin-top: 2px;">{{ tenant.name|default:request.user.fablab.name|default:"LabOS Master" }}</strong>
+        <strong style="color: var(--text); display: block; margin-top: 2px;">{{ tenant.name|default:pending_user.fablab.name|default:"LabOS Master" }}</strong>
       </div>
       <div>
         <span style="color: var(--muted);">Profil Sollicité :</span>
-        <strong style="color: #8b5cf6; display: block; margin-top: 2px;">{{ request.user.get_role_display }}</strong>
+        <strong style="color: #8b5cf6; display: block; margin-top: 2px;">{{ pending_user.get_role_display }}</strong>
       </div>
     </div>
   </div>
@@ -73,7 +73,7 @@
         <div>
           <div style="font-weight: 700; font-size: 14px; color: var(--text);">1. Formulaire & Justificatif Transmis</div>
           <div style="font-size: 13px; color: var(--muted); margin-top: 2px;">
-            Vos coordonnées{% if request.user.dossier_document %} et votre document justificatif{% endif %} ont été transmis en toute sécurité.
+            Vos coordonnées{% if pending_user.dossier_document %} et votre document justificatif{% endif %} ont été transmis en toute sécurité.
           </div>
         </div>
       </div>

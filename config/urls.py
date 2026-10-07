@@ -58,6 +58,7 @@ urlpatterns = [
 
     # API Notifications en Temps Réel
     path('api/notifications/', views.notifications_api_view, name='notifications_api'),
+    path('api/notifications/read/', views.mark_notification_read_api_view, name='mark_notification_read_api'),
 ]
 
 from django.urls import re_path

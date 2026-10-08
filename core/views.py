@@ -113,10 +113,9 @@ def switch_tenant_view(request, slug):
         return redirect(redirect_url)
 
     fablab = get_object_or_404(FabLab, slug=slug)
+    # Le contexte passe uniquement par la session : rattacher le compte SuperAdmin
+    # au FabLab le ferait apparaître dans l'annuaire des membres de cet espace.
     request.session['tenant_slug'] = fablab.slug
-    if request.user.is_authenticated and (request.user.is_superuser or getattr(request.user, 'role', '') == 'ADMIN'):
-        request.user.fablab = fablab
-        request.user.save()
     messages.success(request, f"Vous êtes maintenant sur le tenant : {fablab.name}")
     redirect_url = request.META.get('HTTP_REFERER', '/')
     return redirect(redirect_url)
@@ -194,7 +193,7 @@ def equipment_create_view(request):
             doc_url=doc_url if doc_url else None,
             status='AVAILABLE'
         )
-        messages.success(request, f"La machine '{equipment.name}' a été ajoutée avec succès au parc d'équipements !")
+        messages.success(request, f"La machine '{equipment.name}' a été ajoutée  au parc d'équipements !")
         return redirect('equipment_list')
     return redirect('equipment_list')
 
@@ -232,7 +231,7 @@ def equipment_detail_view(request, slug):
             equipment.doc_file = request.FILES.get('doc_file')
 
         equipment.save()
-        messages.success(request, f"La fiche de la machine '{equipment.name}' a été mise à jour avec succès !")
+        messages.success(request, f"La fiche de la machine '{equipment.name}' a été mise à jour  !")
         return redirect('equipment_detail', slug=equipment.slug)
 
     tickets = equipment.maintenance_tickets.select_related('equipment').all()
@@ -248,6 +247,15 @@ def equipment_detail_view(request, slug):
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         return render(request, 'equipment/partials/detail_content.html', context)
     return render(request, 'equipment/detail.html', context)
+
+
+def _platform_admins_hidden(queryset):
+    """Masque les comptes d'administration de la plateforme (SuperAdmin).
+
+    Ils n'appartiennent à aucun établissement et ne doivent apparaître ni dans
+    l'annuaire, ni dans les habilitations, ni dans la messagerie d'un FabLab.
+    """
+    return queryset.exclude(is_superuser=True).exclude(role='ADMIN')
 
 
 def _release_equipment_if_free(equipment):
@@ -367,7 +375,7 @@ def reservation_list_view(request):
                 total_cost=total_cost
             )
             send_reservation_request_email(reservation, getattr(request, 'tenant', None) or request.user.fablab)
-            messages.success(request, f"⏳ Votre demande de réservation sur {eq.name} a été enregistrée avec succès ! Elle est en attente de validation par le FabManager.")
+            messages.success(request, f"⏳ Votre demande de réservation sur {eq.name} a été enregistrée  ! Elle est en attente de validation par le FabManager.")
             return redirect('reservation_list')
 
     context = {
@@ -395,7 +403,7 @@ def reservation_cancel_view(request, pk):
         reservation.status = 'CANCELLED'
         reservation.save()
         _release_equipment_if_free(reservation.equipment)
-        messages.success(request, f"La réservation #{reservation.id} a été annulée avec succès.")
+        messages.success(request, f"La réservation #{reservation.id} a été annulée .")
     return redirect('reservation_list')
 
 
@@ -480,10 +488,12 @@ def certification_list_view(request):
             )
             target_user.is_certified = True
             target_user.save()
-            messages.success(request, f"Habilitation '{cert.name}' accordée avec succès à {target_user.get_full_name() or target_user.username} !")
+            messages.success(request, f"Habilitation '{cert.name}' accordée  à {target_user.get_full_name() or target_user.username} !")
             return redirect('certification_list')
 
-    members = User.objects.filter(fablab=request.tenant) if getattr(request, 'tenant', None) else User.objects.all()
+    members = _platform_admins_hidden(
+        User.objects.filter(fablab=request.tenant) if getattr(request, 'tenant', None) else User.objects.all()
+    )
     context = {
         'certifications': certifications,
         'user_certs': user_certs,
@@ -554,7 +564,7 @@ def workshop_list_view(request):
                     max_seats=max_seats or 10,
                     image=image
                 )
-                messages.success(request, f"La formation '{ws.title}' a été créée avec succès !")
+                messages.success(request, f"La formation '{ws.title}' a été créée  !")
                 return redirect(f"/workshops/{ws.id}/")
 
         elif action == 'register':
@@ -787,7 +797,7 @@ def project_create_view(request):
             project.cover_image = request.FILES['cover_image']
             project.save()
 
-        messages.success(request, f"Votre projet '{project.title}' a été publié avec succès !")
+        messages.success(request, f"Votre projet '{project.title}' a été publié  !")
         return redirect('project_list')
 
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
@@ -905,7 +915,7 @@ def register_tenant_view(request):
 
         messages.info(
             request, 
-            f"L'espace FabLab '{fablab.name}' a été créé avec succès ! Votre demande a été transmise au SuperAdmin pour validation."
+            f"L'espace FabLab '{fablab.name}' a été créé  ! Votre demande a été transmise au SuperAdmin pour validation."
         )
         return redirect('signup_pending')
 
@@ -1103,12 +1113,12 @@ def messaging_view(request):
 
     # Récupérer uniquement les membres du MÊME FabLab tenant pour la messagerie et les DMs
     if current_lab:
-        members = User.objects.filter(is_approved=True, fablab=current_lab).exclude(id=request.user.id)
+        members = _platform_admins_hidden(User.objects.filter(is_approved=True, fablab=current_lab)).exclude(id=request.user.id)
     else:
-        members = User.objects.filter(is_approved=True).exclude(id=request.user.id)
+        members = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
     if not members.exists():
-        members = User.objects.filter(is_approved=True).exclude(id=request.user.id)
+        members = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
     # 2. Traitement des formulaires POST (Création de canal, Invitation, Envoi de message)
     if request.method == 'POST':
@@ -1148,7 +1158,7 @@ def messaging_view(request):
                 if invited_member_ids:
                     new_channel.members.add(*invited_member_ids)
 
-                messages.success(request, f"Canal #{name} créé avec succès !")
+                messages.success(request, f"Canal #{name} créé  !")
                 return redirect(f"/messaging/?channel={new_channel.slug}")
 
         # Action B: Inviter des membres supplémentaires dans le canal actif
@@ -1157,7 +1167,7 @@ def messaging_view(request):
             if active_channel and invited_member_ids:
                 if active_channel.creator == request.user or request.user.is_fabmanager_user or request.user.is_superuser:
                     active_channel.members.add(*invited_member_ids)
-                    messages.success(request, "Membres invités avec succès dans le groupe !")
+                    messages.success(request, "Membres invités  dans le groupe !")
                 else:
                     messages.error(request, "Seul le créateur du groupe ou un FabManager peut inviter des membres.")
             return redirect(f"/messaging/?channel={active_channel.slug if active_channel else 'general'}")
@@ -1220,12 +1230,12 @@ def messaging_view(request):
 
     # Récupérer uniquement les membres du MÊME FabLab tenant pour la messagerie et les DMs
     if current_lab:
-        members_qs = User.objects.filter(is_approved=True, fablab=current_lab).exclude(id=request.user.id)
+        members_qs = _platform_admins_hidden(User.objects.filter(is_approved=True, fablab=current_lab)).exclude(id=request.user.id)
     else:
-        members_qs = User.objects.filter(is_approved=True).exclude(id=request.user.id)
+        members_qs = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
     if not members_qs.exists():
-        members_qs = User.objects.filter(is_approved=True).exclude(id=request.user.id)
+        members_qs = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
     # 4. Calcul des notifications / badges de messages non lus (Style Discord / WhatsApp)
     from django.db.models import Count

@@ -11,4 +11,4 @@ class FabLabAdmin(admin.ModelAdmin):
     @admin.action(description="Approuver les FabLabs sélectionnés (Validation SuperAdmin)")
     def approve_selected_fablabs(self, request, queryset):
         count = queryset.update(is_approved=True, is_active=True)
-        self.message_user(request, f"{count} espace(s) FabLab ont été approuvés avec succès.")
+        self.message_user(request, f"{count} espace(s) FabLab ont été approuvés .")

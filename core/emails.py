@@ -32,7 +32,7 @@ def send_tenant_registered_email(fablab, user):
     subject = f"[LabOS] Demande de création d'espace FabLab : {fablab.name}"
     message = (
         f"Bonjour {user.get_full_name() or user.username},\n\n"
-        f"Votre demande de création de l'espace FabLab '{fablab.name}' a été enregistrée avec succès.\n"
+        f"Votre demande de création de l'espace FabLab '{fablab.name}' a été enregistrée .\n"
         f"Votre document justificatif a été transmis à l'équipe SuperAdmin pour vérification.\n\n"
         f"Identifiant de l'espace (slug) : {fablab.slug}\n"
         f"Plan tarifaire : {fablab.get_plan_display()}\n"
@@ -64,7 +64,7 @@ def send_member_signup_notification(user, tenant):
     member_message = (
         f"Bonjour {user.get_full_name() or user.username},\n\n"
         f"Votre demande d'inscription sur l'espace FabLab '{lab_name}' a bien été reçue.\n\n"
-        f"⏳ Statut de votre demande : Votre dossier est actuellement en cours d'examen par le responsable (FabManager) de votre établissement.\n"
+        f" Statut de votre demande : Votre dossier est actuellement en cours d'examen par le responsable (FabManager) de votre établissement.\n"
         f"Vous recevrez un e-mail de confirmation dès que vos accès auront été validés.\n\n"
         f"L'équipe {lab_name}."
     )
@@ -106,7 +106,7 @@ def send_member_approved_email(user):
     subject = f"[LabOS] Compte validé — Créez votre mot de passe - {lab_name}"
     message = (
         f"Félicitations {user.get_full_name() or user.username} !\n\n"
-        f"Votre compte membre a été validé avec succès par le responsable du FabLab '{lab_name}'.\n\n"
+        f"Votre compte membre a été validé  par le responsable du FabLab '{lab_name}'.\n\n"
         f" Votre identifiant de connexion : {user.username}\n\n"
         f" Dernière étape : créez votre mot de passe pour activer votre compte :\n"
         f"{set_password_url}\n\n"
@@ -149,8 +149,8 @@ def send_member_info_request_email(user, custom_message):
         f"Le FabManager / Responsable de votre espace FabLab '{lab_name}' a examiné votre dossier d'inscription et sollicite des précisions complémentaires :\n\n"
         f"💬 Message du FabManager :\n"
         f"« {custom_message} »\n\n"
-        f"📌 Statut de votre demande : En attente de complément d'informations.\n\n"
-        f"🔗 Veuillez vous connecter pour mettre à jour votre dossier ou transmettre la pièce demandée :\n"
+        f" Statut de votre demande : En attente de complément d'informations.\n\n"
+        f" Veuillez vous connecter pour mettre à jour votre dossier ou transmettre la pièce demandée :\n"
         f"{login_url}\n\n"
         f"L'équipe {lab_name}."
     )

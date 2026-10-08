@@ -11,4 +11,4 @@ class Command(BaseCommand):
         for fablab in tenants:
             self.stdout.write(f"-> Migrating tenant '{fablab.slug}' ({fablab.name})...")
             migrate_tenant(fablab.slug, verbosity=0)
-        self.stdout.write(self.style.SUCCESS("Toutes les bases de données tenant ont été migrées avec succès !"))
+        self.stdout.write(self.style.SUCCESS("Toutes les bases de données tenant ont été migrées  !"))

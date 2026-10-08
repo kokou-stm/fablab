@@ -223,4 +223,4 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"   ✓ Données peuplées pour le schéma : {lab.slug}"))
 
-        self.stdout.write(self.style.SUCCESS("\n✨ Initialisation Multi-Tenant de FabOS terminée avec succès !"))
+        self.stdout.write(self.style.SUCCESS("\n✨ Initialisation Multi-Tenant de FabOS terminée  !"))

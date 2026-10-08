@@ -59,7 +59,7 @@ def login_view(request):
 def logout_view(request):
     """Déconnexion de l'utilisateur."""
     logout(request)
-    messages.info(request, "Vous avez été déconnecté avec succès.")
+    messages.info(request, "Vous avez été déconnecté")
     return redirect('landing')
 
 
@@ -169,7 +169,7 @@ def profile_view(request):
             if 'avatar' in request.FILES:
                 user.avatar = request.FILES['avatar']
             user.save()
-            messages.success(request, "Votre profil a été mis à jour avec succès !")
+            messages.success(request, "Votre profil a été mis à jour !")
             return redirect('profile')
 
         elif action == 'renew_subscription':
@@ -187,7 +187,7 @@ def profile_view(request):
                 price=price,
                 is_active=True
             )
-            messages.success(request, f"Abonnement renouvelé avec succès !")
+            messages.success(request, f"Abonnement renouvelé  !")
             return redirect('profile')
 
     context = {
@@ -212,6 +212,11 @@ def member_list_view(request):
 
     is_superadmin = request.user.is_superuser or request.user.role == 'ADMIN'
 
+    # Les comptes de l'administration de la plateforme n'apparaissent jamais
+    # dans l'annuaire d'un FabLab : ils ne font partie d'aucun établissement.
+    if not is_superadmin:
+        members = members.exclude(is_superuser=True).exclude(role='ADMIN')
+
     if request.method == 'POST':
         action = request.POST.get('action')
         member_id = request.POST.get('member_id')
@@ -226,7 +231,7 @@ def member_list_view(request):
             member.is_approved = True
             member.save()
             send_member_approved_email(member)
-            messages.success(request, f"Le compte membre de {member.get_full_name() or member.username} a été approuvé avec succès !")
+            messages.success(request, f"Le compte membre de {member.get_full_name() or member.username} a été approuvé  !")
             return redirect('member_list')
         elif action == 'reject_user':
             send_member_rejected_email(member)
@@ -240,7 +245,7 @@ def member_list_view(request):
             member.bio = f"[Demande de précision : {custom_msg}]"
             member.save()
             send_member_info_request_email(member, custom_msg)
-            messages.success(request, f"E-mail de demande d'informations complémentaires envoyé avec succès à {member.get_full_name() or member.username} ({member.email}).")
+            messages.success(request, f"E-mail de demande d'informations complémentaires envoyé  à {member.get_full_name() or member.username} ({member.email}).")
             return redirect('member_list')
 
         new_role = request.POST.get('role')
@@ -324,7 +329,7 @@ def superadmin_dashboard_view(request):
             user_obj.is_approved = True
             user_obj.save()
             send_member_approved_email(user_obj)
-            messages.success(request, f"Le compte FabManager de {user_obj.get_full_name() or user_obj.username} a été approuvé avec succès !")
+            messages.success(request, f"Le compte FabManager de {user_obj.get_full_name() or user_obj.username} a été approuvé  !")
             return redirect('superadmin_dashboard')
 
         elif action == 'reject_fabmanager' and target_id:
@@ -392,7 +397,7 @@ def password_reset_view(request):
             message = (
                 f"Bonjour {user_obj.get_full_name() or user_obj.username},\n\n"
                 f"Vous avez demandé la réinitialisation de votre mot de passe sur la plateforme LabOS.\n\n"
-                f"📌 Vos Identifiants :\n"
+                f" Vos Identifiants :\n"
                 f"• Nom d'utilisateur : {user_obj.username}\n"
                 f"• Adresse Email : {user_obj.email}\n\n"
                 f"🔗 Cliquez sur le lien ci-dessous pour choisir votre nouveau mot de passe :\n"
@@ -435,7 +440,7 @@ def password_reset_confirm_view(request, uidb64, token):
             else:
                 user_obj.set_password(new_password)
                 user_obj.save()
-                messages.success(request, "Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.")
+                messages.success(request, "Votre mot de passe a été réinitialisé  ! Vous pouvez maintenant vous connecter.")
                 return redirect('login')
 
         return render(request, 'accounts/password_reset_confirm.html', {'validlink': True, 'user_obj': user_obj})

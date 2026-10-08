@@ -38,4 +38,4 @@ class Command(BaseCommand):
         user.save()
 
         action = "créé" if created else "mis à jour"
-        self.stdout.write(self.style.SUCCESS(f"✓ Compte Administrateur '{username}' ({email}) {action} avec succès."))
+        self.stdout.write(self.style.SUCCESS(f"✓ Compte Administrateur '{username}' ({email}) {action} ."))

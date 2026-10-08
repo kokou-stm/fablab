@@ -14,7 +14,7 @@ class Command(BaseCommand):
         self._seed_channels()
         self._seed_message_tags()
         self._seed_admin_user()
-        self.stdout.write(self.style.SUCCESS("✓ Données par défaut initialisées avec succès."))
+        self.stdout.write(self.style.SUCCESS("✓ Données par défaut initialisées ."))
 
     def _seed_admin_user(self):
         import os
@@ -42,6 +42,9 @@ class Command(BaseCommand):
         user.is_staff = True
         user.is_superuser = True
         user.is_approved = True
+        # L'administration de la plateforme n'appartient à aucun FabLab : sinon le
+        # compte apparaîtrait dans l'annuaire des membres de cet établissement.
+        user.fablab = None
 
         if explicit_password:
             # DJANGO_ADMIN_PASSWORD fourni explicitement : rotation volontaire, on l'applique toujours.

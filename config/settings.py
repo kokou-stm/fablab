@@ -25,6 +25,30 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
+# Origines de confiance pour la vérification CSRF (Multi-tenant, sous-domaines, prod & dev)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.aidubber.fr',
+    'https://aidubber.fr',
+    'http://*.aidubber.fr',
+    'http://aidubber.fr',
+    'http://*.localhost:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://*.localhost',
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
+_extra_csrf = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+if _extra_csrf:
+    for _orig in _extra_csrf.split(','):
+        _orig = _orig.strip()
+        if _orig and _orig not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_orig)
+
+# Gestionnaire d'échec CSRF personnalisé pour éviter les 403 bloquants en cas de double session
+CSRF_FAILURE_VIEW = 'core.views.custom_csrf_failure_view'
+
 # Le conteneur ACI ne fait que du HTTP ; quand il est servi derrière un proxy TLS
 # (ex: Cloudflare en mode Flexible), celui-ci indique le vrai protocole via cet en-tête.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

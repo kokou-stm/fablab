@@ -193,6 +193,17 @@
     </div>
 
     <!-- Booking CTA Box -->
+    {% if request.user.is_fabmanager_user %}
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md); height: fit-content;">
+      <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Gestion de la machine</h3>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
+        En tant que responsable, vous modifiez la fiche de cette machine et validez les demandes des membres — vous ne réservez pas de créneau vous-même.
+      </p>
+      <a href="{% url 'reservation_list' %}" hx-get="{% url 'reservation_list' %}" hx-target="#content" hx-push-url="true" style="display: block; text-align: center; padding: 10px; background: var(--text); color: var(--bg); border-radius: var(--radius-md); font-weight: 700; text-decoration: none;">
+        Gérer les demandes de réservation
+      </a>
+    </div>
+    {% else %}
     <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md); height: fit-content;">
       <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Réserver un Créneau</h3>
       <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">{{ equipment.hourly_rate }} € <span style="font-size: 13px; font-weight: 400; color: var(--muted);">/ heure</span></div>
@@ -226,6 +237,7 @@
         </button>
       </form>
     </div>
+    {% endif %}
 
   </div>
 </div>

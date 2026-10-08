@@ -7,7 +7,7 @@
     </div>
     <div style="display: flex; gap: 10px;">
       <a href="{% url 'reservation_list' %}" hx-get="{% url 'reservation_list' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
-        + Nouvelle Réservation
+        {% if request.user.is_fabmanager_user %}Gérer les Réservations{% else %}+ Nouvelle Réservation{% endif %}
       </a>
       <a href="{% url 'usage_history' %}" hx-get="{% url 'usage_history' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
         Historique d'Utilisation

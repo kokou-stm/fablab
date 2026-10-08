@@ -312,6 +312,12 @@ def reservation_list_view(request):
             messages.error(request, "Votre compte est actuellement en attente de validation par le responsable du FabLab. Vous ne pouvez pas encore effectuer de réservations.")
             return redirect('reservation_list')
 
+        # Les responsables gèrent le parc et valident les demandes : ils ne
+        # réservent pas eux-mêmes les machines.
+        if request.user.is_fabmanager_user:
+            messages.error(request, "En tant que responsable, vous gérez les machines et validez les demandes, mais vous ne réservez pas de créneau.")
+            return redirect('reservation_list')
+
         equipment_id = request.POST.get('equipment_id')
         start_time = request.POST.get('start_time')
         end_time = request.POST.get('end_time')
@@ -1061,6 +1067,33 @@ def mark_notification_read_api_view(request):
         return JsonResponse({'status': 'ok', 'id': notif_id})
 
     return JsonResponse({'error': 'Missing notification id'}, status=400)
+
+
+def custom_csrf_failure_view(request, reason=""):
+    """
+    Gestionnaire d'échec CSRF personnalisé :
+    - Si l'utilisateur est déjà connecté dans le même navigateur (ex: reconnexion ou double onglet),
+      on le redirige directement vers son tableau de bord sans blocage 403.
+    - Si la session a expiré ou le token a changé, on le redirige vers /login/ avec un message informatif.
+    """
+    if request.user.is_authenticated:
+        messages.info(request, f"Vous êtes déjà connecté en tant que {request.user.get_full_name() or request.user.username}.")
+        if request.user.is_superuser or request.user.role == 'ADMIN':
+            return redirect('superadmin_dashboard')
+        if request.user.is_approved:
+            return redirect('dashboard')
+        return redirect('signup_pending')
+
+    path = request.path_info or ''
+    if 'login' in path:
+        messages.info(request, "Votre session a été actualisée. Veuillez vous connecter.")
+        return redirect('login')
+    elif 'signup' in path:
+        messages.info(request, "Le formulaire a été actualisé. Veuillez soumettre à nouveau votre demande.")
+        return redirect('signup')
+
+    messages.warning(request, "La session a expiré ou le formulaire a été actualisé. Veuillez vous reconnecter.")
+    return redirect('login')
 
 
 from accounts.models import User

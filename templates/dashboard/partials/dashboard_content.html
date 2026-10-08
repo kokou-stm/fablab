@@ -8,7 +8,7 @@
     </div>
     <div style="display: flex; gap: 10px;">
       <a href="/reservations/" class="btn btn-primary" style="padding: 8px 16px; background: var(--text); color: var(--bg); border-radius: var(--radius-md); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-        <span>+ Nouvelle Réservation</span>
+        <span>{% if request.user.is_fabmanager_user %}Gérer les Réservations{% else %}+ Nouvelle Réservation{% endif %}</span>
       </a>
     </div>
   </div>

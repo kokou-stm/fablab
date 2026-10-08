@@ -1,6 +1,15 @@
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.http import HttpResponse
+
+def _auth_redirect(request, url_name, fallback_path):
+    if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
+        response = HttpResponse(status=200)
+        response['HX-Redirect'] = fallback_path
+        return response
+    return redirect(url_name)
+
 
 def role_required(*allowed_roles):
     """Décorateur restreignant l'accès aux utilisateurs possédant au moins l'un des rôles spécifiés."""
@@ -9,17 +18,17 @@ def role_required(*allowed_roles):
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 messages.warning(request, "Veuillez vous connecter pour accéder à cette page.")
-                return redirect('login')
+                return _auth_redirect(request, 'login', '/login/')
             if request.user.is_admin_user:
                 return view_func(request, *args, **kwargs)
             # Un rôle ne donne ses droits qu'une fois le compte validé.
             if not getattr(request.user, 'is_approved', False):
                 messages.error(request, "Votre compte est en attente de validation.")
-                return redirect('signup_pending')
+                return _auth_redirect(request, 'signup_pending', '/signup-pending/')
             if request.user.role in allowed_roles:
                 return view_func(request, *args, **kwargs)
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette fonctionnalité.")
-            return redirect('dashboard')
+            return _auth_redirect(request, 'dashboard', '/dashboard/')
         return _wrapped_view
     return decorator
 
@@ -34,14 +43,14 @@ def approved_member_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            messages.warning(request, "Veuillez vous connecter pour effectuer cette action.")
-            return redirect('login')
+            messages.warning(request, "Veuillez vous connecter pour accéder à cette page.")
+            return _auth_redirect(request, 'login', '/login/')
         # Un FabManager non encore validé n'a pas plus de droits qu'un membre
         # en attente : seul le SuperAdmin est exempté de validation.
         if request.user.is_admin_user or getattr(request.user, 'is_approved', False):
             return view_func(request, *args, **kwargs)
         messages.error(request, "Votre compte est actuellement en attente de validation par le responsable de votre FabLab.")
-        return redirect('signup_pending')
+        return _auth_redirect(request, 'signup_pending', '/signup-pending/')
     return _wrapped_view
 
 

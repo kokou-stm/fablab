@@ -300,27 +300,30 @@
               {% endif %}
             </td>
             <td style="padding: 14px 16px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" onclick="openDossierModal('m-{{ m.id }}')" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" onclick="openDossierModal('m-{{ m.id }}')" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 4px;">
                   📂 Ouvrir
                 </button>
                 {% if m.role == 'FABMANAGER' or m.role == 'ADMIN' %}
                   {% if is_superadmin %}
-                    <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                    <form method="post" style="display: inline-flex; align-items: center; margin: 0;">
                       {% csrf_token %}
                       <input type="hidden" name="member_id" value="{{ m.id }}" />
-                      <button type="submit" name="toggle_approved" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
-                        Toggle Validation
+                      <button type="submit" name="toggle_approved" value="1" class="switch-control" title="{% if m.is_approved %}Compte Validé (cliquer pour suspendre){% else %}Compte en attente (cliquer pour approuver){% endif %}">
+                        <span class="switch-track {% if m.is_approved %}is-approved{% endif %}">
+                          <span class="switch-thumb"></span>
+                        </span>
+                        <span class="switch-label">{% if m.is_approved %}<span style="color:#10b981;">Validé</span>{% else %}<span style="color:#f59e0b;">En attente</span>{% endif %}</span>
                       </button>
                     </form>
                   {% else %}
                     <span style="font-size: 11px; color: var(--muted); font-style: italic;">Validation SuperAdmin</span>
                   {% endif %}
                 {% else %}
-                  <form method="post" style="display: flex; align-items: center; gap: 8px;">
+                  <form method="post" style="display: inline-flex; align-items: center; gap: 10px; margin: 0;">
                     {% csrf_token %}
                     <input type="hidden" name="member_id" value="{{ m.id }}" />
-                    <select name="role" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                    <select name="role" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 12px; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text);">
                       <option value="MAKER" {% if m.role == 'MAKER' %}selected{% endif %}>Maker</option>
                       <option value="STUDENT" {% if m.role == 'STUDENT' %}selected{% endif %}>Étudiant</option>
                       <option value="INSTRUCTOR" {% if m.role == 'INSTRUCTOR' %}selected{% endif %}>Formateur</option>
@@ -329,11 +332,19 @@
                         <option value="ADMIN" {% if m.role == 'ADMIN' %}selected{% endif %}>Administrateur</option>
                       {% endif %}
                     </select>
-                    <button type="submit" name="toggle_certified" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
-                      Toggle Habilitation
+
+                    <button type="submit" name="toggle_approved" value="1" class="switch-control" title="{% if m.is_approved %}Compte Validé (cliquer pour suspendre){% else %}Compte en attente (cliquer pour approuver){% endif %}">
+                      <span class="switch-track {% if m.is_approved %}is-approved{% endif %}">
+                        <span class="switch-thumb"></span>
+                      </span>
+                      <span class="switch-label">{% if m.is_approved %}<span style="color:#10b981;">Validé</span>{% else %}<span style="color:#f59e0b;">En attente</span>{% endif %}</span>
                     </button>
-                    <button type="submit" name="toggle_approved" value="1" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border);">
-                      Toggle Validation
+
+                    <button type="submit" name="toggle_certified" value="1" class="switch-control" title="{% if m.is_certified %}Membre Habilité machines (cliquer pour retirer){% else %}Non habilité (cliquer pour habiliter){% endif %}">
+                      <span class="switch-track {% if m.is_certified %}is-certified{% endif %}">
+                        <span class="switch-thumb"></span>
+                      </span>
+                      <span class="switch-label">{% if m.is_certified %}<span style="color:#3b82f6;">Habilité</span>{% else %}Non hab.{% endif %}</span>
                     </button>
                   </form>
                 {% endif %}

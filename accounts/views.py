@@ -8,7 +8,7 @@ from django.utils.text import slugify
 from django.db.models import Sum, Q
 
 from accounts.models import User, Subscription
-from accounts.decorators import fabmanager_required, role_required, admin_required
+from accounts.decorators import fabmanager_required, role_required, admin_required, approved_member_required
 from fablabs.models import FabLab
 from reservations.models import Certification, UserCertification
 from core.emails import send_member_signup_notification, send_member_approved_email, send_member_info_request_email, send_member_rejected_email
@@ -147,12 +147,9 @@ def signup_pending_view(request):
     return render(request, 'accounts/signup_pending.html', {'pending_user': pending_user})
 
 
+@approved_member_required
 def profile_view(request):
     """Vue et modification du profil membre avec gestion des abonnements."""
-    if not request.user.is_authenticated:
-        messages.warning(request, "Veuillez vous connecter pour voir votre profil.")
-        return redirect('login')
-
     user = request.user
     user_subscriptions = Subscription.objects.filter(user=user)
     active_sub = user_subscriptions.filter(is_active=True).first()

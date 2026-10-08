@@ -122,6 +122,7 @@ def switch_tenant_view(request, slug):
     return redirect(redirect_url)
 
 
+@approved_member_required
 def equipment_list_view(request):
     category_slug = request.GET.get('category')
     status_filter = request.GET.get('status')
@@ -199,6 +200,7 @@ def equipment_create_view(request):
     return redirect('equipment_list')
 
 
+@approved_member_required
 def equipment_detail_view(request, slug):
     equipment = get_object_or_404(Equipment, slug=slug)
 
@@ -273,6 +275,7 @@ def _release_equipment_if_free(equipment):
         equipment.save(update_fields=['status'])
 
 
+@approved_member_required
 def reservation_list_view(request):
     reservations = Reservation.objects.select_related('equipment').all()
     equipments = Equipment.objects.select_related('category').filter(status='AVAILABLE')
@@ -382,7 +385,7 @@ def reservation_list_view(request):
                 total_cost=total_cost
             )
             send_reservation_request_email(reservation, getattr(request, 'tenant', None) or request.user.fablab)
-            messages.success(request, f"⏳ Votre demande de réservation sur {eq.name} a été enregistrée  ! Elle est en attente de validation par le FabManager.")
+            messages.success(request, f" Votre demande de réservation sur {eq.name} a été enregistrée  ! Elle est en attente de validation par le FabManager.")
             return redirect('reservation_list')
 
     context = {
@@ -394,6 +397,7 @@ def reservation_list_view(request):
     return render(request, 'reservations/list.html', context)
 
 
+@approved_member_required
 def reservation_cancel_view(request, pk):
     """Annulation d'une réservation (par son auteur, un FabManager ou un Admin uniquement)."""
     reservation = get_object_or_404(Reservation, id=pk)
@@ -511,6 +515,7 @@ def certification_list_view(request):
     return render(request, 'certifications/list.html', context)
 
 
+@approved_member_required
 def workshop_list_view(request):
     from django.utils.text import slugify
     category_filter = request.GET.get('category')
@@ -620,6 +625,7 @@ def workshop_list_view(request):
     return render(request, 'workshops/list.html', context)
 
 
+@approved_member_required
 def workshop_detail_view(request, pk):
     workshop = get_object_or_404(Workshop.objects.prefetch_related('lessons__resources', 'direct_resources', 'registrations'), id=pk)
 
@@ -767,6 +773,7 @@ def inventory_list_view(request):
     return render(request, 'inventory/list.html', context)
 
 
+@approved_member_required
 def project_list_view(request):
     projects = Project.objects.filter(is_public=True)
     context = {'projects': projects}

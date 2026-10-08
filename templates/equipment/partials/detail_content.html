@@ -213,18 +213,24 @@
         <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
         
         <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Nom du Réservateur :</label>
-          <input type="text" name="user_name" class="form-control" value="Maker Démo" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Réservé par :</label>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--muted); font-size: 14px;">
+            <span style="width: 24px; height: 24px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">
+              {{ request.user.username|slice:":1"|upper }}
+            </span>
+            <span style="color: var(--text); font-weight: 600;">{{ request.user.get_full_name|default:request.user.username }}</span>
+            <span>@{{ request.user.username }}</span>
+          </div>
         </div>
 
         <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date & Début :</label>
-          <input type="datetime-local" name="start_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date &amp; Début :</label>
+          <input type="datetime-local" id="booking-start" name="start_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
         </div>
 
         <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date & Fin :</label>
-          <input type="datetime-local" name="end_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date &amp; Fin :</label>
+          <input type="datetime-local" id="booking-end" name="end_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
         </div>
 
         <div>
@@ -241,3 +247,30 @@
 
   </div>
 </div>
+
+<script>
+  // Interdit le choix d'un créneau déjà passé, et garde la fin après le début.
+  (function () {
+    var start = document.getElementById('booking-start');
+    var end = document.getElementById('booking-end');
+    if (!start || !end) return;
+
+    function localNow(offsetMinutes) {
+      var d = new Date(Date.now() + (offsetMinutes || 0) * 60000);
+      d.setSeconds(0, 0);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    function refreshBounds() {
+      var now = localNow(0);
+      start.min = now;
+      end.min = start.value && start.value > now ? start.value : now;
+      if (end.value && end.value < end.min) end.value = '';
+    }
+
+    refreshBounds();
+    start.addEventListener('change', refreshBounds);
+    start.addEventListener('focus', refreshBounds);
+    end.addEventListener('focus', refreshBounds);
+  })();
+</script>

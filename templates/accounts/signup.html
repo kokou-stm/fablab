@@ -1,13 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div style="max-width: 520px; margin: 30px auto; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
+<div
+  style="max-width: 520px; margin: 30px auto; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
   <div style="text-align: center; margin-bottom: 24px;">
     <h1 style="font-size: 22px; font-weight: 700; margin: 0;">Inscription Nouveau Membre</h1>
     {% if tenant %}
-      <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez l'espace <strong>{{ tenant.name }}</strong></p>
+    <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez l'espace <strong>{{ tenant.name
+        }}</strong></p>
     {% else %}
-      <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez la communauté des Makers LabOS</p>
+    <p style="color: var(--muted); font-size: 14px; margin: 6px 0 0 0;">Rejoignez la communauté des Makers LabOS</p>
     {% endif %}
   </div>
 
@@ -16,52 +18,61 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
       <div>
         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Prénom</label>
-        <input type="text" name="first_name" required placeholder="Thomas" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+        <input type="text" name="first_name" required placeholder="Thomas" class="form-input"
+          style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
       </div>
       <div>
         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nom</label>
-        <input type="text" name="last_name" required placeholder="Pesquet" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+        <input type="text" name="last_name" required placeholder="Pesquet" class="form-input"
+          style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
       </div>
     </div>
 
     <div style="margin-bottom: 16px;">
       <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nom d'utilisateur</label>
-      <input type="text" name="username" required placeholder="pesquet_t" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+      <input type="text" name="username" required placeholder="pesquet_t" class="form-input"
+        style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
     </div>
 
     <div style="margin-bottom: 16px;">
       <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Adresse Email</label>
-      <input type="email" name="email" required placeholder="thomas@example.org" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+      <input type="email" name="email" required placeholder="thomas@example.org" class="form-input"
+        style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
     </div>
 
     <div style="margin-bottom: 16px;">
       <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Téléphone</label>
-      <input type="text" name="phone" placeholder="+33 6 12 34 56 78" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+      <input type="text" name="phone" placeholder="+33 6 12 34 56 78" class="form-input"
+        style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
     </div>
 
     {% if tenant %}
-      <!-- Auto-attribué selon le sous-domaine / tenant actif -->
-      <input type="hidden" name="fablab_id" value="{{ tenant.id }}" />
-      <div style="margin-bottom: 16px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="color: var(--muted); font-weight: 500;">FabLab / Établissement :</span>
-        <span style="font-weight: 700; color: var(--text);">📍 {{ tenant.name }} ({{ tenant.city }})</span>
-      </div>
+    <!-- Auto-attribué selon le sous-domaine / tenant actif -->
+    <input type="hidden" name="fablab_id" value="{{ tenant.id }}" />
+    <div
+      style="margin-bottom: 16px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+      <span style="color: var(--muted); font-weight: 500;">FabLab / Établissement :</span>
+      <span style="font-weight: 700; color: var(--text);"> {{ tenant.name }} ({{ tenant.city }})</span>
+    </div>
     {% else %}
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Sélectionner votre FabLab / Établissement</label>
-        <select name="fablab_id" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
-          {% for lab in all_tenants %}
-            <option value="{{ lab.id }}">
-              {{ lab.name }} ({{ lab.city }})
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Sélectionner votre FabLab /
+        Établissement</label>
+      <select name="fablab_id" class="form-select"
+        style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+        {% for lab in all_tenants %}
+        <option value="{{ lab.id }}">
+          {{ lab.name }} ({{ lab.city }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
     {% endif %}
 
     <div style="margin-bottom: 16px;">
       <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Statut / Profil</label>
-      <select name="role" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
+      <select name="role" class="form-select"
+        style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
         <option value="MAKER">Maker Résident (Prototypage & Création)</option>
         <option value="STUDENT">Étudiant / Stagiaire </option>
         <option value="INSTRUCTOR">Formateur / Intervenant</option>
@@ -69,24 +80,35 @@
     </div>
 
     <div style="margin-bottom: 16px;">
-      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">📄 Justificatif / Carte Étudiant / Pièce d'Identité  :</label>
-      <input type="file" name="dossier_document" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-input" style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
-      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Permet au FabManager de vérifier votre dossier avant d'approuver votre compte.</div>
+      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">📄 Justificatif / Carte
+        Étudiant / Pièce d'Identité :</label>
+      <input type="file" name="dossier_document" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-input"
+        style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Permet au FabManager de vérifier votre dossier
+        avant d'approuver votre compte.</div>
     </div>
 
-    <div style="margin-bottom: 24px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px; color: var(--muted);">
-      Une fois votre compte validé par le responsable du FabLab, vous recevrez un e-mail pour en créer un et vous connecter.
+    <div
+      style="margin-bottom: 24px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px; color: var(--muted);">
+      Une fois votre compte validé par le responsable du FabLab, vous recevrez un e-mail pour en créer un et vous
+      connecter.
     </div>
 
-    <button type="submit" id="signup-submit-btn" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <button type="submit" id="signup-submit-btn"
+      style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
       <span>Créer mon Compte Membre</span>
     </button>
   </form>
 
   <style>
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 
@@ -102,7 +124,8 @@
   </script>
 
   <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--muted);">
-    Déjà inscrit ? <a href="{% url 'login' %}" style="color: var(--text); font-weight: 600; text-decoration: underline;">Se connecter</a>
+    Déjà inscrit ? <a href="{% url 'login' %}"
+      style="color: var(--text); font-weight: 600; text-decoration: underline;">Se connecter</a>
   </div>
 </div>
 {% endblock %}

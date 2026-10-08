@@ -5334,3 +5334,84 @@ a.nav-user-card:focus-visible {
 .btn.icon-btn.acct-toggle.is-off       { color: #1e6e35; border-color: #cfe8d6; }
 .btn.icon-btn.acct-toggle.is-off:hover { color: #1e6e35; border-color: #1e6e35; background: #e6f4ea; }
 .status-badge.withdrawn { background: #fdecea; color: #c0392b; }
+
+/* ── Professional Interactive Switch Toggles ───────────────────────────── */
+.switch-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.switch-control:hover {
+  background: var(--panel);
+}
+.switch-control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.switch-track {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  display: inline-block;
+  vertical-align: middle;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+html[data-theme="dark"] .switch-track {
+  background: #334155;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Active State - Validation (Emerald Green) */
+.switch-track.is-approved {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+.switch-track.is-approved .switch-thumb {
+  transform: translateX(16px);
+}
+/* Active State - Habilitation (Indigo/Blue) */
+.switch-track.is-certified {
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+}
+.switch-track.is-certified .switch-thumb {
+  transform: translateX(16px);
+}
+.switch-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+.switch-control:hover .switch-label {
+  color: var(--text);
+}
+.switch-control:hover .switch-track:not(.is-approved):not(.is-certified) {
+  background: #94a3b8;
+}
+html[data-theme="dark"] .switch-control:hover .switch-track:not(.is-approved):not(.is-certified) {
+  background: #475569;
+}
+

@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -999,7 +1000,24 @@ def notifications_api_view(request):
                     'time': r.created_at.strftime('%H:%M')
                 })
 
-    # 4. Notifications pour les messages reçus et mentions @username
+    # 4. Nouvelles machines ajoutées au parc, visibles par tout le FabLab
+    recent_cutoff = dj_timezone.now() - datetime.timedelta(days=7)
+    new_equipments = Equipment.objects.select_related('category').filter(
+        status='AVAILABLE', created_at__gte=recent_cutoff
+    ).order_by('-created_at')[:5]
+    for e in new_equipments:
+        key = f"equip-{e.id}"
+        if key not in read_keys:
+            items.append({
+                'id': key,
+                'icon': '🆕',
+                'title': 'Nouvelle machine disponible',
+                'text': f"{e.name} vient d'être ajoutée au parc ({e.category.name}).",
+                'url': f"/equipment/{e.slug}/",
+                'time': e.created_at.strftime('%H:%M')
+            })
+
+    # 5. Notifications pour les messages reçus et mentions @username
     unread_dms = Message.objects.select_related('sender', 'channel').filter(recipient=request.user, is_read=False)[:5]
     for msg in unread_dms:
         key = f"dm-{msg.id}"

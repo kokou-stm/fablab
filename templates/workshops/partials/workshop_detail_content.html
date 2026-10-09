@@ -53,10 +53,8 @@
           {% if workshop.price == 0 %}Gratuit{% else %}{{ workshop.price }} €{% endif %}
         </div>
 
-        <div
-          style="font-size: 12px; color: {% if workshop.available_seats > 0 %}#10b981{% else %}#ef4444{% endif %}; font-weight: 700;">
-          {{ workshop.available_seats }} place{{ workshop.available_seats|pluralize }} disponible{{
-          workshop.available_seats|pluralize }}
+        <div style="font-size: 12px; color: {% if workshop.available_seats > 0 %}#10b981{% else %}#ef4444{% endif %}; font-weight: 700;">
+          {{ workshop.available_seats }} place{{ workshop.available_seats|pluralize }} disponible{{ workshop.available_seats|pluralize }}
         </div>
 
         {% if not is_registered %}

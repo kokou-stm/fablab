@@ -7,11 +7,11 @@
       {{ msg.sender_username|slice:":1"|upper }}
     </div>
 
-    <!-- Message Bubble -->
-    <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {% if msg.sender.id == request.user.id %}flex-end{% else %}flex-start{% endif %};">
+    <!-- Message Bubble Column -->
+    <div style="max-width: 75%; display: flex; flex-direction: column; align-items: {% if msg.sender.id == request.user.id %}flex-end{% else %}flex-start{% endif %}; gap: 6px;">
       
       <!-- Meta Header -->
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
         <span style="font-weight: 700; color: var(--text);">{{ msg.sender_username }}</span>
         <span style="font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); color: var(--muted);">
           {{ msg.sender_role }}
@@ -19,21 +19,79 @@
         <span style="font-size: 11px; color: var(--muted);">{{ msg.created_at|date:"H:i" }}</span>
       </div>
 
-      <!-- Content Card -->
-      <div style="padding: 12px 16px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,0.04); {% if msg.sender.id == request.user.id %}background: var(--text); color: var(--bg); border-top-right-radius: 2px;{% else %}background: var(--panel); color: var(--text); border: 1px solid var(--border); border-top-left-radius: 2px;{% endif %}">
-        
-        <div style="white-space: pre-wrap; word-break: break-word;">{{ msg.content|format_mentions }}</div>
-
-        <!-- Attachment Link -->
-        {% if msg.attachment and msg.attachment.name %}
-          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
-            <a href="{{ msg.attachment.url }}" target="_blank" style="font-size: 12px; font-weight: 700; color: inherit; text-decoration: underline; display: inline-flex; align-items: center; gap: 6px;">
-              Pièce jointe : {{ msg.attachment.name }}
+      <!-- Attachment Preview Card (If Attached) -->
+      {% if msg.attachment and msg.attachment.name %}
+        {% with ext=msg.attachment|file_ext is_img=msg.attachment|is_image_file bname=msg.attachment|file_basename %}
+          {% if is_img %}
+            <a href="{{ msg.attachment.url }}" target="_blank" style="display: block; border-radius: 14px; overflow: hidden; max-width: 320px; border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(0,0,0,0.12); transition: transform 0.15s ease;">
+              <img src="{{ msg.attachment.url }}" alt="{{ bname }}" style="display: block; width: 100%; height: auto; max-height: 260px; object-fit: cover;" />
             </a>
-          </div>
-        {% endif %}
+          {% else %}
+            <!-- File Pill Card (Exact Match to User Screenshot) -->
+            <a href="{{ msg.attachment.url }}" target="_blank" 
+               style="display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 16px; background: #1c1f26; border: 1px solid rgba(255,255,255,0.08); color: #f8fafc; text-decoration: none; min-width: 220px; max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,0.22); transition: background 0.15s, transform 0.15s;"
+               onmouseover="this.style.background='#272b35'; this.style.transform='translateY(-1px)'"
+               onmouseout="this.style.background='#1c1f26'; this.style.transform='translateY(0)'">
+              
+              <!-- Icon on the Left -->
+              <div style="flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                {% if ext == 'PDF' %}
+                  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    <span style="font-size: 8px; font-weight: 900; color: #ef4444; letter-spacing: 0.05em; margin-top: -2px;">PDF</span>
+                  </div>
+                {% elif ext in 'STL,STEP,STP,OBJ,3MF,DXF' %}
+                  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span style="font-size: 8px; font-weight: 900; color: #a855f7; letter-spacing: 0.05em; margin-top: -2px;">3D</span>
+                  </div>
+                {% elif ext in 'ZIP,RAR,7Z,TAR,GZ' %}
+                  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span style="font-size: 8px; font-weight: 900; color: #f59e0b; letter-spacing: 0.05em; margin-top: -2px;">ZIP</span>
+                  </div>
+                {% else %}
+                  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <span style="font-size: 8px; font-weight: 900; color: #3b82f6; letter-spacing: 0.05em; margin-top: -2px;">DOC</span>
+                  </div>
+                {% endif %}
+              </div>
 
-      </div>
+              <!-- File Name and Extension Subtitle -->
+              <div style="flex: 1; overflow: hidden; min-width: 0;">
+                <div style="font-weight: 700; font-size: 13.5px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {{ bname }}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #94a3b8; margin-top: 2px;">
+                  {{ ext }}
+                </div>
+              </div>
+            </a>
+          {% endif %}
+        {% endwith %}
+      {% endif %}
+
+      <!-- Text Message Bubble (If text content exists) -->
+      {% if msg.content %}
+        <div style="padding: 10px 16px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; box-shadow: 0 2px 8px rgba(0,0,0,0.04); {% if msg.sender.id == request.user.id %}background: #1e40af; color: #ffffff;{% else %}background: var(--panel); color: var(--text); border: 1px solid var(--border);{% endif %}">
+          <div style="white-space: pre-wrap; word-break: break-word;">{{ msg.content|format_mentions }}</div>
+        </div>
+      {% endif %}
+
     </div>
 
   </div>

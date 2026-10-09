@@ -129,30 +129,60 @@
             style="display: flex; flex-direction: column; gap: 8px;">
         {% csrf_token %}
 
-        <!-- Attached File Preview Badge -->
-        <div id="attached-file-preview" style="display: none; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text); background: var(--surface); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); width: fit-content;">
-          <span>📎 <span id="attached-file-name">fichier</span></span>
-          <span onclick="clearAttachedFile()" style="cursor: pointer; color: #ef4444; margin-left: 6px; font-weight: 800;" title="Retirer la pièce jointe">✕</span>
-        </div>
-
-        <!-- Main Input Bar Row (Modern ChatGPT/Slack style) -->
-        <div style="display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 6px 10px 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <!-- Integrated Composer Card (Modern AI/Slack/iMessage Style) -->
+        <div style="display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 10px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: border-color 0.15s; position: relative;">
           
-          <!-- (+) Button for File Upload -->
-          <label title="Joindre un fichier ou une photo" style="width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; cursor: pointer; font-size: 20px; font-weight: 700; color: var(--text); flex-shrink: 0; transition: background 0.15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--panel)'">
-            +
-            <input type="file" name="attachment" id="chat-attachment-input" style="display: none;" onchange="showAttachedFileName(this)">
-          </label>
+          <!-- Attached Document / Image Thumbnail Preview Card (Matches User Screenshot) -->
+          <div id="attached-file-preview" style="display: none; margin-bottom: 8px; position: relative; width: fit-content;">
+            <div style="position: relative; width: 68px; height: 86px; border-radius: 8px; overflow: hidden; background: #ffffff; border: 1px solid rgba(0,0,0,0.18); box-shadow: 0 4px 14px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+              
+              <!-- Document Mockup Visual (Document text lines) -->
+              <div id="attached-doc-visual" style="flex: 1; padding: 7px 6px; display: flex; flex-direction: column; gap: 4px; background: #ffffff; overflow: hidden;">
+                <div style="height: 4px; width: 55%; background: #64748b; border-radius: 2px; opacity: 0.8; margin-bottom: 2px;"></div>
+                <div style="height: 3px; width: 85%; background: #94a3b8; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 90%; background: #94a3b8; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 75%; background: #94a3b8; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 88%; background: #cbd5e1; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 65%; background: #cbd5e1; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 80%; background: #cbd5e1; border-radius: 2px; opacity: 0.65;"></div>
+                <div style="height: 3px; width: 70%; background: #cbd5e1; border-radius: 2px; opacity: 0.65;"></div>
+              </div>
 
-          <!-- Textarea Input -->
-          <div style="flex: 1; position: relative;">
-            <textarea id="chat-textarea" name="content" rows="1" required onkeydown="handleChatKeyDown(event)" onkeyup="handleMentionTrigger(event)" placeholder="Envoyer un message à {% if active_dm_user %}@{{ active_dm_user.username }}{% else %}{{ active_channel.name }}{% endif %} (tapez @ pour tagger un membre)..." style="width: 100%; padding: 6px 4px; font-size: 13.5px; border: none; background: transparent; color: var(--text); resize: none; outline: none; font-family: inherit; max-height: 120px; vertical-align: middle;"></textarea>
+              <!-- Real Image Preview (if image file attached) -->
+              <img id="attached-img-preview" src="" alt="Aperçu" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+
+              <!-- Extension / PDF Badge in Bottom-Left Corner -->
+              <div id="attached-ext-badge" style="position: absolute; bottom: 4px; left: 4px; padding: 2px 5px; border-radius: 4px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(2px); color: #ffffff; font-size: 9px; font-weight: 800; letter-spacing: 0.05em; line-height: 1;">
+                PDF
+              </div>
+            </div>
+
+            <!-- Remove Attachment 'X' Button on Top-Right Corner -->
+            <button type="button" onclick="clearAttachedFile()" style="position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; border-radius: 50%; background: #0f172a; color: #ffffff; border: 1.5px solid var(--surface); display: grid; place-items: center; cursor: pointer; font-size: 10px; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,0.35); transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Retirer la pièce jointe">
+              ✕
+            </button>
           </div>
 
-          <!-- Send Button -->
-          <button type="submit" title="Envoyer le message (Appuyez sur Entrée)" style="width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); border: none; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; font-size: 14px; font-weight: 800; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-            ➔
-          </button>
+          <!-- Bottom Row: (+) Button, Textarea Input, Send Button -->
+          <div style="display: flex; align-items: flex-end; gap: 10px;">
+            
+            <!-- (+) Button for File Upload -->
+            <label title="Joindre un fichier, document ou photo" style="width: 32px; height: 32px; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); display: grid; place-items: center; cursor: pointer; font-size: 20px; font-weight: 700; color: var(--text); flex-shrink: 0; margin-bottom: 2px; transition: background 0.15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--panel)'">
+              +
+              <input type="file" name="attachment" id="chat-attachment-input" style="display: none;" onchange="showAttachedFileName(this)">
+            </label>
+
+            <!-- Textarea Input -->
+            <div style="flex: 1; position: relative;">
+              <textarea id="chat-textarea" name="content" rows="1" onkeydown="handleChatKeyDown(event)" onkeyup="handleMentionTrigger(event)" placeholder="Envoyer un message à {% if active_dm_user %}@{{ active_dm_user.username }}{% else %}{{ active_channel.name }}{% endif %} (tapez @ pour tagger un membre)..." style="width: 100%; padding: 6px 0; font-size: 14px; border: none; background: transparent; color: var(--text); resize: none; outline: none; font-family: inherit; max-height: 140px; line-height: 1.45;"></textarea>
+            </div>
+
+            <!-- Send Button -->
+            <button type="submit" title="Envoyer le message (Appuyez sur Entrée)" style="width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); border: none; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; font-size: 14px; font-weight: 800; margin-bottom: 2px; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              ➔
+            </button>
+
+          </div>
 
         </div>
 
@@ -174,7 +204,9 @@
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       const form = event.target.closest('form');
-      if (form && event.target.value.trim().length > 0) {
+      const attachmentInput = document.getElementById('chat-attachment-input');
+      const hasAttachment = attachmentInput && attachmentInput.files && attachmentInput.files.length > 0;
+      if (form && (event.target.value.trim().length > 0 || hasAttachment)) {
         if (window.htmx) {
           htmx.trigger(form, 'submit');
         } else {
@@ -250,18 +282,48 @@
 
   function showAttachedFileName(input) {
     const preview = document.getElementById('attached-file-preview');
-    const nameSpan = document.getElementById('attached-file-name');
+    const badge = document.getElementById('attached-ext-badge');
+    const docVisual = document.getElementById('attached-doc-visual');
+    const imgPreview = document.getElementById('attached-img-preview');
     if (input.files && input.files[0]) {
-      nameSpan.innerText = input.files[0].name;
-      preview.style.display = 'inline-flex';
+      const file = input.files[0];
+      const name = file.name;
+      const ext = name.split('.').pop().toUpperCase() || 'FILE';
+      if (badge) badge.innerText = ext;
+      
+      if (file.type && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          if (imgPreview) {
+            imgPreview.src = e.target.result;
+            imgPreview.style.display = 'block';
+          }
+          if (docVisual) docVisual.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        if (imgPreview) {
+          imgPreview.src = '';
+          imgPreview.style.display = 'none';
+        }
+        if (docVisual) docVisual.style.display = 'flex';
+      }
+      if (preview) preview.style.display = 'block';
     }
   }
 
   function clearAttachedFile() {
     const input = document.getElementById('chat-attachment-input');
     const preview = document.getElementById('attached-file-preview');
+    const imgPreview = document.getElementById('attached-img-preview');
+    const docVisual = document.getElementById('attached-doc-visual');
     if (input) input.value = '';
     if (preview) preview.style.display = 'none';
+    if (imgPreview) {
+      imgPreview.src = '';
+      imgPreview.style.display = 'none';
+    }
+    if (docVisual) docVisual.style.display = 'flex';
   }
 
   function handleMentionTrigger(e) {

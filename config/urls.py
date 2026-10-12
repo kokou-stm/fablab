@@ -43,6 +43,9 @@ urlpatterns = [
     path('workshops/', views.workshop_list_view, name='workshop_list'),
     path('workshops/<int:pk>/', views.workshop_detail_view, name='workshop_detail'),
 
+    # Bibliothèque du FabLab
+    path('library/', views.library_list_view, name='library_list'),
+
     # Inventaire & Consommables
     path('inventory/', views.inventory_list_view, name='inventory_list'),
 

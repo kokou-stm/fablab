@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'workshops',
     'inventory',
     'projects',
+    'library',
 ]
 
 MIDDLEWARE = [

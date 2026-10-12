@@ -14,7 +14,28 @@ class Command(BaseCommand):
         self._seed_channels()
         self._seed_message_tags()
         self._seed_admin_user()
+        self._migrate_existing_tenants()
         self.stdout.write(self.style.SUCCESS("✓ Données par défaut initialisées ."))
+
+    def _migrate_existing_tenants(self):
+        """Applique les migrations au schéma de chaque FabLab déjà créé.
+
+        Les espaces sont provisionnés à leur création ; sans cette étape, une
+        table ajoutée plus tard (nouveau modèle) n'existerait pas dans leur
+        schéma et les données retomberaient silencieusement sur le schéma
+        commun, partagé entre tous les établissements.
+        """
+        from fablabs.models import FabLab
+        from config.tenant_router import migrate_tenant
+
+        migrated = 0
+        for slug in FabLab.objects.values_list('slug', flat=True):
+            try:
+                migrate_tenant(slug, verbosity=0)
+                migrated += 1
+            except Exception as exc:  # un espace en erreur ne doit pas bloquer le démarrage
+                self.stdout.write(self.style.WARNING(f"  Migration du FabLab '{slug}' impossible : {exc}"))
+        self.stdout.write(f"  Schémas FabLab mis à jour : {migrated}")
 
     def _seed_admin_user(self):
         import os

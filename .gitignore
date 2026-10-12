@@ -22,3 +22,6 @@ backups/
 .DS_Store
 .vscode/
 .idea/
+
+# Dossier de travail hors projet (fichiers audio volumineux)
+stt_ewe/

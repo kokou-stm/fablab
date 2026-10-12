@@ -15,6 +15,7 @@ from reservations.models import Reservation, Certification, UserCertification
 from workshops.models import Workshop, WorkshopRegistration, CourseLesson, LessonResource
 from inventory.models import InventoryItem
 from projects.models import Project
+from library.models import LibraryResource
 from accounts.decorators import role_required, fabmanager_required, approved_member_required
 from core.emails import (
     send_tenant_registered_email,
@@ -817,6 +818,98 @@ def project_create_view(request):
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         return render(request, 'projects/partials/create_content.html')
     return render(request, 'projects/create.html')
+
+
+@approved_member_required
+def library_list_view(request):
+    """Bibliothèque du FabLab : consultable par tous les membres, alimentée par les responsables."""
+    can_manage = request.user.is_fabmanager_user
+
+    if request.method == 'POST':
+        if not can_manage:
+            messages.error(request, "Seuls les responsables du FabLab peuvent modifier la bibliothèque.")
+            return redirect('library_list')
+
+        action = request.POST.get('action')
+
+        if action == 'delete_resource':
+            resource = get_object_or_404(LibraryResource, id=request.POST.get('resource_id'))
+            title = resource.title
+            resource.delete()
+            messages.info(request, f"La ressource « {title} » a été retirée de la bibliothèque.")
+            return redirect('library_list')
+
+        title = (request.POST.get('title') or '').strip()
+        if not title:
+            messages.error(request, "Le titre de la ressource est obligatoire.")
+            return redirect('library_list')
+
+        external_url = (request.POST.get('external_url') or '').strip()
+        fields = {
+            'title': title,
+            'resource_type': request.POST.get('resource_type', 'LINK'),
+            'category': request.POST.get('category', 'GENERAL'),
+            'description': (request.POST.get('description') or '').strip(),
+            'author': (request.POST.get('author') or '').strip(),
+            'external_url': external_url or None,
+        }
+
+        if action == 'update_resource':
+            resource = get_object_or_404(LibraryResource, id=request.POST.get('resource_id'))
+            for field, value in fields.items():
+                setattr(resource, field, value)
+            if request.FILES.get('file'):
+                resource.file = request.FILES['file']
+            if request.FILES.get('cover_image'):
+                resource.cover_image = request.FILES['cover_image']
+            resource.save()
+            messages.success(request, f"La ressource « {resource.title} » a été mise à jour.")
+            return redirect('library_list')
+
+        # Ajout d'une nouvelle ressource
+        if not external_url and not request.FILES.get('file'):
+            messages.error(request, "Indiquez un lien externe ou joignez un fichier.")
+            return redirect('library_list')
+
+        resource = LibraryResource.objects.create(
+            added_by=request.user,
+            file=request.FILES.get('file'),
+            cover_image=request.FILES.get('cover_image'),
+            **fields,
+        )
+        messages.success(request, f"« {resource.title} » a été ajoutée à la bibliothèque !")
+        return redirect('library_list')
+
+    resources = LibraryResource.objects.select_related('added_by').all()
+
+    search_query = (request.GET.get('q') or '').strip()
+    type_filter = request.GET.get('type') or ''
+    category_filter = request.GET.get('category') or ''
+
+    if search_query:
+        resources = resources.filter(
+            Q(title__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(author__icontains=search_query)
+        )
+    if type_filter:
+        resources = resources.filter(resource_type=type_filter)
+    if category_filter:
+        resources = resources.filter(category=category_filter)
+
+    context = {
+        'resources': resources,
+        'can_manage': can_manage,
+        'resource_types': LibraryResource.RESOURCE_TYPES,
+        'categories': LibraryResource.CATEGORY_CHOICES,
+        'search_query': search_query,
+        'current_type': type_filter,
+        'current_category': category_filter,
+        'total_count': LibraryResource.objects.count(),
+    }
+    if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
+        return render(request, 'library/partials/library_content.html', context)
+    return render(request, 'library/list.html', context)
 
 
 @approved_member_required

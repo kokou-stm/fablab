@@ -26,6 +26,7 @@ PROTECTED_MEDIA_PREFIXES = (
     'justificatifs/',      # Justificatifs officiels d'un espace FabLab (KBIS, etc.)
     'chat_attachments/',   # Pièces jointes de messagerie (canaux privés compris)
     'workshop_resources/', # Supports de cours réservés aux inscrits d'un atelier
+    'library_resources/',  # Documents de la bibliothèque du FabLab
 )
 
 

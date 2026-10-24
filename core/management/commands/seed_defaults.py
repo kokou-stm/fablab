@@ -33,7 +33,7 @@ class Command(BaseCommand):
             try:
                 migrate_tenant(slug, verbosity=0)
                 migrated += 1
-            except Exception as exc:  # un espace en erreur ne doit pas bloquer le démarrage
+            except Exception as exc:
                 self.stdout.write(self.style.WARNING(f"  Migration du FabLab '{slug}' impossible : {exc}"))
         self.stdout.write(f"  Schémas FabLab mis à jour : {migrated}")
 
@@ -63,26 +63,18 @@ class Command(BaseCommand):
         user.is_staff = True
         user.is_superuser = True
         user.is_approved = True
-        # L'administration de la plateforme n'appartient à aucun FabLab : sinon le
-        # compte apparaîtrait dans l'annuaire des membres de cet établissement.
         user.fablab = None
 
         if explicit_password:
-            # DJANGO_ADMIN_PASSWORD fourni explicitement : rotation volontaire, on l'applique toujours.
             user.set_password(explicit_password)
             self.stdout.write(f"  Compte Administrateur : mot de passe de '{username}' appliqué depuis DJANGO_ADMIN_PASSWORD.")
         elif created:
-            # Première création sans mot de passe fourni : on en génère un et on
-            # l'affiche UNE SEULE FOIS dans les logs de déploiement.
             generated = secrets.token_urlsafe(16)
             user.set_password(generated)
             self.stdout.write(self.style.WARNING(
                 f"  ⚠️  Aucun DJANGO_ADMIN_PASSWORD fourni : mot de passe généré pour '{username}' : {generated}\n"
                 f"      Notez-le maintenant : il ne sera plus jamais réaffiché, et ne sera plus modifié aux prochains déploiements."
             ))
-        # Sinon (compte déjà existant, aucun mot de passe fourni explicitement) : on
-        # ne touche surtout pas au mot de passe actuel, qu'il ait été changé
-        # manuellement ou déjà généré lors d'un déploiement précédent.
 
         user.save()
         action = "créé" if created else "mis à jour"

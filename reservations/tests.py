@@ -50,7 +50,6 @@ class ReservationsModelAndViewsTests(BaseTenantTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_reservation_requires_certification_enforcement(self):
-        # Création d'une CNC qui exige une habilitation
         cnc_category = EquipmentCategory.objects.create(name="CNC", slug="cnc")
         cnc = Equipment.objects.create(
             name="Fraiseuse CNC",
@@ -61,7 +60,6 @@ class ReservationsModelAndViewsTests(BaseTenantTestCase):
         start_time = (timezone.now() + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M")
         end_time = (timezone.now() + timedelta(days=1, hours=2)).strftime("%Y-%m-%dT%H:%M")
 
-        # Réservation refusée car l'utilisateur n'est pas habilité
         response = self.client.post(reverse('reservation_list'), {
             'equipment_id': cnc.id,
             'start_time': start_time,
@@ -70,11 +68,9 @@ class ReservationsModelAndViewsTests(BaseTenantTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Reservation.objects.filter(equipment=cnc).exists())
 
-        # Octroi de l'habilitation sur la catégorie CNC
         cert = Certification.objects.create(name="Habilitation CNC", category=cnc_category)
         UserCertification.objects.create(user=self.user, certification=cert, is_active=True)
 
-        # Réservation acceptée après l'obtention du badge
         response = self.client.post(reverse('reservation_list'), {
             'equipment_id': cnc.id,
             'start_time': start_time,

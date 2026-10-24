@@ -54,7 +54,6 @@ class WorkshopsModelAndViewsTests(BaseTenantTestCase):
         self.assertEqual(self.workshop.registered_count, 1)
 
     def test_workshop_max_seats_enforcement(self):
-        # Atelier avec 1 seule place disponible
         full_ws = Workshop.objects.create(
             title="Atelier Limité",
             slug="atelier-limite",
@@ -64,11 +63,9 @@ class WorkshopsModelAndViewsTests(BaseTenantTestCase):
             end_date=timezone.now() + timedelta(days=2, hours=2),
             max_seats=1
         )
-        # Première inscription
         self.client.post(reverse('workshop_list'), {'workshop_id': full_ws.id})
         self.assertEqual(full_ws.available_seats, 0)
 
-        # Inscription d'un 2e membre sur l'atelier complet -> Doit être refusée
         user2 = User.objects.create_user(username="user2", email="user2@test.org", password="password123", is_approved=True)
         self.client.login(username="user2", password="password123")
         response = self.client.post(reverse('workshop_list'), {'workshop_id': full_ws.id})

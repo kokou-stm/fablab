@@ -18,15 +18,12 @@ from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.views.static import serve as static_serve
 
-# Préfixes de dossiers (relatifs à MEDIA_ROOT) contenant des fichiers sensibles.
-# Tout le reste (photos de machines, logos, avatars, images de projets/ateliers)
-# reste public sans restriction, comme c'était déjà le cas.
 PROTECTED_MEDIA_PREFIXES = (
-    'user_dossiers/',      # Pièces d'identité / justificatifs d'inscription membre
-    'justificatifs/',      # Justificatifs officiels d'un espace FabLab (KBIS, etc.)
-    'chat_attachments/',   # Pièces jointes de messagerie (canaux privés compris)
-    'workshop_resources/', # Supports de cours réservés aux inscrits d'un atelier
-    'library_resources/',  # Documents de la bibliothèque du FabLab
+    'user_dossiers/',
+    'justificatifs/',
+    'chat_attachments/',
+    'workshop_resources/',
+    'library_resources/',
 )
 
 

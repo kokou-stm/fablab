@@ -1,88 +1,96 @@
-<div style="display: grid; gap: 24px;">
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Maintenance & Incident Pannes</h1>
-      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Signalements d'anomalies machines et suivi des réparations par l'équipe FabLab.</p>
+<div class="entete">
+  <h1>Maintenance &amp; pannes</h1>
+  <p>Signalements d'anomalies machines et suivi des réparations par l'équipe du FabLab.</p>
+</div>
+
+<div class="carte" style="margin-bottom:16px">
+  <header>
+    <span class="ms" style="color:var(--warning)">report</span>
+    <div style="flex:1">
+      <h2>Signaler un incident</h2>
+      <p>Le responsable est alerté et peut mettre la machine en maintenance.</p>
     </div>
-  </div>
-
-  <!-- Formulaire de Signalement -->
-  <div style="background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md);">
-    <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 14px 0;">⚡ Signaler un Problème / Incidents</h3>
-    <form action="/maintenance/" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 1fr auto; gap: 12px; align-items: flex-end;">
+  </header>
+  <div class="corps">
+    <form action="/maintenance/" method="POST">
       {% csrf_token %}
-      <div>
-        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Équipement Concerne :</label>
-        <select name="equipment_id" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-          {% for eq in equipments %}
-            <option value="{{ eq.id }}">{{ eq.name }} ({{ eq.location_zone }})</option>
-          {% endfor %}
-        </select>
+      <div class="grille g2" style="gap:0 16px">
+        <div class="champ">
+          <label for="mt-eq">Équipement concerné</label>
+          <select id="mt-eq" name="equipment_id" required>
+            {% for eq in equipments %}
+              <option value="{{ eq.id }}">{{ eq.name }} — {{ eq.location_zone }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="champ">
+          <label for="mt-prio">Priorité</label>
+          <select id="mt-prio" name="priority">
+            <option value="LOW">Faible</option>
+            <option value="MEDIUM" selected>Moyenne</option>
+            <option value="HIGH">Haute</option>
+            <option value="URGENT">Urgente — machine bloquée</option>
+          </select>
+        </div>
       </div>
 
-      <div>
-        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Priorité :</label>
-        <select name="priority" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-          <option value="LOW">Faible</option>
-          <option value="MEDIUM" selected>Moyenne</option>
-          <option value="HIGH">Haute</option>
-          <option value="URGENT">Urgent / Machine Bloquée</option>
-        </select>
+      <div class="champ">
+        <label for="mt-titre">Intitulé du problème</label>
+        <input type="text" id="mt-titre" name="issue_title" required placeholder="ex. buse 0.4 bouchée">
       </div>
 
-      <div>
-        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Intitulé du Problème :</label>
-        <input type="text" name="issue_title" required placeholder="Buse 0.4 bouchée..." style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+      <div class="champ">
+        <label for="mt-desc">Détails</label>
+        <input type="text" id="mt-desc" name="description" placeholder="ex. claquement sur l'axe X depuis ce matin">
       </div>
 
-      <div>
-        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Détails :</label>
-        <input type="text" name="description" placeholder="Claquement axe X..." style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-      </div>
-
-      <div>
-        <button type="submit" style="padding: 9px 18px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer;">
-          Envoyer Signalement
-        </button>
-      </div>
+      <button type="submit" class="btn p"><span class="ms">send</span> Envoyer le signalement</button>
     </form>
   </div>
+</div>
 
-  <!-- Tickets Table -->
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+<div class="carte">
+  <div class="enveloppe">
+    <table>
       <thead>
-        <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
-          <th style="padding: 12px 16px;">Priorité</th>
-          <th style="padding: 12px 16px;">Équipement</th>
-          <th style="padding: 12px 16px;">Problème</th>
-          <th style="padding: 12px 16px;">Signalé Le</th>
-          <th style="padding: 12px 16px;">Statut Ticket</th>
+        <tr>
+          <th>Priorité</th>
+          <th>Équipement</th>
+          <th>Problème</th>
+          <th>Signalé le</th>
+          <th>Statut</th>
         </tr>
       </thead>
       <tbody>
         {% for t in tickets %}
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 14px 16px;">
-              <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--panel); border: 1px solid var(--border);">
+          <tr>
+            <td>
+              <span class="etq {% if t.priority == 'URGENT' %}r{% elif t.priority == 'HIGH' %}a{% elif t.priority == 'LOW' %}n{% else %}b{% endif %}">
                 {{ t.get_priority_display }}
               </span>
             </td>
-            <td style="padding: 14px 16px; font-weight: 600;">{{ t.equipment.name }}</td>
-            <td style="padding: 14px 16px;">
-              <div style="font-weight: 600;">{{ t.issue_title }}</div>
-              <div style="font-size: 12px; color: var(--muted);">{{ t.description }}</div>
+            <td><span class="p">{{ t.equipment.name }}</span></td>
+            <td>
+              <span class="p">{{ t.issue_title }}</span>
+              {% if t.description %}<small>{{ t.description }}</small>{% endif %}
             </td>
-            <td style="padding: 14px 16px; color: var(--muted); font-size: 13px;">{{ t.created_at|date:"d/m/Y H:i" }}</td>
-            <td style="padding: 14px 16px;">
-              <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+            <td style="color:var(--on-surface-variant)">{{ t.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+              <span class="etq {% if t.status == 'OPEN' %}r{% elif t.status == 'RESOLVED' or t.status == 'CLOSED' %}v{% else %}a{% endif %}">
                 {{ t.get_status_display }}
               </span>
             </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="5" style="padding: 30px; text-align: center; color: var(--muted);">Aucun ticket de maintenance ouvert.</td>
+            <td colspan="5">
+              <div class="vide">
+                <span class="ms">verified</span>
+                <b>Aucun ticket de maintenance ouvert</b>
+                Tout le parc machines est opérationnel.
+              </div>
+            </td>
           </tr>
         {% endfor %}
       </tbody>

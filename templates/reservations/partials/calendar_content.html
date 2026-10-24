@@ -1,41 +1,37 @@
-<div style="display: flex; flex-direction: column; gap: 24px;">
-  
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Planning Centralisé des Réservations</h1>
-      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Vue d'occupation et disponibilité en temps réel pour l'espace <strong>{{ tenant.name|default:"FabLab" }}</strong>.</p>
-    </div>
-    <div style="display: flex; gap: 10px;">
-      <a href="{% url 'reservation_list' %}" hx-get="{% url 'reservation_list' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
-        {% if request.user.is_fabmanager_user %}Gérer les Réservations{% else %}+ Nouvelle Réservation{% endif %}
-      </a>
-      <a href="{% url 'usage_history' %}" hx-get="{% url 'usage_history' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
-        Historique d'Utilisation
-      </a>
-    </div>
+<div class="entete" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+  <div style="flex:1;min-width:260px">
+    <h1>Planning centralisé</h1>
+    <p>Occupation et disponibilité en temps réel pour l'espace {{ tenant.name|default:"FabLab" }}.</p>
   </div>
-
-  <!-- Legend & Filter Bar -->
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow);">
-    <div style="display: flex; align-items: center; gap: 20px; font-size: 13px; font-weight: 600;">
-      <span>Légende :</span>
-      <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #10B981;"></span> Confirmée (Vert)</span>
-      <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #3B82F6;"></span> En Cours / Utilisée (Bleu)</span>
-      <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #F59E0B;"></span> En Attente (Orange)</span>
-    </div>
-    <div style="font-size: 12px; color: var(--muted);">
-      Filtré sur les machines actives de : <strong>{{ tenant.name }}</strong>
-    </div>
+  <div class="ligne">
+    <a class="btn" href="{% url 'reservation_list' %}" hx-get="{% url 'reservation_list' %}"
+       hx-target="#content" hx-push-url="true">
+      <span class="ms">{% if request.user.is_fabmanager_user %}fact_check{% else %}add{% endif %}</span>
+      {% if request.user.is_fabmanager_user %}Gérer les réservations{% else %}Réserver{% endif %}
+    </a>
+    <a class="btn" href="{% url 'usage_history' %}" hx-get="{% url 'usage_history' %}"
+       hx-target="#content" hx-push-url="true">
+      <span class="ms">history</span> Historique
+    </a>
   </div>
-
-  <!-- Calendar Card Shell -->
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
-    <div id="calendar-view" style="min-height: 520px;"></div>
-  </div>
-
 </div>
 
-<!-- FullCalendar Library CDN -->
+<div class="barre-outils">
+  <span style="font-size:12px;font-weight:500;color:var(--on-surface-variant)">Légende</span>
+  <span class="etq v"><span class="pt"></span> Confirmée</span>
+  <span class="etq b"><span class="pt"></span> En cours</span>
+  <span class="etq a"><span class="pt"></span> En attente</span>
+  <span class="pousse" style="font-size:12px;color:var(--on-surface-variant)">
+    Machines actives de {{ tenant.name }}
+  </span>
+</div>
+
+<div class="carte">
+  <div class="corps" style="padding:20px">
+    <div id="calendar-view" style="min-height:540px"></div>
+  </div>
+</div>
+
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.js"></script>
@@ -53,6 +49,7 @@
       const calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'fr',
         initialView: 'timeGridWeek',
+        height: 'auto',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
@@ -62,8 +59,23 @@
         slotMaxTime: '22:00:00',
         allDaySlot: false,
         events: '/reservations/calendar/api/',
-        eventClick: function(info) {
-          alert('Réservation : ' + info.event.title + '\nStatut : ' + info.event.extendedProps.status);
+        eventClick: function (info) {
+          const p = info.event.extendedProps || {};
+          const deb = info.event.start ? info.event.start.toLocaleString('fr-FR') : '—';
+          const fin = info.event.end ? info.event.end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+          ouvrirTiroir(
+            esc(info.event.title),
+            'Détail de la réservation',
+            '<dl class="fiche">'
+              + '<dt>Réservation</dt><dd>' + esc(info.event.title) + '</dd>'
+              + '<dt>Début</dt><dd>' + esc(deb) + '</dd>'
+              + '<dt>Fin</dt><dd>' + esc(fin) + '</dd>'
+              + '<dt>Statut</dt><dd><span class="etq" style="background:' + esc(info.event.backgroundColor)
+              + ';color:#fff">' + esc(p.status || '—') + '</span></dd>'
+              + '</dl>',
+            '<button type="button" class="btn n" onclick="fermerTiroir()">Fermer</button>'
+            + '<a class="btn p" href="/reservations/">Voir les demandes</a>'
+          );
         }
       });
       calendar.render();

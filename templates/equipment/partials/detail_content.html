@@ -1,252 +1,306 @@
-<div style="display: grid; gap: 24px;">
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="font-size: 13px; color: var(--muted); text-decoration: none;">← Retour au catalogue</a>
-      <h1 style="font-size: 26px; font-weight: 700; margin: 8px 0 0 0;">{{ equipment.name }}</h1>
+<div class="entete">
+  <a class="btn n s" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+    <span class="ms">arrow_back</span> Retour au catalogue
+  </a>
+  <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:10px">
+    <div style="flex:1;min-width:240px">
+      <h1>{{ equipment.name }}</h1>
+      <p>{{ equipment.category.name }} · {{ equipment.location_zone }}</p>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
-        <button onclick="document.getElementById('edit-equipment-modal').style.display='grid'" style="padding: 8px 16px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 6px;">
-          ✏️ Modifier la Machine
-        </button>
-      {% endif %}
-      <div style="display: flex; align-items: center; gap: 8px; background: var(--surface); padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-        {% if equipment.is_currently_reserved or equipment.status == 'RESERVED' %}
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);"></span>
-          <span style="font-weight: 700; font-size: 14px; color: #2563eb;">🔵 En Utilisation / Réservé</span>
+
+    {% if equipment.is_currently_reserved or equipment.status == 'RESERVED' %}
+      <span class="etq b"><span class="pt"></span> Réservée / en utilisation</span>
+    {% elif equipment.status == 'MAINTENANCE' %}
+      <span class="etq a"><span class="pt"></span> {{ equipment.get_status_display }}</span>
+    {% elif equipment.status == 'OFFLINE' %}
+      <span class="etq r"><span class="pt"></span> {{ equipment.get_status_display }}</span>
+    {% else %}
+      <span class="etq v"><span class="pt"></span> {{ equipment.get_status_display }}</span>
+    {% endif %}
+
+    {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
+      <button type="button" class="btn" onclick="document.getElementById('edit-equipment-modal').classList.add('on')">
+        <span class="ms">edit</span> Modifier la machine
+      </button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grille g21">
+
+  <div class="pile">
+    {% if equipment.image %}
+      <div class="carte" style="display:grid;place-items:center;background:var(--s-container);padding:16px">
+        <img src="{{ equipment.image.url }}" alt="{{ equipment.name }}" loading="lazy"
+             style="max-width:100%;max-height:360px;border-radius:var(--sh-m)">
+      </div>
+    {% endif %}
+
+    <div class="carte">
+      <header>
+        <span class="ms" style="color:var(--warning)">health_and_safety</span>
+        <div style="flex:1">
+          <h2>Consignes de sécurité &amp; EPI obligatoires</h2>
+        </div>
+      </header>
+      <div class="corps">
+        <div class="avis a">
+          <div>{{ equipment.safety_instructions|default:"Lunettes de sécurité fermées, chaussures de sécurité et cheveux attachés requis. Ne jamais laisser la machine tourner sans surveillance." }}</div>
+        </div>
+
+        <dl class="fiche">
+          <dt>Modèle</dt><dd>{{ equipment.model_number|default:"Standard" }}</dd>
+          <dt>Numéro de série</dt><dd class="mono">{{ equipment.serial_number|default:"—" }}</dd>
+          <dt>Consommation électrique</dt><dd>{{ equipment.power_watts }} W</dd>
+          <dt>Zone d'implantation</dt><dd>{{ equipment.location_zone }}</dd>
+          <dt>Tarif horaire</dt><dd>{{ equipment.hourly_rate }} € / heure</dd>
+          <dt>Habilitation</dt>
+          <dd>
+            {% if equipment.requires_certification %}
+              <span class="etq a">Obligatoire — badge RFID</span>
+            {% else %}
+              <span class="etq v">Accès libre</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="carte">
+      <header>
+        <span class="ms">description</span>
+        <div style="flex:1"><h2>Documentation technique &amp; notice</h2></div>
+      </header>
+      <div class="corps">
+        {% if equipment.doc_file or equipment.doc_url %}
+          <div class="ligne">
+            {% if equipment.doc_file %}
+              <a class="btn p" href="{{ equipment.doc_file.url }}" target="_blank" rel="noopener">
+                <span class="ms">picture_as_pdf</span> Consulter la notice
+              </a>
+            {% endif %}
+            {% if equipment.doc_url %}
+              <a class="btn" href="{{ equipment.doc_url }}" target="_blank" rel="noopener">
+                <span class="ms">open_in_new</span> Manuel web / wiki constructeur
+              </a>
+            {% endif %}
+          </div>
         {% else %}
-          <span class="machine-status-dot status-{{ equipment.status }}"></span>
-          <span style="font-weight: 700; font-size: 14px;">{{ equipment.get_status_display }}</span>
+          <div class="vide" style="padding:28px 16px">
+            <span class="ms">description</span>
+            <b>Aucune documentation jointe</b>
+            Le responsable du FabLab peut ajouter une notice ou un lien depuis la fiche machine.
+          </div>
         {% endif %}
+      </div>
+    </div>
+
+    <div class="carte">
+      <header>
+        <span class="ms">build</span>
+        <div style="flex:1"><h2>Historique de maintenance &amp; incidents</h2></div>
+      </header>
+      <div class="corps">
+        {% for t in tickets %}
+          <div class="evt {% if t.status == 'OPEN' %}alerte{% endif %}" style="grid-template-columns:36px 1fr auto">
+            <span class="rond"><span class="ms">report</span></span>
+            <div>
+              <b>{{ t.issue_title }}</b>
+              <div class="q">{{ t.description }}</div>
+            </div>
+            <span class="etq {% if t.status == 'OPEN' %}r{% elif t.status == 'RESOLVED' %}v{% else %}a{% endif %}">
+              {{ t.get_status_display }}
+            </span>
+          </div>
+        {% empty %}
+          <div class="vide" style="padding:28px 16px">
+            <span class="ms">verified</span>
+            <b>Aucun incident signalé</b>
+            Cette machine n'a pas d'historique de panne récent.
+          </div>
+        {% endfor %}
       </div>
     </div>
   </div>
 
-  {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
-    <!-- Modal Édition de Machine -->
-    <div id="edit-equipment-modal" style="display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); place-items: center;">
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: min(650px, 94vw); padding: 28px; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; text-align: left;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-          <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text);">✏️ Modifier la Machine : {{ equipment.name }}</h3>
-          <button onclick="document.getElementById('edit-equipment-modal').style.display='none'" style="background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer;">✕</button>
+  <!-- Colonne de droite : réservation ou gestion -->
+  {% if request.user.is_fabmanager_user %}
+    <div class="carte" style="align-self:start">
+      <header>
+        <span class="ms">admin_panel_settings</span>
+        <div style="flex:1"><h2>Gestion de la machine</h2></div>
+      </header>
+      <div class="corps">
+        <p style="font-size:13px;line-height:19px;color:var(--on-surface-variant);margin:0 0 16px">
+          En tant que responsable, vous modifiez la fiche de cette machine et validez les demandes des membres —
+          vous ne réservez pas de créneau vous-même.
+        </p>
+        <a class="btn p" style="width:100%" href="{% url 'reservation_list' %}"
+           hx-get="{% url 'reservation_list' %}" hx-target="#content" hx-push-url="true">
+          <span class="ms">fact_check</span> Gérer les demandes
+        </a>
+      </div>
+    </div>
+  {% else %}
+    <div class="carte" style="align-self:start">
+      <header>
+        <div style="flex:1">
+          <h2>Réserver un créneau</h2>
+          <p>{{ equipment.hourly_rate }} € par heure d'utilisation</p>
         </div>
-
-        <form method="POST" enctype="multipart/form-data" style="display: grid; gap: 16px;">
+      </header>
+      <div class="corps">
+        <form action="/reservations/" method="POST">
           {% csrf_token %}
-          <input type="hidden" name="action" value="update_equipment">
+          <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div>
-              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Nom de la Machine :</label>
-              <input type="text" name="name" value="{{ equipment.name }}" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Catégorie :</label>
-              <select name="category_id" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-                {% for cat in categories %}
-                  <option value="{{ cat.id }}" {% if equipment.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
-                {% endfor %}
-              </select>
+          <div class="champ">
+            <label>Réservé par</label>
+            <div style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;
+                        border:1px solid var(--outline-variant);border-radius:var(--sh-xs);background:var(--s-container)">
+              <span class="avatar" style="width:26px;height:26px;font-size:11px">{{ request.user.username|slice:":1"|upper }}</span>
+              <span style="font-weight:500">{{ request.user.get_full_name|default:request.user.username }}</span>
+              <span style="color:var(--on-surface-variant);font-size:12.5px">@{{ request.user.username }}</span>
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Statut :</label>
-              <select name="status" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-                <option value="AVAILABLE" {% if equipment.status == 'AVAILABLE' %}selected{% endif %}>🟢 Disponible</option>
-                <option value="RESERVED" {% if equipment.status == 'RESERVED' %}selected{% endif %}>🔵 En Utilisation</option>
-                <option value="MAINTENANCE" {% if equipment.status == 'MAINTENANCE' %}selected{% endif %}>🟠 En Maintenance</option>
-                <option value="OFFLINE" {% if equipment.status == 'OFFLINE' %}selected{% endif %}>🔴 Hors Service</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Tarif Horaire (€/h) :</label>
-              <input type="number" step="0.5" name="hourly_rate" value="{{ equipment.hourly_rate }}" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Puissance (Watts) :</label>
-              <input type="number" name="power_watts" value="{{ equipment.power_watts }}" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-            </div>
+          <div class="champ">
+            <label for="booking-start">Début du créneau</label>
+            <input type="datetime-local" id="booking-start" name="start_time" required>
           </div>
 
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Emplacement / Zone :</label>
-            <input type="text" name="location_zone" value="{{ equipment.location_zone }}" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+          <div class="champ">
+            <label for="booking-end">Fin du créneau</label>
+            <input type="datetime-local" id="booking-end" name="end_time" required>
           </div>
 
-          <div style="padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="edit_requires_certification" name="requires_certification" {% if equipment.requires_certification %}checked{% endif %} style="width: 18px; height: 18px;">
-            <label for="edit_requires_certification" style="font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text);">
-              🔒 Habilitation / Formation / Badge requis pour utiliser cette machine
-            </label>
+          <div class="champ">
+            <label for="booking-desc">Description du travail</label>
+            <textarea id="booking-desc" name="project_description" placeholder="ex. prototypage du carter du robot…"></textarea>
           </div>
 
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description & Caractéristiques :</label>
-            <textarea name="description" rows="2" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px; resize: vertical;">{{ equipment.description }}</textarea>
-          </div>
+          <button type="submit" class="btn p" style="width:100%">
+            <span class="ms">event_available</span> Envoyer ma demande
+          </button>
 
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Consignes de Sécurité & EPI requis :</label>
-            <textarea name="safety_instructions" rows="2" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px; resize: vertical;">{{ equipment.safety_instructions }}</textarea>
-          </div>
-
-          <div style="padding: 14px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
-            <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);"> Documentation Technique & Notice :</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">Fichier Notice PDF (Remplacer) :</label>
-                <input type="file" name="doc_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" style="width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
-              </div>
-              <div>
-                <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">Lien Web Manuel / Wiki :</label>
-                <input type="url" name="doc_url" value="{{ equipment.doc_url|default:'' }}" placeholder="https://..." style="width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Remplacer la Photo de la Machine :</label>
-            <input type="file" name="image" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 12px;">
-          </div>
-
-          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-            <button type="button" onclick="document.getElementById('edit-equipment-modal').style.display='none'" style="padding: 9px 16px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); cursor: pointer;">Annuler</button>
-            <button type="submit" style="padding: 9px 20px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">✓ Sauvegarder les Modifications</button>
+          <div class="aide" style="padding:10px 0 0;font-size:12px;color:var(--on-surface-variant)">
+            Votre demande est transmise au responsable du FabLab, qui la valide ou la refuse.
           </div>
         </form>
       </div>
     </div>
   {% endif %}
 
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-    
-    <!-- Specs & Safety -->
-    <div style="display: grid; gap: 20px;">
-      {% if equipment.image %}
-        <div style="width: 100%; min-height: 240px; max-height: 380px; overflow: hidden; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: center; padding: 16px;">
-          <img src="{{ equipment.image.url }}" alt="{{ equipment.name }}" style="max-width: 100%; max-height: 350px; width: auto; height: auto; object-fit: contain; border-radius: var(--radius-sm);" loading="lazy">
-        </div>
-      {% endif %}
-      <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md);">
-        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Consignes de Sécurité & EPI Obligatoires</h3>
-        <p style="color: var(--muted); font-size: 14px; line-height: 1.6;">
-          {{ equipment.safety_instructions|default:"Lunettes de sécurité fermées, chaussures de sécurité et port de charlotte/cheveux attachés requis. Ne jamais laisser la machine tourner sans surveillance." }}
-        </p>
+</div>
 
-        <div style="margin-top: 20px; padding: 16px; background: var(--panel); border-radius: var(--radius-md); border: 1px solid var(--border);">
-          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">Spécifications Techniques :</div>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 13px;">
-            <div><strong>Modèle :</strong> {{ equipment.model_number }}</div>
-            <div><strong>Numéro de série :</strong> {{ equipment.serial_number|default:"N/A" }}</div>
-            <div><strong>Consommation électrique :</strong> {{ equipment.power_watts }} W</div>
-            <div><strong>Zone d'implantation :</strong> {{ equipment.location_zone }}</div>
-            <div><strong>Tarif horaire :</strong> {{ equipment.hourly_rate }} € / h</div>
-            <div><strong>Habilitation :</strong> {% if equipment.requires_certification %}Obligatoire (Badging RFID){% else %}Accès Libre{% endif %}</div>
-          </div>
-        </div>
+{% if request.user.is_authenticated and request.user.is_fabmanager_user %}
+<!-- Modification de la machine -->
+<div class="fond-modal" id="edit-equipment-modal" onclick="if(event.target===this) this.classList.remove('on')">
+  <div class="boite">
+    <header>
+      <div style="flex:1">
+        <h3>Modifier la machine</h3>
+        <p>{{ equipment.name }}</p>
       </div>
+      <button type="button" class="ic-btn" aria-label="Fermer"
+              onclick="document.getElementById('edit-equipment-modal').classList.remove('on')">
+        <span class="ms">close</span>
+      </button>
+    </header>
 
-      <!-- Documentation Technique & Notice -->
-      <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md);">
-        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 16px 0;"> Documentation Technique & Notice d'Utilisation</h3>
-        
-        {% if equipment.doc_file or equipment.doc_url %}
-          <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-            {% if equipment.doc_file %}
-              <a href="{{ equipment.doc_file.url }}" target="_blank" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 8px;">
-                📄 Consulter la Notice Technique (PDF / Fichier)
-              </a>
-            {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_equipment">
 
-            {% if equipment.doc_url %}
-              <a href="{{ equipment.doc_url }}" target="_blank" class="btn btn-outline" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--border); color: var(--text); text-decoration: none; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 8px;">
-                🔗 Manuel Web / Wiki Constructeur ↗
-              </a>
-            {% endif %}
+      <div class="contenu">
+        <div class="grille g2" style="gap:0 16px">
+          <div class="champ">
+            <label for="ed-nom">Nom de la machine</label>
+            <input type="text" id="ed-nom" name="name" value="{{ equipment.name }}" required>
           </div>
-        {% else %}
-          <div style="padding: 14px; background: var(--panel); border: 1px dashed var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); text-align: center;">
-            ℹ️ Aucune documentation ni manuel web n'a encore été joint à cette machine.
+          <div class="champ">
+            <label for="ed-cat">Catégorie</label>
+            <select id="ed-cat" name="category_id" required>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if equipment.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
           </div>
-        {% endif %}
-      </div>
+        </div>
 
-      <!-- Tickets de maintenance pour cette machine -->
-      <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md);">
-        <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 16px 0;">Historique de Maintenance & Incident</h3>
-        <div style="display: grid; gap: 10px;">
-          {% for t in tickets %}
-            <div style="padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-              <div style="display: flex; justify-content: space-between; font-weight: 600;">
-                <span>{{ t.issue_title }}</span>
-                <span>{{ t.get_status_display }}</span>
-              </div>
-              <div style="color: var(--muted); margin-top: 4px;">{{ t.description }}</div>
+        <div class="grille g3" style="gap:0 14px">
+          <div class="champ">
+            <label for="ed-stat">Statut</label>
+            <select id="ed-stat" name="status">
+              <option value="AVAILABLE" {% if equipment.status == 'AVAILABLE' %}selected{% endif %}>Disponible</option>
+              <option value="RESERVED" {% if equipment.status == 'RESERVED' %}selected{% endif %}>En utilisation</option>
+              <option value="MAINTENANCE" {% if equipment.status == 'MAINTENANCE' %}selected{% endif %}>En maintenance</option>
+              <option value="OFFLINE" {% if equipment.status == 'OFFLINE' %}selected{% endif %}>Hors service</option>
+            </select>
+          </div>
+          <div class="champ">
+            <label for="ed-tarif">Tarif horaire (€/h)</label>
+            <input type="number" step="0.5" id="ed-tarif" name="hourly_rate" value="{{ equipment.hourly_rate }}">
+          </div>
+          <div class="champ">
+            <label for="ed-watt">Puissance (W)</label>
+            <input type="number" id="ed-watt" name="power_watts" value="{{ equipment.power_watts }}">
+          </div>
+        </div>
+
+        <div class="champ">
+          <label for="ed-zone">Emplacement / zone</label>
+          <input type="text" id="ed-zone" name="location_zone" value="{{ equipment.location_zone }}">
+        </div>
+
+        <label class="choix" style="margin-bottom:20px">
+          <input type="checkbox" id="edit_requires_certification" name="requires_certification"
+                 {% if equipment.requires_certification %}checked{% endif %}>
+          <b style="display:inline">Habilitation requise</b>
+          <p>Une formation ou un badge est nécessaire pour utiliser cette machine.</p>
+        </label>
+
+        <div class="champ">
+          <label for="ed-desc">Description &amp; caractéristiques</label>
+          <textarea id="ed-desc" name="description">{{ equipment.description }}</textarea>
+        </div>
+
+        <div class="champ">
+          <label for="ed-secu">Consignes de sécurité &amp; EPI requis</label>
+          <textarea id="ed-secu" name="safety_instructions">{{ equipment.safety_instructions }}</textarea>
+        </div>
+
+        <div class="avis b" style="display:block">
+          <b>Documentation technique</b>
+          <div class="grille g2" style="gap:0 14px;margin-top:10px">
+            <div class="champ" style="margin-bottom:4px">
+              <label for="ed-doc">Remplacer la notice</label>
+              <input type="file" id="ed-doc" name="doc_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                     style="height:auto;padding:12px 16px">
             </div>
-          {% empty %}
-            <div style="color: var(--muted); font-size: 13px;">Aucun incident récent signalé sur cette machine.</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Booking CTA Box -->
-    {% if request.user.is_fabmanager_user %}
-    <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md); height: fit-content;">
-      <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Gestion de la machine</h3>
-      <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 16px 0;">
-        En tant que responsable, vous modifiez la fiche de cette machine et validez les demandes des membres — vous ne réservez pas de créneau vous-même.
-      </p>
-      <a href="{% url 'reservation_list' %}" hx-get="{% url 'reservation_list' %}" hx-target="#content" hx-push-url="true" style="display: block; text-align: center; padding: 10px; background: var(--text); color: var(--bg); border-radius: var(--radius-md); font-weight: 700; text-decoration: none;">
-        Gérer les demandes de réservation
-      </a>
-    </div>
-    {% else %}
-    <div style="background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: var(--radius-md); height: fit-content;">
-      <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Réserver un Créneau</h3>
-      <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">{{ equipment.hourly_rate }} € <span style="font-size: 13px; font-weight: 400; color: var(--muted);">/ heure</span></div>
-
-      <form action="/reservations/" method="POST" style="display: grid; gap: 12px;">
-        {% csrf_token %}
-        <input type="hidden" name="equipment_id" value="{{ equipment.id }}">
-        
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Réservé par :</label>
-          <div style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--muted); font-size: 14px;">
-            <span style="width: 24px; height: 24px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">
-              {{ request.user.username|slice:":1"|upper }}
-            </span>
-            <span style="color: var(--text); font-weight: 600;">{{ request.user.get_full_name|default:request.user.username }}</span>
-            <span>@{{ request.user.username }}</span>
+            <div class="champ" style="margin-bottom:4px">
+              <label for="ed-url">Lien manuel / wiki</label>
+              <input type="url" id="ed-url" name="doc_url" value="{{ equipment.doc_url|default:'' }}" placeholder="https://…">
+            </div>
           </div>
         </div>
 
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date &amp; Début :</label>
-          <input type="datetime-local" id="booking-start" name="start_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
+        <div class="champ">
+          <label for="ed-img">Remplacer la photo de la machine</label>
+          <input type="file" id="ed-img" name="image" accept="image/*" style="height:auto;padding:12px 16px">
         </div>
+      </div>
 
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Date &amp; Fin :</label>
-          <input type="datetime-local" id="booking-end" name="end_time" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-        </div>
-
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description du Travail :</label>
-          <textarea name="project_description" rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);" placeholder="Prototypage carter robot..."></textarea>
-        </div>
-
-        <button type="submit" style="width: 100%; padding: 10px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; margin-top: 8px;">
-          Confirmer la Réservation
+      <footer>
+        <button type="button" class="btn n" onclick="document.getElementById('edit-equipment-modal').classList.remove('on')">
+          Annuler
         </button>
-      </form>
-    </div>
-    {% endif %}
-
+        <button type="submit" class="btn p"><span class="ms">check</span> Sauvegarder</button>
+      </footer>
+    </form>
   </div>
 </div>
+{% endif %}
 
 <script>
   // Interdit le choix d'un créneau déjà passé, et garde la fin après le début.

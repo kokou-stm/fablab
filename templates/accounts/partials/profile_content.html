@@ -1,165 +1,136 @@
-<div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px;">
+<div class="entete">
+  <h1>Mon profil</h1>
+  <p>Vos informations, votre abonnement et vos habilitations machines.</p>
+</div>
 
-  <!-- Left Side: Profile Card -->
-  <div
-    style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
-    <div style="text-align: center; margin-bottom: 20px;">
-      <div
-        style="width: 80px; height: 80px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px auto;">
-        {{ user_obj.username|slice:":1"|upper }}
-      </div>
-      <h2 style="font-size: 18px; font-weight: 700; margin: 0;">{{ user_obj.get_full_name|default:user_obj.username }}
-      </h2>
-      <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">{{ user_obj.get_role_display }}</div>
-      {% if user_obj.fablab %}
-      <div
-        style="margin-top: 8px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); display: inline-block;">
-        {{ user_obj.fablab.name }}
-      </div>
-      {% endif %}
-    </div>
+<div class="grille" style="grid-template-columns:340px 1fr">
 
-    <div style="border-top: 1px solid var(--border); padding-top: 16px; font-size: 13px;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <span style="color: var(--muted);">Email :</span>
-        <span style="font-weight: 600;">{{ user_obj.email|default:"Non renseigné" }}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <span style="color: var(--muted);">Téléphone :</span>
-        <span style="font-weight: 600;">{{ user_obj.phone|default:"Non renseigné" }}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <span style="color: var(--muted);">Badge RFID :</span>
-        <span style="font-weight: 600; font-family: monospace;">{{ user_obj.rfid_card_id|default:"Non associé" }}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between;">
-        <span style="color: var(--muted);">Habilité Machines :</span>
-        <span style="font-weight: 700; color: {% if user_obj.is_certified %}#10b981{% else %}var(--muted){% endif %};">
-          {% if user_obj.is_certified %}Oui (Certifié){% else %}Non{% endif %}
+  <div class="carte" style="align-self:start">
+    <div class="corps" style="padding:24px">
+      <div style="text-align:center;margin-bottom:20px">
+        <span class="avatar" style="width:80px;height:80px;font-size:30px;margin:0 auto 14px;display:grid">
+          {{ user_obj.username|slice:":1"|upper }}
         </span>
+        <h2 style="font-size:18px;font-weight:500;margin:0">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
+        <div style="font-size:13px;color:var(--on-surface-variant);margin-top:2px">{{ user_obj.get_role_display }}</div>
+        {% if user_obj.fablab %}
+          <div style="margin-top:10px"><span class="etq b">{{ user_obj.fablab.name }}</span></div>
+        {% endif %}
       </div>
-    </div>
 
-    <div style="border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px;">
-      <a href="/logout/"
-        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s ease;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-        Se déconnecter
+      <dl class="fiche">
+        <dt>Adresse e-mail</dt><dd>{{ user_obj.email|default:"Non renseignée" }}</dd>
+        <dt>Téléphone</dt><dd>{{ user_obj.phone|default:"Non renseigné" }}</dd>
+        <dt>Badge RFID</dt><dd class="mono">{{ user_obj.rfid_card_id|default:"Non associé" }}</dd>
+        <dt>Habilitation</dt>
+        <dd>
+          {% if user_obj.is_certified %}
+            <span class="etq v">Habilité machines</span>
+          {% else %}
+            <span class="etq">Non habilité</span>
+          {% endif %}
+        </dd>
+      </dl>
+
+      <a class="btn" href="/logout/" style="width:100%;margin-top:18px;color:var(--error);border-color:var(--error)">
+        <span class="ms">logout</span> Se déconnecter
       </a>
     </div>
   </div>
 
-  <!-- Right Side: Edit Form & Subscriptions & Certifications -->
-  <div style="display: flex; flex-direction: column; gap: 24px;">
+  <div class="pile">
 
-    <!-- Active Subscription Status Box -->
-    <div
-      style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-        <div>
-          <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Mon Abonnement & Cotisation</h3>
-          <p style="margin: 2px 0 0 0; font-size: 13px; color: var(--muted);">Statut de votre accès aux machines du
-            FabLab</p>
+    <div class="carte">
+      <header>
+        <div style="flex:1">
+          <h2>Mon abonnement</h2>
+          <p>Statut de votre accès aux machines du FabLab</p>
         </div>
         {% if active_sub %}
-        <span
-          style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #10b98120; color: #10b981; border: 1px solid #10b98140;">
-          ✓ ABONNEMENT ACTIF
-        </span>
+          <span class="etq v"><span class="pt"></span> Actif</span>
         {% else %}
-        <span
-          style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40;">
-          ⚠ PAS D'ABONNEMENT EN COURS
-        </span>
+          <span class="etq a"><span class="pt"></span> Aucun abonnement</span>
         {% endif %}
-      </div>
+      </header>
 
-      {% if active_sub %}
-      <div
-        style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; background: var(--panel); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px;">
-        <div>
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Formule</div>
-          <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.get_plan_type_display }}</div>
-        </div>
-        <div>
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Date d'échéance</div>
-          <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.end_date|date:"d/m/Y" }}</div>
-        </div>
-        <div>
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Tarif Mensuel</div>
-          <div style="font-weight: 700; font-size: 14px; margin-top: 2px;">{{ active_sub.price }} €</div>
-        </div>
-      </div>
-      {% endif %}
+      <div class="corps">
+        {% if active_sub %}
+          <div class="grille g3" style="margin-bottom:18px">
+            <div class="kpi" style="padding:14px 16px;background:var(--s-container-low)">
+              <span class="l" style="font-size:12px;color:var(--on-surface-variant)">Formule</span>
+              <span style="font-size:15px;font-weight:500;margin-top:2px">{{ active_sub.get_plan_type_display }}</span>
+            </div>
+            <div class="kpi" style="padding:14px 16px;background:var(--s-container-low)">
+              <span class="l" style="font-size:12px;color:var(--on-surface-variant)">Échéance</span>
+              <span style="font-size:15px;font-weight:500;margin-top:2px">{{ active_sub.end_date|date:"d/m/Y" }}</span>
+            </div>
+            <div class="kpi" style="padding:14px 16px;background:var(--s-container-low)">
+              <span class="l" style="font-size:12px;color:var(--on-surface-variant)">Tarif</span>
+              <span style="font-size:15px;font-weight:500;margin-top:2px">{{ active_sub.price }} €</span>
+            </div>
+          </div>
+        {% endif %}
 
-      <!-- Renew/Change Form -->
-      <form method="post"
-        style="display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--border); padding-top: 16px;">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="renew_subscription" />
-        <select name="plan_type" class="form-select"
-          style="flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
-          <option value="MAKER_MONTHLY">Abonnement Maker (30€ / mois)</option>
-          <option value="STUDENT">Pass Étudiant (15€ / mois)</option>
-          <option value="MAKER_ANNUAL">Abonnement Maker Annuel (300€ / an)</option>
-          <option value="PRO">Pass Pro / Entreprise (100€ / mois)</option>
-        </select>
-        <button type="submit" class="btn btn-outline"
-          style="padding: 8px 16px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm); cursor: pointer;">
-          Souscrire / Renouveler
-        </button>
-      </form>
+        <form method="post" class="barre-outils" style="margin:0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="renew_subscription" />
+          <select name="plan_type" style="flex:1;min-width:220px">
+            <option value="MAKER_MONTHLY">Abonnement Maker — 30 € / mois</option>
+            <option value="STUDENT">Pass étudiant — 15 € / mois</option>
+            <option value="MAKER_ANNUAL">Abonnement Maker annuel — 300 € / an</option>
+            <option value="PRO">Pass pro / entreprise — 100 € / mois</option>
+          </select>
+          <button type="submit" class="btn"><span class="ms">autorenew</span> Souscrire ou renouveler</button>
+        </form>
+      </div>
     </div>
 
-    <!-- Edit Profile Form -->
-    <div
-      style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow);">
-      <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">Modifier mes Informations</h3>
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update_profile" />
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-          <div>
-            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Prénom</label>
-            <input type="text" name="first_name" value="{{ user_obj.first_name }}" class="form-input"
-              style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+    <div class="carte">
+      <header>
+        <div style="flex:1"><h2>Modifier mes informations</h2></div>
+      </header>
+      <div class="corps">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_profile" />
+
+          <div class="grille g2" style="gap:0 16px">
+            <div class="champ">
+              <label for="pf-prenom">Prénom</label>
+              <input type="text" id="pf-prenom" name="first_name" value="{{ user_obj.first_name }}" />
+            </div>
+            <div class="champ">
+              <label for="pf-nom">Nom</label>
+              <input type="text" id="pf-nom" name="last_name" value="{{ user_obj.last_name }}" />
+            </div>
           </div>
-          <div>
-            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Nom</label>
-            <input type="text" name="last_name" value="{{ user_obj.last_name }}" class="form-input"
-              style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
+
+          <div class="champ">
+            <label for="pf-tel">Téléphone</label>
+            <input type="text" id="pf-tel" name="phone" value="{{ user_obj.phone }}" />
           </div>
-        </div>
 
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Téléphone</label>
-          <input type="text" name="phone" value="{{ user_obj.phone }}" class="form-input"
-            style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
-        </div>
+          <div class="champ">
+            <label for="pf-bio">Bio &amp; compétences</label>
+            <textarea id="pf-bio" name="bio"
+                      placeholder="Spécialités, logiciels de CAO/FAO maîtrisés…">{{ user_obj.bio }}</textarea>
+          </div>
 
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bio & Compétences
-            (Spécialités, Logiciels CAD/CAM maîtrisés)</label>
-          <textarea name="bio" rows="3" class="form-input"
-            style="width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">{{ user_obj.bio }}</textarea>
-        </div>
-
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <button type="submit"
-            style="padding: 10px 20px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
-            Enregistrer les Modifications
-          </button>
-          <a href="{% url 'password_reset' %}"
-            style="font-size: 13px; color: var(--muted); text-decoration: underline; font-weight: 600;">
-            🔑 Mot de passe oublié / Réinitialiser
-          </a>
-        </div>
-      </form>
+          <div class="ligne">
+            <button type="submit" class="btn p"><span class="ms">save</span> Enregistrer</button>
+            <a class="btn n pousse" href="{% url 'password_reset' %}">
+              <span class="ms">key</span> Réinitialiser mon mot de passe
+            </a>
+          </div>
+        </form>
+      </div>
     </div>
 
   </div>
 </div>
+
+<style>
+  @media (max-width: 1040px) {
+    .grille[style*="340px"] { grid-template-columns: 1fr !important; }
+  }
+</style>

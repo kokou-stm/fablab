@@ -26,7 +26,6 @@ def login_view(request):
         login_input = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
 
-        # Support de la connexion par Email ou Nom d'utilisateur
         username = login_input
         if '@' in login_input:
             user_by_email = User.objects.filter(email__iexact=login_input).first()
@@ -92,8 +91,6 @@ def signup_view(request):
 
         dossier_doc = request.FILES.get('dossier_document')
 
-        # Aucun mot de passe à l'inscription : le membre en définit un lui-même
-        # via un lien à usage unique, une fois son compte validé par le FabManager.
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -107,7 +104,6 @@ def signup_view(request):
             is_approved=False
         )
 
-        # Création automatique d'un abonnement d'essai de 1 mois
         Subscription.objects.create(
             user=user,
             plan_type='STUDENT' if role == 'STUDENT' else 'MAKER_MONTHLY',
@@ -117,11 +113,8 @@ def signup_view(request):
             is_active=True
         )
 
-        # Notification email d'inscription
         send_member_signup_notification(user, target_tenant)
 
-        # Pas de connexion automatique : le compte reste en attente de validation.
-        # On mémorise seulement l'identifiant pour afficher le suivi du dossier.
         request.session['pending_user_id'] = user.id
         if target_tenant:
             request.session['tenant_slug'] = target_tenant.slug
@@ -174,7 +167,6 @@ def profile_view(request):
             days = 365 if plan_type == 'MAKER_ANNUAL' else 30
             price = 300.00 if plan_type == 'MAKER_ANNUAL' else (15.00 if plan_type == 'STUDENT' else 30.00)
 
-            # Désactiver anciens abonnements
             Subscription.objects.filter(user=user, is_active=True).update(is_active=False)
             Subscription.objects.create(
                 user=user,
@@ -209,8 +201,6 @@ def member_list_view(request):
 
     is_superadmin = request.user.is_superuser or request.user.role == 'ADMIN'
 
-    # Les comptes de l'administration de la plateforme n'apparaissent jamais
-    # dans l'annuaire d'un FabLab : ils ne font partie d'aucun établissement.
     if not is_superadmin:
         members = members.exclude(is_superuser=True).exclude(role='ADMIN')
 
@@ -219,7 +209,6 @@ def member_list_view(request):
         member_id = request.POST.get('member_id')
         member = get_object_or_404(User, id=member_id)
 
-        # Protection : Seul un SuperAdmin peut valider ou rejeter un FabManager ou Administrateur
         if member.role in ['FABMANAGER', 'ADMIN'] and not is_superadmin:
             messages.error(request, "Seul le Super Administrateur Système peut valider ou modifier un compte FabManager / Administrateur.")
             return redirect('member_list')
@@ -274,8 +263,6 @@ def member_list_view(request):
 
         return redirect('member_list')
 
-    # Filtrage des demandes selon le rang de l'utilisateur connecté :
-    # Un SuperAdmin voit toutes les demandes (dont FabManagers). Un FabManager standard ne voit QUE les membres réguliers de son labo.
     if is_superadmin:
         pending_members = members.filter(is_approved=False)
         pending_fabmanagers = pending_members.filter(role__in=['FABMANAGER', 'ADMIN'])
@@ -344,9 +331,6 @@ def superadmin_dashboard_view(request):
             messages.info(request, f"L'espace FabLab '{lab.name}' a été {status_str}.")
             return redirect('superadmin_dashboard')
 
-    # Vue globale, non rattachée à un FabLab en particulier : on efface tout
-    # contexte de tenant "collé" en session (ex: suite à un switch-tenant
-    # précédent) pour que la barre du haut n'affiche pas une école au hasard.
     request.session.pop('tenant_slug', None)
 
     context = {

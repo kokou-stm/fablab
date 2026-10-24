@@ -1,60 +1,69 @@
-<div style="max-width: 680px; margin: 20px auto; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);">
-  <div style="margin-bottom: 24px;">
-    <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Publier un Nouveau Projet Maker</h1>
-    <p style="color: var(--muted); font-size: 14px; margin: 4px 0 0 0;">Partagez vos tutoriels, modèles 3D, fichiers vectoriels et documentations Open Source avec la communauté.</p>
+<div style="max-width:760px;margin:0 auto">
+  <div class="entete">
+    <a class="btn n s" href="{% url 'project_list' %}" hx-get="{% url 'project_list' %}"
+       hx-target="#content" hx-push-url="true">
+      <span class="ms">arrow_back</span> Retour à la galerie
+    </a>
+    <h1 style="margin-top:10px">Publier un projet maker</h1>
+    <p>Partagez vos tutoriels, modèles 3D, fichiers vectoriels et documentations open source.</p>
   </div>
 
-  <form method="post" enctype="multipart/form-data" action="{% url 'project_create' %}">
-    {% csrf_token %}
-    <div style="margin-bottom: 18px;">
-      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Titre du Projet</label>
-      <input type="text" name="title" required placeholder="ex: Boîtier Capteur IoT en Découpe Laser" class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
-    </div>
+  <div class="carte">
+    <div class="corps" style="padding:24px">
+      <form method="post" enctype="multipart/form-data" action="{% url 'project_create' %}">
+        {% csrf_token %}
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
-      <div>
-        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Domaine / Spécialité</label>
-        <select name="category" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
-          <option value="Impression 3D & Prototypage">Impression 3D & Prototypage</option>
-          <option value="Découpe Laser & Gravure">Découpe Laser & Gravure</option>
-          <option value="Usinage CNC & Bois">Usinage CNC & Bois</option>
-          <option value="Électronique & IoT">Électronique & IoT</option>
-          <option value="Design & Modélisation CAD">Design & Modélisation CAD</option>
-        </select>
-      </div>
-      <div>
-        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Licence Open Source</label>
-        <select name="license" class="form-select" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);">
-          <option value="CC-BY-SA">Creative Commons BY-SA 4.0</option>
-          <option value="CC-BY-NC">Creative Commons Non-Commercial</option>
-          <option value="MIT">Licence MIT (Open Source)</option>
-          <option value="CERN-OHL">CERN Open Hardware Licence</option>
-        </select>
-      </div>
-    </div>
+        <div class="champ">
+          <label for="pj-titre">Titre du projet</label>
+          <input type="text" id="pj-titre" name="title" required
+                 placeholder="ex. boîtier de capteur IoT en découpe laser">
+        </div>
 
-    <div style="margin-bottom: 18px;">
-      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Description & Étapes d'Assemblage</label>
-      <textarea name="description" rows="5" required placeholder="Décrivez les matériels nécessaires, le temps d'usinage, les paramètres de découpe/impression et la notice de montage..." class="form-input" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);"></textarea>
-    </div>
+        <div class="grille g2" style="gap:0 16px">
+          <div class="champ">
+            <label for="pj-cat">Domaine / spécialité</label>
+            <select id="pj-cat" name="category">
+              <option value="Impression 3D &amp; Prototypage">Impression 3D &amp; prototypage</option>
+              <option value="Découpe Laser &amp; Gravure">Découpe laser &amp; gravure</option>
+              <option value="Usinage CNC &amp; Bois">Usinage CNC &amp; bois</option>
+              <option value="Électronique &amp; IoT">Électronique &amp; IoT</option>
+              <option value="Design &amp; Modélisation CAD">Design &amp; modélisation CAO</option>
+            </select>
+          </div>
+          <div class="champ">
+            <label for="pj-lic">Licence open source</label>
+            <select id="pj-lic" name="license">
+              <option value="CC-BY-SA">Creative Commons BY-SA 4.0</option>
+              <option value="CC-BY-NC">Creative Commons non commerciale</option>
+              <option value="MIT">Licence MIT</option>
+              <option value="CERN-OHL">CERN Open Hardware Licence</option>
+            </select>
+          </div>
+        </div>
 
-    <div style="margin-bottom: 20px;">
-      <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Photo d'illustration de couverture</label>
-      <input type="file" name="cover_image" accept="image/*" class="form-input" style="width: 100%; padding: 8px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text);" />
-    </div>
+        <div class="champ">
+          <label for="pj-desc">Description &amp; étapes d'assemblage</label>
+          <textarea id="pj-desc" name="description" required style="min-height:140px"
+                    placeholder="Matériel nécessaire, temps d'usinage, paramètres de découpe ou d'impression, notice de montage…"></textarea>
+        </div>
 
-    <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
-      <input type="checkbox" name="is_public" id="is_public" checked style="width: 16px; height: 16px;" />
-      <label for="is_public" style="font-size: 14px; font-weight: 500;">Rendre ce projet public dans la Galerie Open Source</label>
-    </div>
+        <div class="champ">
+          <label for="pj-img">Photo de couverture</label>
+          <input type="file" id="pj-img" name="cover_image" accept="image/*" style="height:auto;padding:12px 16px">
+        </div>
 
-    <div style="display: flex; justify-content: flex-end; gap: 12px;">
-      <a href="{% url 'project_list' %}" hx-get="{% url 'project_list' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 10px 18px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
-        Annuler
-      </a>
-      <button type="submit" style="padding: 10px 24px; font-size: 14px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
-        Publier le Projet
-      </button>
+        <label class="choix" style="margin-bottom:24px">
+          <input type="checkbox" name="is_public" id="is_public" checked>
+          <b style="display:inline">Projet public</b>
+          <p>Visible dans la galerie open source du FabLab.</p>
+        </label>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <a class="btn n" href="{% url 'project_list' %}" hx-get="{% url 'project_list' %}"
+             hx-target="#content" hx-push-url="true">Annuler</a>
+          <button type="submit" class="btn p"><span class="ms">publish</span> Publier le projet</button>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>

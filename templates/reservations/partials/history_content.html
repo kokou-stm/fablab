@@ -1,69 +1,71 @@
-<div style="display: flex; flex-direction: column; gap: 24px;">
-  
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Historique d'Utilisation des Machines</h1>
-      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Relevé d'utilisation réelle, durées de fonctionnement et coûts générés au sein de <strong>{{ tenant.name|default:"FabLab" }}</strong>.</p>
-    </div>
-    <a href="{% url 'reservation_calendar' %}" hx-get="{% url 'reservation_calendar' %}" hx-target="#content" hx-push-url="true" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius-sm);">
-      Voir le Planning
-    </a>
+<div class="entete" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+  <div style="flex:1;min-width:260px">
+    <h1>Historique d'utilisation</h1>
+    <p>Relevé d'utilisation réelle, durées de fonctionnement et coûts générés dans {{ tenant.name|default:"le FabLab" }}.</p>
   </div>
+  <a class="btn" href="{% url 'reservation_calendar' %}" hx-get="{% url 'reservation_calendar' %}"
+     hx-target="#content" hx-push-url="true">
+    <span class="ms">calendar_month</span> Voir le planning
+  </a>
+</div>
 
-  <!-- KPI Summary Bar -->
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
-      <div style="font-size: 12px; text-transform: uppercase; color: var(--muted); font-weight: 600;">Total Sessions</div>
-      <div style="font-size: 28px; font-weight: 700; margin-top: 4px;">{{ total_sessions }}</div>
-    </div>
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
-      <div style="font-size: 12px; text-transform: uppercase; color: var(--muted); font-weight: 600;">Heures Cumulées</div>
-      <div style="font-size: 28px; font-weight: 700; margin-top: 4px; color: #3b82f6;">{{ total_hours }} h</div>
-    </div>
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow);">
-      <div style="font-size: 12px; text-transform: uppercase; color: var(--muted); font-weight: 600;">Chiffre / Recettes Usinage</div>
-      <div style="font-size: 28px; font-weight: 700; margin-top: 4px; color: #10b981;">{{ total_cost_sum }} €</div>
-    </div>
+<div class="grille g3" style="margin-bottom:16px">
+  <div class="kpi">
+    <span class="rond"><span class="ms">receipt_long</span></span>
+    <span class="v">{{ total_sessions }}</span>
+    <span class="l">Sessions enregistrées</span>
   </div>
+  <div class="kpi">
+    <span class="rond"><span class="ms">schedule</span></span>
+    <span class="v">{{ total_hours }}</span>
+    <span class="l">Heures cumulées</span>
+  </div>
+  <div class="kpi ok">
+    <span class="rond"><span class="ms">payments</span></span>
+    <span class="v">{{ total_cost_sum }} €</span>
+    <span class="l">Recettes d'usinage</span>
+  </div>
+</div>
 
-  <!-- Table Card -->
-  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+<div class="carte">
+  <div class="enveloppe">
+    <table>
       <thead>
-        <tr style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
-          <th style="padding: 12px 16px;">Date & Créneau</th>
-          <th style="padding: 12px 16px;">Équipement / Machine</th>
-          <th style="padding: 12px 16px;">Utilisateur / Maker</th>
-          <th style="padding: 12px 16px;">Description / Travail</th>
-          <th style="padding: 12px 16px;">Statut</th>
-          <th style="padding: 12px 16px;">Coût (€)</th>
+        <tr>
+          <th>Date &amp; créneau</th>
+          <th>Équipement</th>
+          <th>Maker</th>
+          <th>Travail réalisé</th>
+          <th>Statut</th>
+          <th class="num">Coût</th>
         </tr>
       </thead>
       <tbody>
         {% for r in reservations %}
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 14px 16px; color: var(--muted); font-size: 13px;">
-              {{ r.start_time|date:"d/m/Y H:i" }} → {{ r.end_time|date:"H:i" }}
-            </td>
-            <td style="padding: 14px 16px; font-weight: 600;">{{ r.equipment.name }}</td>
-            <td style="padding: 14px 16px;">{{ r.user_full_name }}</td>
-            <td style="padding: 14px 16px; font-size: 13px; color: var(--text);">
-              {{ r.project_description|default:"Réservation standard"|truncatewords:15 }}
-            </td>
-            <td style="padding: 14px 16px;">
-              <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border);">
+          <tr>
+            <td style="color:var(--on-surface-variant)">{{ r.start_time|date:"d/m/Y H:i" }} → {{ r.end_time|date:"H:i" }}</td>
+            <td><span class="p">{{ r.equipment.name }}</span></td>
+            <td>{{ r.user_full_name }}</td>
+            <td>{{ r.project_description|default:"Réservation standard"|truncatewords:15 }}</td>
+            <td>
+              <span class="etq {% if r.status == 'APPROVED' or r.status == 'COMPLETED' %}v{% elif r.status == 'ACTIVE' %}b{% elif r.status == 'PENDING' %}a{% elif r.status == 'REJECTED' or r.status == 'CANCELLED' %}r{% endif %}">
                 {{ r.get_status_display }}
               </span>
             </td>
-            <td style="padding: 14px 16px; font-weight: 700; color: #10b981;">{{ r.total_cost }} €</td>
+            <td class="num mono">{{ r.total_cost }} €</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="6" style="padding: 30px; text-align: center; color: var(--muted);">Aucun historique d'utilisation enregistré.</td>
+            <td colspan="6">
+              <div class="vide">
+                <span class="ms">history</span>
+                <b>Aucun historique d'utilisation</b>
+                Les sessions terminées apparaîtront dans ce relevé.
+              </div>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
 </div>

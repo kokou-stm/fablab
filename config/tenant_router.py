@@ -94,7 +94,6 @@ def ensure_tenant_db_registered(tenant_slug: str, db_path: Optional[str] = None)
         _ensure_pg_schema(schema)
         return alias
 
-    # Fallback SQLite local
     if not db_path:
         tenant_dir = Path(settings.MEDIA_ROOT) / "tenants" / tenant_slug
         tenant_dir.mkdir(parents=True, exist_ok=True)

@@ -34,7 +34,6 @@ def landing_view(request):
     recent_projects = Project.objects.filter(is_public=True)[:3]
     all_tenants = FabLab.objects.all()
 
-    # Statistiques agrégées avec cache Redis (60 secondes)
     stats = cache.get('landing_stats')
     if stats is None:
         eq_stats = Equipment.objects.aggregate(
@@ -75,7 +74,6 @@ def dashboard_view(request):
     recent_projects = Project.objects.all()[:3]
     tickets = MaintenanceTicket.objects.select_related('equipment').filter(status__in=['OPEN', 'IN_PROGRESS'])
 
-    # KPI Analytics — une seule requête agrégée au lieu de 4 count() séparés
     eq_stats = equipments.aggregate(
         total=Count('id'),
         available=Count('id', filter=Q(status='AVAILABLE')),
@@ -115,8 +113,6 @@ def switch_tenant_view(request, slug):
         return redirect(redirect_url)
 
     fablab = get_object_or_404(FabLab, slug=slug)
-    # Le contexte passe uniquement par la session : rattacher le compte SuperAdmin
-    # au FabLab le ferait apparaître dans l'annuaire des membres de cet espace.
     request.session['tenant_slug'] = fablab.slug
     messages.success(request, f"Vous êtes maintenant sur le tenant : {fablab.name}")
     redirect_url = request.META.get('HTTP_REFERER', '/')
@@ -129,7 +125,6 @@ def equipment_list_view(request):
     status_filter = request.GET.get('status')
     search_query = (request.GET.get('q') or request.GET.get('search') or '').strip()
 
-    # Les catégories par défaut sont initialisées via `python manage.py seed_defaults`
 
     equipments = Equipment.objects.select_related('category').all()
     categories = EquipmentCategory.objects.all()
@@ -288,7 +283,6 @@ def reservation_list_view(request):
 
         action = request.POST.get('action')
 
-        # Action d'Approbation / Refus par le FabManager / Admin
         if action in ['approve_reservation', 'reject_reservation']:
             if not request.user.is_superuser and not request.user.is_fabmanager_user:
                 messages.error(request, "Seul le FabManager est autorisé à valider ou refuser les réservations.")
@@ -299,7 +293,6 @@ def reservation_list_view(request):
             if action == 'approve_reservation':
                 res_obj.status = 'APPROVED'
                 res_obj.save()
-                # La machine n'est plus réservable tant que ce créneau est confirmé.
                 res_obj.equipment.status = 'RESERVED'
                 res_obj.equipment.save(update_fields=['status'])
                 send_reservation_decision_email(res_obj, approved=True)
@@ -312,13 +305,10 @@ def reservation_list_view(request):
                 messages.info(request, f"✕ La réservation #{res_obj.id} a été refusée.")
             return redirect('reservation_list')
 
-        # Nouvelles demandes de réservation
         if not request.user.is_admin_user and not getattr(request.user, 'is_approved', False):
             messages.error(request, "Votre compte est actuellement en attente de validation par le responsable du FabLab. Vous ne pouvez pas encore effectuer de réservations.")
             return redirect('reservation_list')
 
-        # Les responsables gèrent le parc et valident les demandes : ils ne
-        # réservent pas eux-mêmes les machines.
         if request.user.is_fabmanager_user:
             messages.error(request, "En tant que responsable, vous gérez les machines et validez les demandes, mais vous ne réservez pas de créneau.")
             return redirect('reservation_list')
@@ -348,7 +338,6 @@ def reservation_list_view(request):
                 messages.error(request, "Impossible de réserver un créneau déjà passé.")
                 return redirect('reservation_list')
 
-            # Vérification de l'habilitation obligatoire sur la machine
             if eq.requires_certification and not (request.user.is_superuser or request.user.is_fabmanager_user):
                 has_cert = UserCertification.objects.filter(
                     user=request.user,
@@ -360,7 +349,6 @@ def reservation_list_view(request):
                     messages.error(request, f"La machine '{eq.name}' nécessite une habilitation/formation active pour la catégorie '{eq.category.name}'. Veuillez contacter un Formateur.")
                     return redirect('reservation_list')
 
-            # Empêche deux réservations actives de se chevaucher sur la même machine
             overlap = Reservation.objects.filter(
                 equipment=eq,
                 status__in=['PENDING', 'APPROVED', 'ACTIVE'],
@@ -452,7 +440,6 @@ def usage_history_view(request):
     """Rapport et suivi d'historique d'utilisation réelle des machines."""
     reservations = Reservation.objects.select_related('equipment').all().order_by('-start_time')
 
-    # Agrégation SQL au lieu d'une boucle Python sur toutes les réservations
     agg = reservations.aggregate(
         total_cost=Sum('total_cost'),
         total_duration=Sum(
@@ -533,7 +520,6 @@ def workshop_list_view(request):
             return redirect('login')
 
         if action == 'create_workshop':
-            # Autorisé pour Tuteurs / Enseignants, FabManagers, Superusers
             if not (request.user.is_superuser or request.user.is_fabmanager_user or request.user.is_instructor_user):
                 messages.error(request, "Seuls les formateurs et responsables peuvent créer une formation.")
                 return redirect('workshop_list')
@@ -606,7 +592,6 @@ def workshop_list_view(request):
                 messages.success(request, f"Inscription réussie à la formation '{ws.title}' !")
                 return redirect(f"/workshops/{ws.id}/")
 
-    # Attacher l'état d'inscription de request.user sur chaque workshop
     registered_workshop_ids = set()
     if request.user.is_authenticated:
         registered_workshop_ids = set(
@@ -866,7 +851,6 @@ def library_list_view(request):
             messages.success(request, f"La ressource « {resource.title} » a été mise à jour.")
             return redirect('library_list')
 
-        # Ajout d'une nouvelle ressource
         if not external_url and not request.FILES.get('file'):
             messages.error(request, "Indiquez un lien externe ou joignez un fichier.")
             return redirect('library_list')
@@ -966,19 +950,16 @@ def register_tenant_view(request):
         admin_username = request.POST.get('admin_username')
         admin_name = request.POST.get('admin_name')
 
-        # Validation unicité slug
         if FabLab.objects.filter(slug=clean_slug).exists():
             messages.error(request, f"L'identifiant/slug '{clean_slug}' est déjà utilisé. Veuillez en choisir un autre.")
             return render(request, 'accounts/register_tenant.html', {'lab_name': lab_name, 'contact_email': contact_email})
 
-        # Validation unicité du nom de domaine personnalisé
         if custom_domain and FabLab.objects.filter(domain__iexact=custom_domain).exists():
             messages.error(request, f"Le nom de domaine '{custom_domain}' est déjà utilisé par un autre espace.")
             return render(request, 'accounts/register_tenant.html', {'lab_name': lab_name, 'contact_email': contact_email})
 
         justification_doc = request.FILES.get('justification_document')
 
-        # 1. Création du Tenant Master
         fablab = FabLab.objects.create(
             name=lab_name,
             slug=clean_slug,
@@ -991,9 +972,6 @@ def register_tenant_view(request):
             justification_document=justification_doc
         )
 
-        # 2. Création de l'utilisateur Admin/FabManager lié (en attente de validation SuperAdmin).
-        # Aucun mot de passe à l'inscription : il sera défini via un lien à usage
-        # unique envoyé une fois le compte validé par le SuperAdmin.
         user = User.objects.create_user(
             username=admin_username,
             email=contact_email,
@@ -1004,19 +982,14 @@ def register_tenant_view(request):
             is_approved=False
         )
 
-        # 3. Provisionnement du Schéma Postgres isolé pour la nouvelle école
         migrate_tenant(clean_slug)
         set_current_tenant(clean_slug)
 
-        # 4. Populer les catégories par défaut dans le nouveau schéma
         from django.core.management import call_command
         call_command('seed_defaults', verbosity=0)
 
-        # 5. Notification Email de confirmation d'inscription d'espace
         send_tenant_registered_email(fablab, user)
 
-        # 6. Redirection vers le suivi de dossier, sans connecter le compte :
-        # il reste en attente de validation par le SuperAdmin.
         request.session['tenant_slug'] = clean_slug
         request.session['pending_user_id'] = user.id
 
@@ -1036,14 +1009,12 @@ def notifications_api_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0, 'items': []})
 
-    # Récupérer l'ensemble des clés de notifications déjà acquittées par l'utilisateur
     read_keys = set(
         NotificationReadStatus.objects.filter(user=request.user).values_list('notification_key', flat=True)
     )
 
     items = []
 
-    # 1. Pour les FabManagers et SuperAdmins : Réservations en attente
     if request.user.is_superuser or request.user.is_fabmanager_user:
         pending_res = Reservation.objects.select_related('equipment').filter(status='PENDING')[:10]
         for r in pending_res:
@@ -1058,7 +1029,6 @@ def notifications_api_view(request):
                     'time': r.created_at.strftime('%H:%M')
                 })
 
-        # 2. Pour les FabManagers : Membres en attente d'approbation
         pending_members = User.objects.filter(is_approved=False, is_superuser=False)[:10]
         for m in pending_members:
             key = f"mem-{m.id}"
@@ -1072,7 +1042,6 @@ def notifications_api_view(request):
                     'time': m.date_joined.strftime('%H:%M')
                 })
 
-        # 3. Tickets de maintenance ouverts
         open_tickets = MaintenanceTicket.objects.select_related('equipment').filter(status='OPEN')[:5]
         for t in open_tickets:
             key = f"maint-{t.id}"
@@ -1086,7 +1055,6 @@ def notifications_api_view(request):
                     'time': t.created_at.strftime('%H:%M')
                 })
     else:
-        # Pour les membres réguliers : Leurs réservations validées
         my_res = Reservation.objects.select_related('equipment').filter(user=request.user, status='APPROVED')[:10]
         for r in my_res:
             key = f"myres-{r.id}"
@@ -1100,7 +1068,6 @@ def notifications_api_view(request):
                     'time': r.created_at.strftime('%H:%M')
                 })
 
-    # 4. Nouvelles machines ajoutées au parc, visibles par tout le FabLab
     recent_cutoff = dj_timezone.now() - datetime.timedelta(days=7)
     new_equipments = Equipment.objects.select_related('category').filter(
         status='AVAILABLE', created_at__gte=recent_cutoff
@@ -1117,7 +1084,6 @@ def notifications_api_view(request):
                 'time': e.created_at.strftime('%H:%M')
             })
 
-    # 5. Notifications pour les messages reçus et mentions @username
     unread_dms = Message.objects.select_related('sender', 'channel').filter(recipient=request.user, is_read=False)[:5]
     for msg in unread_dms:
         key = f"dm-{msg.id}"
@@ -1219,15 +1185,11 @@ from accounts.models import User
 @approved_member_required
 def messaging_view(request):
     """Messagerie Interne Collaborative Multi-tenant (Style ikiu/Slack)."""
-    # Les canaux et tags par défaut sont initialisés via `python manage.py seed_defaults`
-    # (exécuté au déploiement, pas à chaque requête HTTP)
 
     tags = MessageTag.objects.all()
 
-    # Déterminer le FabLab tenant actif pour filtrer strictly les membres
     current_lab = getattr(request, 'tenant', None) or request.user.fablab
 
-    # Filtrer les canaux selon le rôle et les invitations privées (M2M multi-tenant check)
     ThroughModel = Channel.members.through
     user_channel_ids = set(ThroughModel.objects.filter(user_id=request.user.id).values_list('channel_id', flat=True))
 
@@ -1238,13 +1200,11 @@ def messaging_view(request):
             if request.user.is_superuser or request.user.is_fabmanager_user:
                 channels.append(ch)
         elif ch.is_private or ch.channel_type == 'GROUP':
-            # Visible uniquement si le membre est invité dans le groupe, créateur du groupe, ou FabManager/Admin
             if ch.creator == request.user or ch.id in user_channel_ids or request.user.is_fabmanager_user or request.user.is_superuser:
                 channels.append(ch)
         else:
             channels.append(ch)
 
-    # Sélection du canal ou du DM
     channel_slug = request.GET.get('channel', 'general')
     tag_slug = request.GET.get('tag')
     dm_user_id = request.GET.get('dm')
@@ -1262,7 +1222,6 @@ def messaging_view(request):
         else:
             active_dm_user = User.objects.filter(id=dm_user_id, is_approved=True).first()
 
-    # Récupérer uniquement les membres du MÊME FabLab tenant pour la messagerie et les DMs
     if current_lab:
         members = _platform_admins_hidden(User.objects.filter(is_approved=True, fablab=current_lab)).exclude(id=request.user.id)
     else:
@@ -1271,11 +1230,9 @@ def messaging_view(request):
     if not members.exists():
         members = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
-    # 2. Traitement des formulaires POST (Création de canal, Invitation, Envoi de message)
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # Action A: Création d'un nouveau canal de discussion par un Enseignant, Formateur ou FabManager
         if action == 'create_channel':
             is_allowed = request.user.is_superuser or request.user.is_fabmanager_user or getattr(request.user, 'is_instructor_user', False)
             if not is_allowed:
@@ -1312,7 +1269,6 @@ def messaging_view(request):
                 messages.success(request, f"Canal #{name} créé  !")
                 return redirect(f"/messaging/?channel={new_channel.slug}")
 
-        # Action B: Inviter des membres supplémentaires dans le canal actif
         elif action == 'invite_members':
             invited_member_ids = request.POST.getlist('members')
             if active_channel and invited_member_ids:
@@ -1323,13 +1279,11 @@ def messaging_view(request):
                     messages.error(request, "Seul le créateur du groupe ou un FabManager peut inviter des membres.")
             return redirect(f"/messaging/?channel={active_channel.slug if active_channel else 'general'}")
 
-        # Action C: Envoi normal de message dans le canal ou DM
         else:
             content = request.POST.get('content', '').strip()
             attachment = request.FILES.get('attachment')
             selected_tag_ids = request.POST.getlist('tags')
 
-            # Restriction : Seuls les FabManagers et Admins peuvent poster dans #annonces
             if not active_dm_user and active_channel and active_channel.slug == 'annonces':
                 if not (request.user.is_superuser or request.user.is_fabmanager_user):
                     messages.error(request, "Seuls les FabManagers et l'équipe d'administration peuvent publier dans le canal des annonces officielles.")
@@ -1355,9 +1309,7 @@ def messaging_view(request):
                         return redirect(f"/messaging/?dm={active_dm_user.id}")
                     return redirect(f"/messaging/?channel={active_channel.slug}")
 
-    # 3. Récupération des messages & Marquage comme lu (is_read = True)
     if active_dm_user:
-        # Marquer automatiquement comme lus les messages privés reçus de cet interlocuteur
         Message.objects.filter(sender=active_dm_user, recipient=request.user, is_read=False).update(is_read=True)
 
         message_list = Message.objects.filter(
@@ -1366,7 +1318,6 @@ def messaging_view(request):
         ).prefetch_related('tags')
     else:
         message_list = Message.objects.filter(channel=active_channel).prefetch_related('tags')
-        # Mettre à jour le statut de lecture du canal actif pour l'utilisateur
         if active_channel:
             latest_msg = message_list.last()
             if latest_msg:
@@ -1379,7 +1330,6 @@ def messaging_view(request):
     if tag_slug:
         message_list = message_list.filter(tags__slug=tag_slug)
 
-    # Récupérer uniquement les membres du MÊME FabLab tenant pour la messagerie et les DMs
     if current_lab:
         members_qs = _platform_admins_hidden(User.objects.filter(is_approved=True, fablab=current_lab)).exclude(id=request.user.id)
     else:
@@ -1388,7 +1338,6 @@ def messaging_view(request):
     if not members_qs.exists():
         members_qs = _platform_admins_hidden(User.objects.filter(is_approved=True)).exclude(id=request.user.id)
 
-    # 4. Calcul des notifications / badges de messages non lus (Style Discord / WhatsApp)
     from django.db.models import Count
     unread_dm_qs = Message.objects.filter(recipient=request.user, is_read=False).values('sender_id').annotate(count=Count('id'))
     unread_dm_counts = {item['sender_id']: item['count'] for item in unread_dm_qs}
@@ -1397,14 +1346,12 @@ def messaging_view(request):
     for m in members:
         m.unread_count = unread_dm_counts.get(m.id, 0)
 
-    # B) Messages non lus par canal de discussion (uniquement si requete complete ou navigation)
     thread_only = request.GET.get('thread_only') == '1' or request.headers.get('HX-Target') == 'message-thread'
     
     if not thread_only:
         read_statuses = {rs.channel_id: rs.last_read_message_id for rs in ChannelReadStatus.objects.filter(user=request.user)}
         channel_ids = [ch.id for ch in channels]
 
-        # Agrégation SQL au lieu d'itérer sur tous les messages en Python
         from django.db.models import Max
         channel_unreads = {}
         for ch_id in channel_ids:
@@ -1435,9 +1382,6 @@ def messaging_view(request):
         'members': members,
     }
 
-    # N'envoyer le partiel message_thread.html QUE pour le rafraîchissement automatique du fil de discussion (polling sans toucher à la zone de saisie)
-    # N'envoyer le partiel chat_box.html QUE lorsque la cible HTMX est le container complet du tchat (#chat-container)
-    # Pour les navigations HTMX normales (#content), envoyer le partiel messaging_content.html (sans re-étendre base.html)
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         if request.GET.get('thread_only') == '1' or request.headers.get('HX-Target') == 'message-thread':
             return render(request, 'messaging/partials/message_thread.html', context)

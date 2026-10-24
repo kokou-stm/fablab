@@ -1,722 +1,513 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
   <title>LabOS — {{ tenant.name|default:"Gestion de FabLab" }}</title>
-  
-  <!-- Fonts Space Grotesk & Spectral inspired by ikiu -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:wght@400;600&display=swap" rel="stylesheet">
-  
-  <!-- CSS Main Styles -->
-  <link rel="stylesheet" href="/static/css/main.css?v=3" />
-  
-  <style>
-    {% if hide_sidebar or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'signup' or request.resolver_match.url_name == 'signup_pending' or request.resolver_match.url_name == 'password_reset' or request.resolver_match.url_name == 'password_reset_confirm' or request.resolver_match.url_name == 'register_tenant' %}
-    .app-shell {
-      grid-template-columns: 1fr !important;
-    }
-    {% endif %}
-    /* Additions specifiques au FabOS inspirées d'ikiu */
-    .tenant-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .tenant-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #10b981;
-    }
-    .machine-status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-    .status-AVAILABLE { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.4); }
-    .status-RESERVED { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
-    .status-MAINTENANCE { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
-    .status-OFFLINE { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet">
 
-    /* Custom layout tweaks */
-    .topbar {
-      height: 64px;
-      padding: 0 24px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .nav-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      margin: 16px 0 6px 12px;
-      font-weight: 600;
-    }
-    #modal {
-      position: fixed; inset: 0; display: grid; place-items: center;
-      background: rgba(8,10,14,.55); backdrop-filter: blur(6px); opacity: 0; pointer-events: none;
-      transition: opacity 220ms ease; z-index: 50;
-    }
-    #modal:not(:empty) { opacity: 1; pointer-events: auto; }
-    .modal-box {
-      width: min(680px, 94vw); background: var(--surface); color: var(--text);
-      border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px;
-    }
-    .mobile-hamburger-btn {
-      display: none;
-    }
-    @media (max-width: 1180px) {
-      .mobile-hamburger-btn {
-        display: inline-flex !important;
-      }
-      .topbar-tenant-label {
-        display: none !important;
-      }
-      .topbar {
-        padding: 0 10px !important;
-        gap: 6px !important;
-      }
-      .topbar-user-text {
-        display: none !important;
-      }
-      .topbar-logout-btn span {
-        display: none !important;
-      }
-      .topbar-logout-btn {
-        padding: 6px 8px !important;
-      }
-      .topbar-superadmin-btn span:last-child {
-        display: none !important;
-      }
-    }
-    @media (max-width: 768px) {
-      .topbar-tenant-badge {
-        max-width: 110px !important;
-        font-size: 11px !important;
-        padding: 4px 6px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-      }
-      .topbar-tenant-badge span:last-child {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-      }
-      .topbar-superadmin-btn {
-        display: none !important;
-      }
-    }
-    @media (max-width: 540px) {
-      .topbar-tenant-badge {
-        display: none !important;
-      }
-    }
-    @media (max-width: 640px) {
-      .modal-box, div[id$="-modal"] > div {
-        width: 95vw !important;
-        max-width: 95vw !important;
-        max-height: 90vh !important;
-        overflow-y: auto !important;
-        padding: 16px !important;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/theme.css?v=1" />
 
-  <!-- HTMX Library (defer pour ne pas bloquer le rendu de la page) -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
+{% with nu=request.resolver_match.url_name %}
+{% if hide_sidebar or nu == 'login' or nu == 'signup' or nu == 'signup_pending' or nu == 'password_reset' or nu == 'password_reset_confirm' or nu == 'register_tenant' %}
+<body class="sans-sidebar">
+{% else %}
 <body>
-  <div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
-  <div class="app-shell">
+{% endif %}
+<script>try{if(localStorage.getItem('labos_theme')==='sombre')document.body.classList.add('sombre');}catch(e){}</script>
 
-    {% if not hide_sidebar and request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'signup' and request.resolver_match.url_name != 'signup_pending' and request.resolver_match.url_name != 'password_reset' and request.resolver_match.url_name != 'password_reset_confirm' and request.resolver_match.url_name != 'register_tenant' %}
-    <!-- Sidebar Left Navigation -->
-    <aside class="sidebar">
-      <div class="sidebar-top-section">
-        <div class="sidebar-brand-wrapper">
-          <div class="sidebar-brand">
-            <div class="sidebar-logo">⚡</div>
-            <div class="sidebar-brand-info">
-              <div class="sidebar-brand-title">LabOS</div>
-              <div class="sidebar-brand-sub">Space Management</div>
-            </div>
-          </div>
-          <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Plier/Déplier le menu" title="Plier / Déplier le menu">
-            <svg class="sidebar-toggle-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-        </div>
-
-        {% if tenant %}
-        <div class="sidebar-tenant-wrapper">
-          <div class="tenant-badge" title="FabLab : {{ tenant.name }}">
-            <span class="tenant-dot"></span>
-            <span class="tenant-label">{{ tenant.name }}</span>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-
-      <nav class="nav">
-        <div class="nav-section-title">Espace FabLab</div>
-        
-        <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="/dashboard/" hx-get="/dashboard/" hx-target="#content" hx-push-url="true" title="Tableau de bord">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          </span>
-          <span class="nav-label">Tableau de bord</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'equipment_list' or request.resolver_match.url_name == 'equipment_detail' %}active{% endif %}" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" title="Équipements & Machines">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>
-          </span>
-          <span class="nav-label">Équipements & Machines</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_list' %}active{% endif %}" href="/reservations/" hx-get="/reservations/" hx-target="#content" hx-push-url="true" title="Demandes de Réservation">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </span>
-          <span class="nav-label">Demandes de Réservation</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'reservation_calendar' %}active{% endif %}" href="/reservations/calendar/" hx-get="/reservations/calendar/" hx-target="#content" hx-push-url="true" title="Planning Centralisé">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-          </span>
-          <span class="nav-label">Planning Centralisé</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'usage_history' %}active{% endif %}" href="/reservations/history/" hx-get="/reservations/history/" hx-target="#content" hx-push-url="true" title="Historique d'Utilisation">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </span>
-          <span class="nav-label">Historique d'Utilisation</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'certification_list' %}active{% endif %}" href="/certifications/" hx-get="/certifications/" hx-target="#content" hx-push-url="true" title="Habilitations & Badges">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-          </span>
-          <span class="nav-label">Habilitations & Badges</span>
-        </a>
-
-        {% if user.is_authenticated and user.is_fabmanager_user %}
-        <a class="nav-item {% if request.resolver_match.url_name == 'member_list' %}active{% endif %}" href="/members/" hx-get="/members/" hx-target="#content" hx-push-url="true" title="Annuaire des Membres">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </span>
-          <span class="nav-label">Annuaire des Membres</span>
-        </a>
-        {% endif %}
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'messaging' %}active{% endif %}" href="/messaging/" hx-get="/messaging/" hx-target="#content" hx-push-url="true" title="Messagerie">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </span>
-          <span class="nav-label">Messagerie</span>
-        </a>
-
-        <div class="nav-section-title">Communs & Activités</div>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'workshop_list' %}active{% endif %}" href="/workshops/" hx-get="/workshops/" hx-target="#content" hx-push-url="true" title="Ateliers & Formations">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          </span>
-          <span class="nav-label">Ateliers & Formations</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'library_list' %}active{% endif %}" href="/library/" hx-get="/library/" hx-target="#content" hx-push-url="true" title="Bibliothèque">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="16" y2="11"/></svg>
-          </span>
-          <span class="nav-label">Bibliothèque</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}" href="/inventory/" hx-get="/inventory/" hx-target="#content" hx-push-url="true" title="Stocks & Consommables">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-          </span>
-          <span class="nav-label">Stocks & Consommables</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'project_list' or request.resolver_match.url_name == 'project_create' %}active{% endif %}" href="/projects/" hx-get="/projects/" hx-target="#content" hx-push-url="true" title="Projets & Communs">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          </span>
-          <span class="nav-label">Projets & Communs</span>
-        </a>
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}" href="/maintenance/" hx-get="/maintenance/" hx-target="#content" hx-push-url="true" title="Maintenance & Pannes">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          </span>
-          <span class="nav-label">Maintenance & Pannes</span>
-        </a>
-
-        {% if user.is_authenticated %}
-        <div class="nav-section-title">Compte & Session</div>
-
-        {% if is_superadmin or request.user.is_superuser %}
-        <a class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}" href="/superadmin/" hx-get="/superadmin/" hx-target="#content" hx-push-url="true" style="color: #8b5cf6; font-weight: 700;" title="SuperAdmin Center">
-          <span class="nav-ico" style="color: #8b5cf6;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          </span>
-          <span class="nav-label">SuperAdmin Center</span>
-        </a>
-        {% endif %}
-
-        <a class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="/profile/" hx-get="/profile/" hx-target="#content" hx-push-url="true" title="Mon Profil">
-          <span class="nav-ico">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </span>
-          <span class="nav-label">Mon Profil</span>
-        </a>
-
-        <a class="nav-item" href="/logout/" style="color: #ef4444;" title="Se déconnecter">
-          <span class="nav-ico" style="color: #ef4444;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span class="nav-label">Se déconnecter</span>
-        </a>
-        {% endif %}
-      </nav>
-    </aside>
+<header id="appbar">
+  <div class="ab-zone ab-gauche">
+    {% if not hide_sidebar and nu != 'login' and nu != 'signup' and nu != 'signup_pending' and nu != 'password_reset' and nu != 'password_reset_confirm' and nu != 'register_tenant' %}
+    <button type="button" class="ic-btn ham" onclick="basculerDrawer()" aria-label="Menu de navigation">
+      <span class="ms">menu</span>
+    </button>
     {% endif %}
 
-    <!-- Main Content Shell -->
-    <div class="main" style="display: flex; flex-direction: column;">
-      
-      <!-- Topbar Header -->
-      <header class="topbar">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <!-- Bouton Mobile Hamburger Menu (3 traits responsive) -->
-          {% if not hide_sidebar %}
-            <button onclick="toggleMobileSidebar()" class="mobile-hamburger-btn" aria-label="Menu principal" style="background: var(--panel); border: 1px solid var(--border); width: 38px; height: 38px; padding: 0; border-radius: var(--radius-sm); cursor: pointer; color: var(--text); display: none; align-items: center; justify-content: center; flex-shrink: 0;" title="Ouvrir le menu de navigation">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
-          {% endif %}
+    <a class="marque" href="{% if request.user.is_authenticated %}/dashboard/{% else %}/{% endif %}">
+      <span class="logo">L</span>
+      <span class="titres">
+        <b>LabOS</b>
+        <span class="sous">Gestion de FabLab</span>
+      </span>
+    </a>
 
-          {% if request.resolver_match.url_name == 'register_tenant' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'signup' or request.resolver_match.url_name == 'signup_pending' or request.resolver_match.url_name == 'password_reset' or request.resolver_match.url_name == 'password_reset_confirm' %}
-            <a href="/" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 15px;">
-              <span style="width: 32px; height: 32px; background: var(--text); color: var(--bg); border-radius: 8px; display: grid; place-items: center; font-size: 16px;">⚡</span>
-              <span>LabOS</span>
-            </a>
-          {% else %}
-            <!-- Badge du FabLab actif uniquement — jamais de liste des autres écoles ici -->
-            <div style="display: flex; align-items: center; gap: 8px;">
-              {% if tenant %}
-                <span class="topbar-tenant-label" style="font-size: 13px; color: var(--muted); font-weight: 500;">FabLab / Espace :</span>
-                <div class="topbar-tenant-badge" style="padding: 6px 14px; font-size: 13px; border-radius: var(--radius-sm); font-weight: 700; background: var(--panel); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant.name }}</span>
-                </div>
-              {% elif request.user.is_authenticated and request.user.fablab %}
-                <span class="topbar-tenant-label" style="font-size: 13px; color: var(--muted); font-weight: 500;">FabLab / Espace :</span>
-                <div class="topbar-tenant-badge" style="padding: 6px 14px; font-size: 13px; border-radius: var(--radius-sm); font-weight: 700; background: var(--panel); border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ request.user.fablab.name }}</span>
-                </div>
-              {% endif %}
-              {% if not request.user.is_authenticated %}
-                {% if tenant_from_host %}
-                  <a href="/signup/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
-                    S'inscrire
-                  </a>
-                {% else %}
-                  <a href="/register-lab/" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; color: var(--text); border: 1px solid var(--border); background: var(--panel);">
-                    + Créer un Espace
-                  </a>
-                {% endif %}
-              {% endif %}
-            </div>
-          {% endif %}
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 10px;">
-          {% if is_superadmin or request.user.is_superuser %}
-            <a href="/superadmin/" class="btn btn-outline btn-sm topbar-superadmin-btn" style="padding: 5px 10px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid rgba(139, 92, 246, 0.4); color: #8b5cf6; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Accéder au SuperAdmin Control Center">
- <span>SuperAdmin</span>
-            </a>
-          {% endif %}
-
-          <!-- Bouton Dark/Light Theme Toggle -->
-          <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Basculer le thème" style="width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: var(--radius-sm); font-size: 16px; flex-shrink: 0;">
-            <span id="theme-icon">🌙</span>
-          </button>
-
-          {% if request.user.is_authenticated %}
-            <!-- Cloche & Dropdown Notifications Temps Réel -->
-            <div style="position: relative; flex-shrink: 0;">
-              <button id="notif-bell-btn" onclick="toggleNotifDropdown(event)" class="btn btn-outline btn-sm" style="position: relative; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-radius: var(--radius-sm); font-size: 16px; border: 1px solid var(--border); background: var(--panel); cursor: pointer;" title="Notifications en temps réel">
-                🔔
-                <span id="notif-badge" style="display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 2px 6px; border: 2px solid var(--surface); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);">
-                  0
-                </span>
-              </button>
-
-              <!-- Dropdown Notifications Container -->
-              <div id="notif-dropdown" style="display: none; position: absolute; right: 0; top: 46px; width: 340px; max-width: 90vw; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow); z-index: 9999; overflow: hidden;">
-                <div style="padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
-                  <div style="font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px;">
-                    🔔 Notifications
-                  </div>
-                  <span id="notif-count-text" style="font-size: 11px; font-weight: 600; color: var(--muted);">0 alerte(s)</span>
-                </div>
-
-                <div id="notif-list" style="max-height: 320px; overflow-y: auto;">
-                  <div style="padding: 24px; text-align: center; color: var(--muted); font-size: 13px;">
-                    Chargement des notifications...
-                  </div>
-                </div>
-
-                <div style="padding: 10px 14px; background: var(--panel); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-                  <button type="button" onclick="markAllNotifsRead()" style="background: none; border: none; color: var(--muted); cursor: pointer; font-weight: 600; padding: 0; font-size: 11px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
-                    ✓ Tout marquer comme lu
-                  </button>
-                  <a href="javascript:void(0)" onclick="fetchNotifications()" style="color: var(--text); text-decoration: none; font-weight: 600;">
-                    🔄 Actualiser
-                  </a>
-                </div>
-              </div>
-            </div>
-          {% endif %}
-
-          <!-- Profil / Authentification Utilisateur -->
-          {% if request.user.is_authenticated %}
-            <div style="display: flex; align-items: center; gap: 8px; padding-left: 8px; border-left: 1px solid var(--border); flex-shrink: 0;">
-              <a href="/profile/" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">
-                  {{ request.user.username|slice:":1"|upper }}
-                </div>
-                <div class="topbar-user-text">
-                  <div style="font-size: 13px; font-weight: 600; line-height: 1.2;">{{ request.user.get_full_name|default:request.user.username }}</div>
-                  <div style="font-size: 11px; color: var(--muted);">{{ request.user.get_role_display }}</div>
-                </div>
-              </a>
-              <a href="/logout/" class="btn btn-outline btn-sm topbar-logout-btn" style="padding: 5px 10px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Se déconnecter de votre session">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span>Déconnexion</span>
-              </a>
-            </div>
-          {% else %}
-            <div style="display: flex; align-items: center; gap: 8px; padding-left: 12px; border-left: 1px solid var(--border);">
-              <a href="/login/" class="btn btn-outline btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none;">Connexion</a>
-              <a href="/signup/" class="btn btn-primary btn-sm" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; background: var(--text); color: var(--bg); font-weight: 600;">S'inscrire</a>
-            </div>
-          {% endif %}
-        </div>
-      </header>
-
-      <!-- Floating Toast Notifications Container -->
-      <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 440px; width: calc(100vw - 40px); pointer-events: none;">
-        {% if messages %}
-          {% for message in messages %}
-            <div class="toast-item" style="pointer-events: auto; padding: 14px 18px; border-radius: 10px; color: #ffffff; font-size: 14px; font-weight: 600; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.22); transition: all 0.3s ease; animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); {% if message.tags == 'success' %}background: #059669; border-left: 5px solid #10b981;{% elif message.tags == 'error' %}background: #dc2626; border-left: 5px solid #ef4444;{% else %}background: #1f2937; border-left: 5px solid #3b82f6;{% endif %}">
-              <div style="flex: 1; line-height: 1.4;">{{ message }}</div>
-              <button type="button" onclick="dismissToast(this.parentElement)" style="background: none; border: none; color: #ffffff; opacity: 0.8; cursor: pointer; font-size: 16px; padding: 0; line-height: 1; flex-shrink: 0;">✕</button>
-            </div>
-          {% endfor %}
-        {% endif %}
+    {% if tenant %}
+      <span class="sep-v"></span>
+      <div class="picker" title="FabLab actif">
+        <span class="puce" style="background:var(--success)"></span>
+        <span class="nom">{{ tenant.name }}</span>
       </div>
-
-      <!-- Main HTMX Content Area -->
-      <main id="content" style="flex: 1; padding: 24px;">
-        {% block content %}{% endblock %}
-      </main>
-
-    </div>
+    {% elif request.user.is_authenticated and request.user.fablab %}
+      <span class="sep-v"></span>
+      <div class="picker" title="FabLab actif">
+        <span class="puce" style="background:var(--success)"></span>
+        <span class="nom">{{ request.user.fablab.name }}</span>
+      </div>
+    {% endif %}
   </div>
 
-  <!-- Dynamic Modal Overlay -->
-  <div id="modal"></div>
+  <div class="ab-zone ab-centre">
+    {% if request.user.is_authenticated %}
+    <form class="champ-rech" id="form-rech" action="/equipment/" method="get"
+          hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+      <span class="ms">search</span>
+      <input type="text" name="q" id="rech" placeholder="Rechercher une machine, un équipement…"
+             value="{{ request.GET.q|default:'' }}" autocomplete="off" />
+    </form>
+    {% endif %}
+  </div>
 
-  <style>
-    @keyframes toastSlideIn {
-      from { opacity: 0; transform: translateY(-12px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+  <div class="ab-zone ab-droite">
+    {% if request.user.is_authenticated %}
+      <button type="button" class="ic-btn btn-rech" onclick="basculerRecherche()" aria-label="Rechercher">
+        <span class="ms">search</span>
+      </button>
+    {% endif %}
+
+    <button type="button" class="ic-btn" onclick="basculerTheme()" aria-label="Basculer le thème" title="Thème clair / sombre">
+      <span class="ms" id="ic-theme">dark_mode</span>
+    </button>
+
+    {% if request.user.is_authenticated %}
+    <div style="position:relative">
+      <button type="button" class="ic-btn" id="notif-bell-btn" onclick="basculerNotifs(event)" aria-label="Notifications">
+        <span class="ms">notifications</span>
+        <span class="notif-pastille" id="notif-badge" style="display:none">0</span>
+      </button>
+
+      <div class="notif-panneau" id="notif-dropdown">
+        <header>
+          Notifications
+          <span id="notif-count-text">0 alerte(s)</span>
+        </header>
+        <div class="notif-liste" id="notif-list">
+          <div class="notif-vide">Chargement…</div>
+        </div>
+        <footer>
+          <button type="button" onclick="markAllNotifsRead()">Tout marquer comme lu</button>
+          <button type="button" onclick="fetchNotifications()">Actualiser</button>
+        </footer>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if is_superadmin or request.user.is_superuser %}
+      <a class="ic-btn ab-outils" href="/superadmin/" title="SuperAdmin Control Center" aria-label="SuperAdmin">
+        <span class="ms">shield_person</span>
+      </a>
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+      <a class="ab-compte" href="/profile/" title="Mon profil">
+        <span class="avatar">{{ request.user.username|slice:":1"|upper }}</span>
+        <span class="txt">
+          <b>{{ request.user.get_full_name|default:request.user.username }}</b>
+          <span>{{ request.user.get_role_display }}</span>
+        </span>
+      </a>
+      <a class="ic-btn" href="/logout/" title="Se déconnecter" aria-label="Se déconnecter">
+        <span class="ms">logout</span>
+      </a>
+    {% else %}
+      <a class="btn s" href="/login/" style="margin-left:6px">Connexion</a>
+      {% if tenant_from_host %}
+        <a class="btn p s" href="/signup/" style="margin-left:6px">S'inscrire</a>
+      {% else %}
+        <a class="btn p s" href="/register-lab/" style="margin-left:6px">Créer un espace</a>
+      {% endif %}
+    {% endif %}
+  </div>
+</header>
+
+<div id="corps">
+  {% if not hide_sidebar and nu != 'login' and nu != 'signup' and nu != 'signup_pending' and nu != 'password_reset' and nu != 'password_reset_confirm' and nu != 'register_tenant' %}
+  <aside id="drawer">
+    <nav id="nav">
+      <div class="groupe">ESPACE FABLAB</div>
+
+      <a class="nav-btn {% if nu == 'dashboard' %}actif{% endif %}" href="/dashboard/"
+         hx-get="/dashboard/" hx-target="#content" hx-push-url="true">
+        <span class="ms">space_dashboard</span><span class="lib">Tableau de bord</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'equipment_list' or nu == 'equipment_detail' %}actif{% endif %}" href="/equipment/"
+         hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+        <span class="ms">precision_manufacturing</span><span class="lib">Équipements &amp; machines</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'reservation_list' %}actif{% endif %}" href="/reservations/"
+         hx-get="/reservations/" hx-target="#content" hx-push-url="true">
+        <span class="ms">pending_actions</span><span class="lib">Demandes de réservation</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'reservation_calendar' %}actif{% endif %}" href="/reservations/calendar/"
+         hx-get="/reservations/calendar/" hx-target="#content" hx-push-url="true">
+        <span class="ms">calendar_month</span><span class="lib">Planning centralisé</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'usage_history' %}actif{% endif %}" href="/reservations/history/"
+         hx-get="/reservations/history/" hx-target="#content" hx-push-url="true">
+        <span class="ms">history</span><span class="lib">Historique d'utilisation</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'certification_list' %}actif{% endif %}" href="/certifications/"
+         hx-get="/certifications/" hx-target="#content" hx-push-url="true">
+        <span class="ms">workspace_premium</span><span class="lib">Habilitations &amp; badges</span>
+      </a>
+
+      {% if user.is_authenticated and user.is_fabmanager_user %}
+      <a class="nav-btn {% if nu == 'member_list' %}actif{% endif %}" href="/members/"
+         hx-get="/members/" hx-target="#content" hx-push-url="true">
+        <span class="ms">group</span><span class="lib">Annuaire des membres</span>
+      </a>
+      {% endif %}
+
+      <a class="nav-btn {% if nu == 'messaging' %}actif{% endif %}" href="/messaging/"
+         hx-get="/messaging/" hx-target="#content" hx-push-url="true">
+        <span class="ms">forum</span><span class="lib">Messagerie</span>
+      </a>
+
+      <div class="groupe">COMMUNS &amp; ACTIVITÉS</div>
+
+      <a class="nav-btn {% if nu == 'workshop_list' or nu == 'workshop_detail' %}actif{% endif %}" href="/workshops/"
+         hx-get="/workshops/" hx-target="#content" hx-push-url="true">
+        <span class="ms">school</span><span class="lib">Ateliers &amp; formations</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'library_list' %}actif{% endif %}" href="/library/"
+         hx-get="/library/" hx-target="#content" hx-push-url="true">
+        <span class="ms">local_library</span><span class="lib">Bibliothèque</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'inventory_list' %}actif{% endif %}" href="/inventory/"
+         hx-get="/inventory/" hx-target="#content" hx-push-url="true">
+        <span class="ms">inventory_2</span><span class="lib">Stocks &amp; consommables</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'project_list' or nu == 'project_create' %}actif{% endif %}" href="/projects/"
+         hx-get="/projects/" hx-target="#content" hx-push-url="true">
+        <span class="ms">folder_open</span><span class="lib">Projets &amp; communs</span>
+      </a>
+
+      <a class="nav-btn {% if nu == 'maintenance_list' %}actif{% endif %}" href="/maintenance/"
+         hx-get="/maintenance/" hx-target="#content" hx-push-url="true">
+        <span class="ms">build</span><span class="lib">Maintenance &amp; pannes</span>
+      </a>
+
+      {% if user.is_authenticated %}
+      <div class="groupe">COMPTE &amp; SESSION</div>
+
+      {% if is_superadmin or request.user.is_superuser %}
+      <a class="nav-btn {% if nu == 'superadmin_dashboard' %}actif{% endif %}" href="/superadmin/"
+         hx-get="/superadmin/" hx-target="#content" hx-push-url="true">
+        <span class="ms">shield_person</span><span class="lib">SuperAdmin Center</span>
+      </a>
+      {% endif %}
+
+      <a class="nav-btn {% if nu == 'profile' %}actif{% endif %}" href="/profile/"
+         hx-get="/profile/" hx-target="#content" hx-push-url="true">
+        <span class="ms">account_circle</span><span class="lib">Mon profil</span>
+      </a>
+
+      <a class="nav-btn" href="/logout/">
+        <span class="ms">logout</span><span class="lib">Se déconnecter</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="pied-drawer">
+      LabOS · plateforme de gestion de FabLab<br>
+      {% if tenant %}Espace « {{ tenant.name }} »{% endif %}
+    </div>
+  </aside>
+  {% endif %}
+
+  <main>
+    <div id="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% endwith %}
+
+<div id="voile" onclick="fermerSurcouches()"></div>
+<div class="menu-flot" id="menu"></div>
+
+<aside id="tiroir">
+  <header>
+    <div style="flex:1">
+      <h3 id="tiTitre"></h3>
+      <p id="tiSous"></p>
+    </div>
+    <button type="button" class="ic-btn" onclick="fermerTiroir()" aria-label="Fermer"><span class="ms">close</span></button>
+  </header>
+  <div class="contenu" id="tiCorps"></div>
+  <footer id="tiPied"></footer>
+</aside>
+
+<div id="toasts">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast {% if message.tags == 'success' %}v{% elif message.tags == 'error' %}r{% elif message.tags == 'warning' %}a{% else %}b{% endif %}">
+        <span class="ms">{% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}</span>
+        <span style="flex:1">{{ message }}</span>
+        <button type="button" onclick="this.parentElement.remove()" aria-label="Fermer"><span class="ms">close</span></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<div id="modal"></div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* --------- thème clair / sombre --------- */
+  function basculerTheme(){
+    const sombre = document.body.classList.toggle('sombre');
+    const ic = $('#ic-theme');
+    if (ic) ic.textContent = sombre ? 'light_mode' : 'dark_mode';
+    try { localStorage.setItem('labos_theme', sombre ? 'sombre' : 'clair'); } catch(e) {}
+  }
+  (function(){
+    const ic = $('#ic-theme');
+    if (ic && document.body.classList.contains('sombre')) ic.textContent = 'light_mode';
+  })();
+
+  /* --------- tiroir de navigation sur petit écran --------- */
+  function basculerDrawer(){
+    const d = $('#drawer'); if (!d) return;
+    const ouvert = d.classList.toggle('on');
+    $('#voile').classList.toggle('on', ouvert);
+  }
+  function fermerSurcouches(){
+    const d = $('#drawer'); if (d) d.classList.remove('on');
+    const t = $('#tiroir'); if (t) t.classList.remove('on');
+    $('#voile').classList.remove('on');
+    fermerMenu();
+  }
+
+  /* --------- panneau latéral --------- */
+  function ouvrirTiroir(titre, sous, corps, pied){
+    $('#tiTitre').innerHTML = titre || '';
+    $('#tiSous').innerHTML  = sous || '';
+    $('#tiCorps').innerHTML = corps || '';
+    $('#tiPied').innerHTML  = pied || '';
+    $('#tiroir').classList.add('on');
+    $('#voile').classList.add('on');
+  }
+  function fermerTiroir(){
+    $('#tiroir').classList.remove('on');
+    $('#voile').classList.remove('on');
+  }
+  document.addEventListener('click', function(e){
+    if (window.innerWidth > 1000) return;
+    if (e.target.closest('#drawer .nav-btn')) fermerSurcouches();
+  });
+
+  /* --------- recherche repliable --------- */
+  function basculerRecherche(){
+    const c = $('#form-rech'); if (!c) return;
+    c.classList.toggle('ouvert');
+    if (c.classList.contains('ouvert')) $('#rech').focus();
+  }
+
+  /* --------- menus flottants --------- */
+  function fermerMenu(){ const m = $('#menu'); if (m) m.classList.remove('on'); }
+  function ouvrirMenu(ancre, html, alignDroite){
+    const m = $('#menu'); if (!m) return;
+    m.innerHTML = html; m.classList.add('on');
+    const b = ancre.getBoundingClientRect();
+    m.style.top = (b.bottom + window.scrollY + 6) + 'px';
+    m.style.left = alignDroite
+      ? (b.right + window.scrollX - m.offsetWidth) + 'px'
+      : (b.left + window.scrollX) + 'px';
+  }
+  document.addEventListener('click', function(e){
+    if (!e.target.closest('#menu') && !e.target.closest('[data-menu]')) fermerMenu();
+  }, true);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { fermerSurcouches(); return; }
+    if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) {
+      const c = $('#rech'); if (c) { e.preventDefault(); c.focus(); }
     }
-  </style>
+  });
 
-  <!-- JavaScript Theme, Toast & Password Visibility Logic -->
-  <script>
-    function dismissToast(toastEl) {
-      if (!toastEl) return;
-      toastEl.style.opacity = '0';
-      toastEl.style.transform = 'translateY(-12px) scale(0.95)';
-      setTimeout(function() { if (toastEl && toastEl.parentElement) toastEl.remove(); }, 300);
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-      const toasts = document.querySelectorAll(".toast-item");
-      toasts.forEach(function(toast) {
-        setTimeout(function() {
-          dismissToast(toast);
-        }, 5000);
-      });
+  /* --------- notifications éphémères --------- */
+  function toast(msg, type){
+    const ic = type==='v' ? 'check_circle' : type==='r' ? 'error' : 'info';
+    const d = document.createElement('div');
+    d.className = 'toast' + (type ? ' ' + type : ' b');
+    d.innerHTML = '<span class="ms">' + ic + '</span><span style="flex:1">' + esc(msg) + '</span>';
+    $('#toasts').appendChild(d);
+    setTimeout(() => d.remove(), 4600);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('#toasts .toast').forEach(function(t){
+      setTimeout(function(){ t.remove(); }, 5600);
     });
+  });
 
-    function togglePasswordVisibility(inputId, btnEl) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btnEl.textContent = 'Masquer';
-      } else {
-        input.type = 'password';
-        btnEl.textContent = 'Afficher';
-      }
+  /* --------- ondulation Material --------- */
+  document.addEventListener('pointerdown', function(e){
+    const c = e.target.closest('.btn, nav .nav-btn, .ic-btn, .filtre button, .filtre a, .fab-creer, .picker, .menu-flot button, .ab-compte, .tabs button, .tabs a, .c-compte');
+    if (!c || c.disabled) return;
+    const b = c.getBoundingClientRect(), d = Math.max(b.width, b.height) * 2.2;
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.width = r.style.height = d + 'px';
+    r.style.left = (e.clientX - b.left - d/2) + 'px';
+    r.style.top  = (e.clientY - b.top  - d/2) + 'px';
+    c.appendChild(r);
+    setTimeout(() => r.remove(), 520);
+  });
+
+  /* --------- repli si la police d'icônes n'est pas disponible --------- */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function(){
+      if (!document.fonts.check('20px "Material Symbols Rounded"')) document.body.classList.add('sans-icones');
+    }).catch(function(){});
+  }
+
+  /* --------- utilitaires formulaires --------- */
+  function togglePasswordVisibility(inputId, btnEl){
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const cache = input.type === 'password';
+    input.type = cache ? 'text' : 'password';
+    btnEl.textContent = cache ? 'Masquer' : 'Afficher';
+  }
+
+  function getCsrfToken(){
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) return match[1];
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+  }
+
+  /* =========================================================================
+     Cloche de notifications
+     ========================================================================= */
+  function basculerNotifs(e){
+    if (e) e.stopPropagation();
+    const d = $('#notif-dropdown'); if (!d) return;
+    const ouvert = d.classList.toggle('on');
+    if (ouvert) fetchNotifications();
+  }
+
+  document.addEventListener('click', function(e){
+    const d = $('#notif-dropdown'), b = $('#notif-bell-btn');
+    if (d && d.classList.contains('on') && !d.contains(e.target) && (!b || !b.contains(e.target))) {
+      d.classList.remove('on');
+    }
+  });
+
+  function majCompteur(n){
+    const badge = $('#notif-badge'), txt = $('#notif-count-text');
+    if (badge) {
+      badge.textContent = n;
+      badge.style.display = n > 0 ? 'block' : 'none';
+    }
+    if (txt) txt.textContent = n > 0 ? n + ' alerte(s)' : 'Aucune alerte';
+  }
+
+  function handleNotifClick(event, notifId, targetUrl){
+    if (event) event.preventDefault();
+    const badge = $('#notif-badge');
+    const n = parseInt(badge ? badge.textContent : '0', 10) || 0;
+    if (n > 0) majCompteur(n - 1);
+
+    const d = $('#notif-dropdown');
+    if (d) d.classList.remove('on');
+
+    fetch('/api/notifications/read/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      body: JSON.stringify({ id: notifId }),
+      keepalive: true
+    }).catch(err => console.error(err))
+      .finally(() => { if (targetUrl) window.location.href = targetUrl; });
+  }
+
+  function dismissSingleNotif(event, notifId){
+    if (event) event.stopPropagation();
+    const item = document.querySelector('[data-notif-item="' + notifId + '"]');
+    if (item) item.remove();
+
+    const badge = $('#notif-badge');
+    const n = parseInt(badge ? badge.textContent : '0', 10) || 0;
+    if (n > 0) majCompteur(n - 1);
+
+    const list = $('#notif-list');
+    if (list && list.children.length === 0) {
+      list.innerHTML = '<div class="notif-vide">Vous êtes à jour, aucune alerte en attente.</div>';
     }
 
-    function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      document.getElementById('theme-icon').textContent = next === 'dark' ? '☀️' : '🌙';
-      localStorage.setItem('theme', next);
-    }
+    fetch('/api/notifications/read/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      body: JSON.stringify({ id: notifId })
+    }).catch(err => console.error(err));
+  }
 
-    // Init stored theme
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      document.documentElement.setAttribute('data-theme', storedTheme);
-      document.getElementById('theme-icon').textContent = storedTheme === 'dark' ? '☀️' : '🌙';
-    }
+  function markAllNotifsRead(){
+    const list = $('#notif-list');
+    const ids = Array.from(list ? list.querySelectorAll('[data-notif-item]') : [])
+                     .map(el => el.getAttribute('data-notif-item'));
+    majCompteur(0);
+    if (list) list.innerHTML = '<div class="notif-vide">Toutes les alertes ont été marquées comme lues.</div>';
 
-    function toggleSidebar() {
-      const body = document.body;
-      const collapsed = body.getAttribute('data-sidebar') === 'collapsed';
-      const nextState = collapsed ? 'expanded' : 'collapsed';
-      body.setAttribute('data-sidebar', nextState);
-      try {
-        localStorage.setItem('sidebar_state', nextState);
-      } catch(e) {}
-    }
+    fetch('/api/notifications/read/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      body: JSON.stringify({ mark_all: true, ids: ids })
+    }).catch(err => console.error(err));
+  }
 
-    // Init stored sidebar state on desktop
-    try {
-      const storedSidebar = localStorage.getItem('sidebar_state');
-      if (storedSidebar && window.innerWidth > 980) {
-        document.body.setAttribute('data-sidebar', storedSidebar);
-      }
-    } catch(e) {}
+  function fetchNotifications(){
+    if (document.hidden) return;
+    fetch('/api/notifications/')
+      .then(res => res.json())
+      .then(data => {
+        const list = $('#notif-list');
+        if (!list) return;
+        majCompteur(data.count || 0);
 
-    function toggleMobileSidebar() {
-      const body = document.body;
-      const isOpen = body.getAttribute('data-sidebar-open') === 'true';
-      body.setAttribute('data-sidebar-open', isOpen ? 'false' : 'true');
-    }
-
-    function closeMobileSidebar() {
-      document.body.setAttribute('data-sidebar-open', 'false');
-    }
-
-    // Ferme le menu mobile automatiquement après un clic sur un lien de navigation
-    document.addEventListener('click', function(e) {
-      if (window.innerWidth > 980) return;
-      const navItem = e.target.closest('.sidebar .nav-item, .sidebar .nav-section-summary');
-      if (navItem) {
-        closeMobileSidebar();
-      }
-    });
-
-    function getCsrfToken() {
-      const match = document.cookie.match(/csrftoken=([^;]+)/);
-      if (match) return match[1];
-      const el = document.querySelector('[name=csrfmiddlewaretoken]');
-      return el ? el.value : '';
-    }
-
-    function toggleNotifDropdown(e) {
-      if (e) e.stopPropagation();
-      const dropdown = document.getElementById('notif-dropdown');
-      if (!dropdown) return;
-      const isVisible = dropdown.style.display === 'block';
-      dropdown.style.display = isVisible ? 'none' : 'block';
-      if (!isVisible) {
-        fetchNotifications();
-      }
-    }
-
-    document.addEventListener('click', function(e) {
-      const dropdown = document.getElementById('notif-dropdown');
-      const bellBtn = document.getElementById('notif-bell-btn');
-      if (dropdown && dropdown.style.display === 'block') {
-        if (!dropdown.contains(e.target) && (!bellBtn || !bellBtn.contains(e.target))) {
-          dropdown.style.display = 'none';
+        if (!data.items || data.items.length === 0) {
+          list.innerHTML = '<div class="notif-vide">Vous êtes à jour, aucune alerte en attente.</div>';
+          return;
         }
-      }
-    });
+        list.innerHTML = data.items.map(item => `
+          <div class="notif-item" data-notif-item="${item.id}" onclick="handleNotifClick(event, '${item.id}', '${item.url}')">
+            <span class="rond">${item.icon}</span>
+            <div class="corps">
+              <div class="t"><b>${item.title}</b><time>${item.time}</time></div>
+              <div class="q">${item.text}</div>
+            </div>
+            <button type="button" class="ic-btn" style="width:28px;height:28px"
+                    onclick="dismissSingleNotif(event, '${item.id}')" aria-label="Marquer comme lu">
+              <span class="ms" style="font-size:16px">close</span>
+            </button>
+          </div>
+        `).join('');
+      })
+      .catch(err => console.error('Notification fetch error:', err));
+  }
 
-    function handleNotifClick(event, notifId, targetUrl) {
-      if (event) event.preventDefault();
-      
-      // 1. Décompte visuel instantané de la cloche
-      const badge = document.getElementById('notif-badge');
-      const countText = document.getElementById('notif-count-text');
-      let currentCount = parseInt(badge ? badge.textContent : '0', 10) || 0;
-      if (currentCount > 0) {
-        currentCount--;
-        if (badge) {
-          badge.textContent = currentCount;
-          badge.style.display = currentCount > 0 ? 'inline-block' : 'none';
-        }
-        if (countText) {
-          countText.textContent = currentCount > 0 ? currentCount + ' alerte(s)' : 'Aucune alerte';
-        }
-      }
-
-      // Masquer le dropdown
-      const dropdown = document.getElementById('notif-dropdown');
-      if (dropdown) dropdown.style.display = 'none';
-
-      // 2. Acquittement de la notification via l'API
-      const csrf = getCsrfToken();
-      fetch('/api/notifications/read/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf
-        },
-        body: JSON.stringify({ id: notifId }),
-        keepalive: true
-      }).catch(err => console.error('Error marking notif as read:', err))
-        .finally(() => {
-          // 3. Redirection vers la page cible
-          if (targetUrl) {
-            window.location.href = targetUrl;
-          }
-        });
-    }
-
-    function dismissSingleNotif(event, notifId) {
-      if (event) event.stopPropagation();
-
-      const itemEl = document.querySelector(`[data-notif-item="${notifId}"]`);
-      if (itemEl) itemEl.remove();
-
-      const badge = document.getElementById('notif-badge');
-      const countText = document.getElementById('notif-count-text');
-      let currentCount = parseInt(badge ? badge.textContent : '0', 10) || 0;
-      if (currentCount > 0) {
-        currentCount--;
-        if (badge) {
-          badge.textContent = currentCount;
-          badge.style.display = currentCount > 0 ? 'inline-block' : 'none';
-        }
-        if (countText) {
-          countText.textContent = currentCount > 0 ? currentCount + ' alerte(s)' : 'Aucune alerte';
-        }
-      }
-
-      const list = document.getElementById('notif-list');
-      if (list && list.children.length === 0) {
-        list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted); font-size: 13px;">✓ Vous êtes à jour ! Aucune alerte en attente.</div>';
-      }
-
-      const csrf = getCsrfToken();
-      fetch('/api/notifications/read/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf
-        },
-        body: JSON.stringify({ id: notifId })
-      }).catch(err => console.error(err));
-    }
-
-    function markAllNotifsRead() {
-      const list = document.getElementById('notif-list');
-      const notifEls = list ? list.querySelectorAll('[data-notif-item]') : [];
-      const ids = Array.from(notifEls).map(el => el.getAttribute('data-notif-item'));
-
-      const badge = document.getElementById('notif-badge');
-      const countText = document.getElementById('notif-count-text');
-      if (badge) badge.style.display = 'none';
-      if (countText) countText.textContent = 'Aucune alerte';
-      if (list) {
-        list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted); font-size: 13px;">✓ Toutes les alertes ont été marquées comme lues.</div>';
-      }
-
-      const csrf = getCsrfToken();
-      fetch('/api/notifications/read/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrf
-        },
-        body: JSON.stringify({ mark_all: true, ids: ids })
-      }).catch(err => console.error(err));
-    }
-
-    function fetchNotifications() {
-      if (document.hidden) return;
-      fetch('/api/notifications/')
-        .then(res => res.json())
-        .then(data => {
-          const badge = document.getElementById('notif-badge');
-          const countText = document.getElementById('notif-count-text');
-          const list = document.getElementById('notif-list');
-          if (!badge || !list) return;
-
-          if (data.count > 0) {
-            badge.style.display = 'inline-block';
-            badge.textContent = data.count;
-            if (countText) countText.textContent = data.count + ' alerte(s)';
-          } else {
-            badge.style.display = 'none';
-            if (countText) countText.textContent = 'Aucune alerte';
-          }
-
-          if (data.items.length === 0) {
-            list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted); font-size: 13px;">✓ Vous êtes à jour ! Aucune alerte en attente.</div>';
-          } else {
-            list.innerHTML = data.items.map(item => `
-              <div data-notif-item="${item.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface); transition: background 0.15s; cursor: pointer;" onmouseover="this.style.background='var(--panel)'" onmouseout="this.style.background='var(--surface)'" onclick="handleNotifClick(event, '${item.id}', '${item.url}')">
-                <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1; min-width: 0;">
-                  <div style="font-size: 18px; line-height: 1; flex-shrink: 0; margin-top: 2px;">${item.icon}</div>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 12px; font-weight: 700; color: var(--text); display: flex; justify-content: space-between; gap: 6px;">
-                      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</span>
-                      <span style="font-size: 10.5px; color: var(--muted); font-weight: 500; flex-shrink: 0;">${item.time}</span>
-                    </div>
-                    <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.35; word-break: break-word;">${item.text}</div>
-                  </div>
-                </div>
-                <button type="button" onclick="dismissSingleNotif(event, '${item.id}')" title="Marquer comme lu" style="background: none; border: none; font-size: 13px; color: var(--muted); cursor: pointer; padding: 4px 6px; margin-left: 6px; border-radius: 4px; flex-shrink: 0;" onmouseover="this.style.color='var(--text)'; this.style.background='rgba(0,0,0,0.06)';" onmouseout="this.style.color='var(--muted)'; this.style.background='none';">
-                  ✕
-                </button>
-              </div>
-            `).join('');
-          }
-        })
-        .catch(err => console.error('Notification fetch error:', err));
-    }
-
-    if (document.getElementById('notif-bell-btn')) {
-      fetchNotifications();
-      setInterval(fetchNotifications, 30000);
-    }
-  </script>
+  if ($('#notif-bell-btn')) {
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
+  }
+</script>
 </body>
 </html>

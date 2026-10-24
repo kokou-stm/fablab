@@ -1,57 +1,59 @@
-<div style="display: grid; gap: 24px;">
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Gestion des Stocks & Consommables</h1>
-      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Filaments 3D, résines, composants
-        électroniques et matière première.</p>
-    </div>
-  </div>
+<div class="entete">
+  <h1>Stocks &amp; consommables</h1>
+  <p>Filaments 3D, résines, composants électroniques et matière première.</p>
+</div>
 
-  <div
-    style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow);">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+<div class="carte">
+  <div class="enveloppe">
+    <table>
       <thead>
-        <tr
-          style="background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; color: var(--muted);">
-          <th style="padding: 12px 16px;">Consommable</th>
-          <th style="padding: 12px 16px;">Catégorie</th>
-          <th style="padding: 12px 16px;">Emplacement</th>
-          <th style="padding: 12px 16px;">Quantité Restante</th>
-          <th style="padding: 12px 16px;">Prix Vente</th>
-          <th style="padding: 12px 16px;">Action</th>
+        <tr>
+          <th>Consommable</th>
+          <th>Catégorie</th>
+          <th>Emplacement</th>
+          <th>Quantité restante</th>
+          <th class="num">Prix de vente</th>
+          <th>Réapprovisionnement</th>
         </tr>
       </thead>
       <tbody>
         {% for item in items %}
-        <tr style="border-bottom: 1px solid var(--border);">
-          <td style="padding: 14px 16px; font-weight: 600;">{{ item.name }}</td>
-          <td style="padding: 14px 16px; color: var(--muted);">{{ item.category }}</td>
-          <td style="padding: 14px 16px;"> {{ item.location }}</td>
-          <td style="padding: 14px 16px;">
+        <tr>
+          <td><span class="p">{{ item.name }}</span></td>
+          <td style="color:var(--on-surface-variant)">{{ item.category }}</td>
+          <td>{{ item.location }}</td>
+          <td>
             {% if item.is_low_stock %}
-            <span style="color: #ef4444; font-weight: 700;">⚠️ {{ item.quantity }} {{ item.get_unit_display }} (Stock
-              Bas)</span>
+              <span class="etq r"><span class="ms" style="font-size:14px">warning</span>
+                {{ item.quantity }} {{ item.get_unit_display }} — stock bas</span>
             {% else %}
-            <span style="color: #10b981; font-weight: 600;">{{ item.quantity }} {{ item.get_unit_display }}</span>
+              <span class="etq v">{{ item.quantity }} {{ item.get_unit_display }}</span>
             {% endif %}
+            <div class="jauge" style="margin-top:8px;max-width:120px">
+              <i class="{% if item.is_low_stock %}r{% else %}v{% endif %}"
+                 style="width:{% if item.is_low_stock %}18{% else %}72{% endif %}%"></i>
+            </div>
           </td>
-          <td style="padding: 14px 16px; font-weight: 700;">{{ item.unit_price }} € / {{ item.get_unit_display }}</td>
-          <td style="padding: 14px 16px;">
-            <form action="/inventory/" method="POST" style="display: flex; gap: 6px; align-items: center; margin: 0;">
+          <td class="num mono">{{ item.unit_price }} € / {{ item.get_unit_display }}</td>
+          <td>
+            <form action="/inventory/" method="POST" style="display:flex;gap:8px;align-items:center;margin:0">
               {% csrf_token %}
               <input type="hidden" name="item_id" value="{{ item.id }}">
               <input type="number" name="add_quantity" value="5" step="1"
-                style="width: 60px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-              <button type="submit"
-                style="padding: 4px 10px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 12px; cursor: pointer;">
-                + Réappro
-              </button>
+                     style="width:78px;height:36px;padding:0 10px;border:1px solid var(--outline);
+                            border-radius:var(--sh-xs);background:var(--surface);color:inherit;font-family:inherit">
+              <button type="submit" class="btn s"><span class="ms">add</span> Réappro</button>
             </form>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" style="padding: 30px; text-align: center; color: var(--muted);">Aucun consommable enregistré.
+          <td colspan="6">
+            <div class="vide">
+              <span class="ms">inventory_2</span>
+              <b>Aucun consommable enregistré</b>
+              Les filaments, résines et composants suivis apparaîtront ici.
+            </div>
           </td>
         </tr>
         {% endfor %}

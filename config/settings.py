@@ -9,7 +9,6 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Chargement automatique du fichier .env si présent
 env_file = BASE_DIR / '.env'
 if env_file.exists():
     with open(env_file) as f:
@@ -25,7 +24,6 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
-# Origines de confiance pour la vérification CSRF (Multi-tenant, sous-domaines, prod & dev)
 CSRF_TRUSTED_ORIGINS = [
     'https://*.aidubber.fr',
     'https://aidubber.fr',
@@ -46,11 +44,8 @@ if _extra_csrf:
         if _orig and _orig not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(_orig)
 
-# Gestionnaire d'échec CSRF personnalisé pour éviter les 403 bloquants en cas de double session
 CSRF_FAILURE_VIEW = 'core.views.custom_csrf_failure_view'
 
-# Le conteneur ACI ne fait que du HTTP ; quand il est servi derrière un proxy TLS
-# (ex: Cloudflare en mode Flexible), celui-ci indique le vrai protocole via cet en-tête.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 INSTALLED_APPS = [
@@ -61,17 +56,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third party
     'django_htmx',
 
-    # Core App
     'core',
 
-    # Master Apps
     'fablabs',
     'accounts',
 
-    # Tenant Apps
     'equipment',
     'reservations',
     'workshops',
@@ -91,13 +82,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
 
-    # Custom Multi-tenant Middleware
     'config.tenant_middleware.TenantMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
 
-# En production, activer le cache des templates compilés pour éviter la relecture disque
 if DEBUG:
     TEMPLATES = [
         {
@@ -140,12 +129,8 @@ else:
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Configuration Multi-tenant Database Router
 DATABASE_ROUTERS = ['config.tenant_router.TenantRouter']
 
-# Configuration Base de Données :
-# Mode Local (Postgres local / SQLite local) activé par défaut pour le déploiement courant.
-# Pour basculer sur la base Postgres Cloud Prod plus tard : définir USE_PROD_POSTGRES=1 et DATABASE_URL
 USE_PROD_POSTGRES = os.environ.get('USE_PROD_POSTGRES', '0') == '1'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -174,8 +159,6 @@ else:
             }
         }
     else:
-        # Si un volume persistant est monté (ex: Azure File Share en prod), la base
-        # SQLite y est stockée pour survivre aux redéploiements ; sinon fichier local.
         _data_dir = os.environ.get('DJANGO_DATA_DIR')
         sqlite_path = Path(_data_dir) / 'db.sqlite3' if _data_dir else BASE_DIR / 'db.sqlite3'
         DATABASES = {
@@ -204,13 +187,10 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        # ManifestStaticFilesStorage ajoute un hash au nom de fichier pour le cache-busting
-        # et permet des headers Cache-Control: max-age=31536000 (1 an)
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
-# En local (DEBUG=True), sert directement depuis STATICFILES_DIRS sans nécessiter collectstatic
 WHITENOISE_USE_FINDERS = DEBUG
 WHITENOISE_AUTOREFRESH = DEBUG
 
@@ -221,7 +201,6 @@ os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuration Envoi d'Emails (Gmail SMTP avec les identifiants du projet app_save)
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
@@ -230,7 +209,6 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'voicetranslator0@gmail.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'LabOS Platform <voicetranslator0@gmail.com>')
 
-# ─── Cache Redis (déjà déployé via docker-compose, câblé ici) ───
 REDIS_URL = os.environ.get('REDIS_URL')
 
 if REDIS_URL and not DEBUG:
@@ -238,18 +216,16 @@ if REDIS_URL and not DEBUG:
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
             'LOCATION': REDIS_URL,
-            'TIMEOUT': 300,  # 5 minutes par défaut
+            'TIMEOUT': 300,
             'OPTIONS': {
                 'db': '1',
             },
             'KEY_PREFIX': 'fabos',
         }
     }
-    # Sessions stockées en cache Redis au lieu de la base de données
     SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
     SESSION_CACHE_ALIAS = 'default'
 else:
-    # En local / test : cache en mémoire (pas besoin de Redis)
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

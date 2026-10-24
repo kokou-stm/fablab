@@ -17,7 +17,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS("🚀 Initialisation de la base Master FabLabs..."))
 
-        # 1. Création des Tenants Master
         labs_data = [
             {
                 'name': 'FabLab Sorbonne Université',
@@ -52,21 +51,17 @@ class Command(BaseCommand):
             status = "créé" if created else "existant"
             self.stdout.write(f"   • FabLab Tenant : {lab.name} ({status})")
 
-        # 2. Pour chaque tenant, exécution des migrations de schéma et population des données
         for lab in created_labs:
             self.stdout.write(self.style.WARNING(f"\n📦 Seeding du tenant : {lab.name} ({lab.slug})..."))
             
-            # Migration du schéma tenant
             migrate_tenant(lab.slug)
             set_current_tenant(lab.slug)
 
-            # Catégories d'Équipement
             cat_3d, _ = EquipmentCategory.objects.get_or_create(slug="impression-3d", defaults={"name": "Impression 3D", "icon": "printer"})
             cat_laser, _ = EquipmentCategory.objects.get_or_create(slug="decoupe-laser", defaults={"name": "Découpe Laser", "icon": "zap"})
             cat_cnc, _ = EquipmentCategory.objects.get_or_create(slug="usinage-cnc", defaults={"name": "Usinage CNC", "icon": "settings"})
             cat_elec, _ = EquipmentCategory.objects.get_or_create(slug="electronique", defaults={"name": "Électronique & IoT", "icon": "cpu"})
 
-            # Machines
             m1, _ = Equipment.objects.get_or_create(
                 slug="prusa-mk4-01",
                 defaults={
@@ -110,7 +105,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Ticket de maintenance si en maintenance
             if m3.status == "MAINTENANCE":
                 MaintenanceTicket.objects.get_or_create(
                     equipment=m3,
@@ -123,7 +117,6 @@ class Command(BaseCommand):
                     }
                 )
 
-            # Certifications
             cert_laser, _ = Certification.objects.get_or_create(
                 name="Habilitation Découpe Laser Niveau 2",
                 category=cat_laser,
@@ -142,7 +135,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Réservations
             now = timezone.now()
             Reservation.objects.get_or_create(
                 equipment=m1,
@@ -157,7 +149,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Ateliers
             w1, _ = Workshop.objects.get_or_create(
                 slug=f"initiation-laser-{lab.slug}",
                 defaults={
@@ -171,7 +162,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Inscriptions ateliers
             WorkshopRegistration.objects.get_or_create(
                 workshop=w1,
                 user_email="etudiant1@sorbonne.fr",
@@ -181,7 +171,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Inventaire & Consommables
             InventoryItem.objects.get_or_create(
                 name="Filament PLA 1.75mm Noir (1kg)",
                 defaults={
@@ -200,7 +189,7 @@ class Command(BaseCommand):
                 defaults={
                     "sku": "PMMA-3MM-CLR",
                     "category": "Découpe Laser",
-                    "quantity": 2.00,  # Stock bas!
+                    "quantity": 2.00,
                     "unit": "SHEET",
                     "min_threshold": 5.00,
                     "unit_price": 14.50,
@@ -208,7 +197,6 @@ class Command(BaseCommand):
                 }
             )
 
-            # Projets
             Project.objects.get_or_create(
                 slug=f"lampe-design-laser-{lab.slug}",
                 defaults={

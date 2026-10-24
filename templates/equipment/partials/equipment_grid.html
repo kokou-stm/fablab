@@ -1,203 +1,200 @@
-<div style="display: grid; gap: 20px;">
-  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-    <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0;">Catalogue des Équipements & Machines</h1>
-      <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px;">Machines d'usinage, d'impression 3D, découpe laser et d'électronique.</p>
-    </div>
-
-    {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
-      <button onclick="document.getElementById('add-equipment-modal').style.display='grid'" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 6px;">
-        + Ajouter une Machine
-      </button>
-    {% endif %}
+<div class="entete" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+  <div style="flex:1;min-width:260px">
+    <h1>Équipements &amp; machines</h1>
+    <p>Impression 3D, découpe laser, usinage CNC et électronique.</p>
   </div>
+  {% if request.user.is_authenticated and request.user.is_fabmanager_user %}
+    <button type="button" class="btn p" onclick="document.getElementById('add-equipment-modal').classList.add('on')">
+      <span class="ms">add</span> Ajouter une machine
+    </button>
+  {% endif %}
+</div>
 
-  <!-- Modal d'ajout de machine -->
-  <div id="add-equipment-modal" style="display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); place-items: center;">
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: min(600px, 92vw); padding: 28px; box-shadow: var(--shadow);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-        <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Ajouter un Nouvel Équipement</h3>
-        <button onclick="document.getElementById('add-equipment-modal').style.display='none'" style="background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer;">✕</button>
+<!-- Recherche et filtres -->
+<form class="barre-outils" method="GET" action="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+  {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+  {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+
+  <input type="text" name="search" value="{{ search_query }}" style="flex:1;min-width:240px"
+         placeholder="Rechercher une machine — nom, marque, zone, catégorie…"
+         hx-get="/equipment/" hx-trigger="keyup changed delay:300ms, search" hx-target="#content" hx-push-url="true">
+  <button type="submit" class="btn"><span class="ms">search</span> Rechercher</button>
+  {% if search_query %}
+    <a class="btn n" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+      <span class="ms">close</span> Effacer
+    </a>
+  {% endif %}
+</form>
+
+<div class="barre-outils">
+  <div class="filtre">
+    <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true"
+       class="{% if not current_category %}actif{% endif %}">Toutes</a>
+    {% for cat in categories %}
+      <a href="/equipment/?category={{ cat.slug }}" hx-get="/equipment/?category={{ cat.slug }}"
+         hx-target="#content" hx-push-url="true"
+         class="{% if current_category == cat.slug %}actif{% endif %}">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Catalogue -->
+<div class="grille auto">
+  {% for eq in equipments %}
+    <div class="carte" style="display:flex;flex-direction:column;box-shadow:var(--e1)">
+      {% if eq.image %}
+        <div style="height:190px;background:var(--s-container);display:grid;place-items:center;overflow:hidden">
+          <img src="{{ eq.image.url }}" alt="{{ eq.name }}" loading="lazy"
+               style="width:100%;height:100%;object-fit:contain;padding:14px">
+        </div>
+      {% else %}
+        <div style="height:130px;background:var(--s-container);display:grid;place-items:center;color:var(--outline)">
+          <span class="ms" style="font-size:40px">precision_manufacturing</span>
+        </div>
+      {% endif %}
+
+      <div class="corps" style="padding:18px 20px 20px;flex:1;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span class="etq">{{ eq.category.name }}</span>
+          <span class="mono" style="font-size:12.5px;font-weight:500">{{ eq.hourly_rate }} €/h</span>
+        </div>
+
+        <h3 style="font-size:17px;font-weight:500;margin:12px 0 2px">
+          <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content"
+             hx-push-url="true" style="color:var(--on-surface)">{{ eq.name }}</a>
+        </h3>
+        <div style="font-size:12px;color:var(--on-surface-variant)">
+          Modèle {{ eq.model_number|default:"standard" }}
+        </div>
+
+        <dl class="fiche" style="margin-top:14px;font-size:13px">
+          <dt>Zone</dt><dd>{{ eq.location_zone }}</dd>
+          <dt>Puissance</dt><dd>{{ eq.power_watts }} W</dd>
+          <dt>Accès</dt>
+          <dd>
+            {% if eq.requires_certification %}
+              <span class="etq a"><span class="pt"></span> Habilitation requise</span>
+            {% else %}
+              <span class="etq v"><span class="pt"></span> Accès libre</span>
+            {% endif %}
+          </dd>
+        </dl>
+
+        <div style="margin-top:auto;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          {% if eq.is_currently_reserved or eq.status == 'RESERVED' %}
+            <span class="etq b"><span class="pt"></span> Réservée</span>
+          {% elif eq.status == 'MAINTENANCE' %}
+            <span class="etq a"><span class="pt"></span> En maintenance</span>
+          {% elif eq.status == 'OFFLINE' %}
+            <span class="etq r"><span class="pt"></span> Hors service</span>
+          {% else %}
+            <span class="etq v"><span class="pt"></span> Disponible</span>
+          {% endif %}
+
+          <a class="btn s" href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/"
+             hx-target="#content" hx-push-url="true">Fiche &amp; réservation</a>
+        </div>
       </div>
+    </div>
+  {% empty %}
+    <div class="carte" style="grid-column:1/-1">
+      <div class="vide">
+        <span class="ms">search_off</span>
+        <b>Aucune machine ne correspond aux filtres</b>
+        Modifiez votre recherche ou réinitialisez les catégories.
+        {% if search_query or current_category %}
+          <a class="btn" href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true">
+            Réinitialiser
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
 
-      <form action="/equipment/create/" method="POST" enctype="multipart/form-data" style="display: grid; gap: 16px;">
-        {% csrf_token %}
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Nom de la Machine :</label>
-            <input type="text" name="name" required placeholder="ex: Prusa MK4 3D" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+{% if request.user.is_authenticated and request.user.is_fabmanager_user %}
+<!-- Ajout d'une machine -->
+<div class="fond-modal" id="add-equipment-modal"
+     onclick="if(event.target===this) this.classList.remove('on')">
+  <div class="boite">
+    <header>
+      <div style="flex:1">
+        <h3>Ajouter un équipement</h3>
+        <p>La machine sera visible par tous les membres du FabLab, qui recevront une notification.</p>
+      </div>
+      <button type="button" class="ic-btn" aria-label="Fermer"
+              onclick="document.getElementById('add-equipment-modal').classList.remove('on')">
+        <span class="ms">close</span>
+      </button>
+    </header>
+
+    <form action="/equipment/create/" method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="contenu">
+        <div class="grille g2" style="gap:0 16px">
+          <div class="champ">
+            <label for="eq-nom">Nom de la machine</label>
+            <input type="text" id="eq-nom" name="name" required placeholder="ex. Prusa MK4">
           </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Catégorie :</label>
-            <select name="category_id" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
-              {% for cat in categories %}
-                <option value="{{ cat.id }}">{{ cat.name }}</option>
-              {% endfor %}
+          <div class="champ">
+            <label for="eq-cat">Catégorie</label>
+            <select id="eq-cat" name="category_id" required>
+              {% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}
             </select>
           </div>
         </div>
 
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Photo / Image de la Machine :</label>
-          <input type="file" name="image" accept="image/*" style="width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+        <div class="champ">
+          <label for="eq-img">Photo de la machine</label>
+          <input type="file" id="eq-img" name="image" accept="image/*" style="height:auto;padding:12px 16px">
         </div>
 
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Emplacement / Zone dans le FabLab :</label>
-          <input type="text" name="location_zone" placeholder="ex: Atelier 3D - Table 1" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+        <div class="champ">
+          <label for="eq-zone">Emplacement dans le FabLab</label>
+          <input type="text" id="eq-zone" name="location_zone" placeholder="ex. Atelier 3D — table 1">
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Puissance (Watts) :</label>
-            <input type="number" name="power_watts" value="250" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px;">
+        <div class="grille g2" style="gap:0 16px">
+          <div class="champ">
+            <label for="eq-watt">Puissance (watts)</label>
+            <input type="number" id="eq-watt" name="power_watts" value="250">
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-top: 20px;">
-            <input type="checkbox" id="requires_certification" name="requires_certification" style="width: 16px; height: 16px;">
-            <label for="requires_certification" style="font-size: 13px; font-weight: 600; cursor: pointer;">Habilitation / Badge requis</label>
+          <div class="champ" style="display:flex;align-items:center;gap:10px;padding-top:18px">
+            <input type="checkbox" id="requires_certification" name="requires_certification">
+            <label for="requires_certification" style="margin:0;cursor:pointer;font-size:14px;color:var(--on-surface)">
+              Habilitation / badge requis
+            </label>
           </div>
         </div>
 
-        <div>
-          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description & Caractéristiques :</label>
-          <textarea name="description" rows="2" placeholder="Volume d'impression, buse, matériaux supportés..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: 13px; resize: vertical;"></textarea>
+        <div class="champ">
+          <label for="eq-desc">Description &amp; caractéristiques</label>
+          <textarea id="eq-desc" name="description" placeholder="Volume d'impression, buse, matériaux supportés…"></textarea>
         </div>
 
-        <!-- Documentation Technique (Optionnel) -->
-        <div style="padding: 14px; background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
-          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Documentation Technique & Notice (Optionnel) :</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">📄 Notice / Fichier PDF :</label>
-              <input type="file" name="doc_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" style="width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
+        <div class="avis b" style="display:block">
+          <b>Documentation technique (facultatif)</b>
+          <div class="grille g2" style="gap:0 14px;margin-top:10px">
+            <div class="champ" style="margin-bottom:4px">
+              <label for="eq-doc">Notice au format fichier</label>
+              <input type="file" id="eq-doc" name="doc_file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                     style="height:auto;padding:12px 16px">
             </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;"> Lien Web Manuel / Wiki :</label>
-              <input type="url" name="doc_url" placeholder="https://..." style="width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 12px;">
+            <div class="champ" style="margin-bottom:4px">
+              <label for="eq-url">Lien vers un manuel ou un wiki</label>
+              <input type="url" id="eq-url" name="doc_url" placeholder="https://…">
             </div>
           </div>
         </div>
+      </div>
 
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;">
-          <button type="button" onclick="document.getElementById('add-equipment-modal').style.display='none'" style="padding: 9px 16px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); cursor: pointer;">Annuler</button>
-          <button type="submit" style="padding: 9px 20px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">Enregistrer la Machine</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Search & Filters Row -->
-  <div style="display: flex; flex-direction: column; gap: 12px;">
-    <!-- Search Bar -->
-    <div style="background: var(--surface); border: 1px solid var(--border); padding: 14px 18px; border-radius: var(--radius-md); box-shadow: var(--shadow);">
-      <form method="GET" action="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
-        
-        <div style="position: relative; flex: 1; min-width: 260px;">
-          <input type="text" name="search" value="{{ search_query }}" placeholder="🔍 Rechercher une machine (nom, marque, zone, catégorie...)" hx-get="/equipment/" hx-trigger="keyup changed delay:300ms, search" hx-target="#content" hx-push-url="true" style="width: 100%; padding: 10px 14px 10px 38px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text);">
-          <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.6; font-size: 14px;">🔍</span>
-        </div>
-        <button type="submit" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); cursor: pointer;">
-          Rechercher
+      <footer>
+        <button type="button" class="btn n" onclick="document.getElementById('add-equipment-modal').classList.remove('on')">
+          Annuler
         </button>
-        {% if search_query %}
-          <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" style="padding: 9px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); text-decoration: none; background: var(--panel);">
-            ✕ Effacer
-          </a>
-        {% endif %}
-      </form>
-    </div>
-
-    <!-- Category Filters -->
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-md);">
-      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">Catégories :</span>
-      <a href="/equipment/" hx-get="/equipment/" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">Toutes</a>
-      {% for cat in categories %}
-        <a href="/equipment/?category={{ cat.slug }}" hx-get="/equipment/?category={{ cat.slug }}" hx-target="#content" hx-push-url="true" class="btn btn-sm {% if current_category == cat.slug %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-          {{ cat.name }}
-        </a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Grid of Equipments -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-    {% for eq in equipments %}
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; const img=this.querySelector('img'); if(img) img.style.transform='scale(1.04)';" onmouseout="this.style.transform='translateY(0)'; const img=this.querySelector('img'); if(img) img.style.transform='scale(1)';">
-        {% if eq.image %}
-          <div style="width: 100%; height: 210px; overflow: hidden; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; align-items: center; justify-content: center; position: relative;">
-            <img src="{{ eq.image.url }}" alt="{{ eq.name }}" style="max-width: 100%; max-height: 100%; width: auto; height: 100%; object-fit: contain; padding: 12px; transition: transform 0.25s ease;" loading="lazy">
-          </div>
-        {% else %}
-          <div style="width: 100%; height: 150px; border-bottom: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted);">
-            <span style="font-size: 32px;">⚙️</span>
-            <span style="font-size: 11px; font-weight: 600;">Photo de la machine</span>
-          </div>
-        {% endif %}
-        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span class="tenant-badge" style="font-size: 11px;">{{ eq.category.name }}</span>
-            <span style="font-size: 13px; font-weight: 700; color: var(--text);">{{ eq.hourly_rate }} €/heure</span>
-          </div>
-
-          <h3 style="font-size: 18px; font-weight: 700; margin: 12px 0 4px 0;">
-            <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" style="color: inherit; text-decoration: none;">
-              {{ eq.name }}
-            </a>
-          </h3>
-
-          <div style="font-size: 12px; color: var(--muted);">Modèle : {{ eq.model_number|default:"Standard" }}</div>
-          
-          <div style="margin-top: 14px; padding: 10px; background: var(--panel); border-radius: var(--radius-sm); font-size: 12px;">
-            <div> <strong>Zone :</strong> {{ eq.location_zone }}</div>
-            <div style="margin-top: 4px;"> <strong>Puissance :</strong> {{ eq.power_watts }} Watts</div>
-            {% if eq.requires_certification %}
-              <div style="margin-top: 4px; color: #f59e0b; font-weight: 600;"> Habilitation requise</div>
-            {% else %}
-              <div style="margin-top: 4px; color: #10b981; font-weight: 600;"> Accès Libre</div>
-            {% endif %}
-          </div>
-
-          <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-            {% if eq.is_currently_reserved or eq.status == 'RESERVED' %}
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);"></span>
-                <span style="font-size: 12px; font-weight: 700; color: #2563eb;">
-                  🔵 En Utilisation / Réservé
-                </span>
-              </div>
-            {% elif eq.status == 'MAINTENANCE' %}
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span>
-                <span style="font-size: 12px; font-weight: 700; color: #d97706;">
-                  🟠 En Maintenance
-                </span>
-              </div>
-            {% elif eq.status == 'OFFLINE' %}
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
-                <span style="font-size: 12px; font-weight: 700; color: #dc2626;">
-                  🔴 Hors Service
-                </span>
-              </div>
-            {% else %}
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);"></span>
-                <span style="font-size: 12px; font-weight: 700; color: #059669;">
-                  🟢 Disponible / Opérationnel
-                </span>
-              </div>
-            {% endif %}
-            
-            <a href="/equipment/{{ eq.slug }}/" hx-get="/equipment/{{ eq.slug }}/" hx-target="#content" hx-push-url="true" class="btn btn-sm btn-outline" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); text-decoration: none; border: 1px solid var(--border); color: var(--text);">Fiche & Réserver →</a>
-          </div>
-        </div>
-      </div>
-    {% empty %}
-      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
-        Aucune machine correspondant aux filtres.
-      </div>
-    {% endfor %}
+        <button type="submit" class="btn p"><span class="ms">save</span> Enregistrer la machine</button>
+      </footer>
+    </form>
   </div>
 </div>
+{% endif %}

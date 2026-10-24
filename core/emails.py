@@ -59,7 +59,6 @@ def send_member_signup_notification(user, tenant):
     lab_name = tenant.name if tenant else "LabOS"
     members_url = f"{get_base_url(tenant)}/members/"
     
-    # 1. Email d'attente pour le nouveau membre (dossier en cours d'examen)
     member_subject = f"[LabOS] Inscription enregistrée - En cours d'examen"
     member_message = (
         f"Bonjour {user.get_full_name() or user.username},\n\n"
@@ -69,7 +68,6 @@ def send_member_signup_notification(user, tenant):
         f"L'équipe {lab_name}."
     )
     
-    # 2. Email de notification pour le FabManager
     manager_subject = f"[LabOS] Inscription en attente de validation"
     manager_message = (
         f"Bonjour,\n\n"
@@ -165,7 +163,6 @@ def send_reservation_request_email(reservation, tenant):
     lab_name = tenant.name if tenant else "LabOS"
     reservations_url = f"{get_base_url(tenant)}/reservations/"
 
-    # Responsables du FabLab + adresse de contact de l'espace, sans doublon.
     recipients = []
     if tenant:
         from accounts.models import User

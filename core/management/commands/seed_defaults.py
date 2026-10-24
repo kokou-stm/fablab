@@ -32,6 +32,7 @@ class Command(BaseCommand):
         for slug in FabLab.objects.values_list('slug', flat=True):
             try:
                 migrate_tenant(slug, verbosity=0)
+                self._seed_tenant_categories(slug)
                 migrated += 1
             except Exception as exc:
                 self.stdout.write(self.style.WARNING(f"  Migration du FabLab '{slug}' impossible : {exc}"))
@@ -80,21 +81,21 @@ class Command(BaseCommand):
         action = "créé" if created else "mis à jour"
         self.stdout.write(f"  Compte Administrateur : '{username}' {action}")
 
+    def _seed_tenant_categories(self, slug):
+        from equipment.models import EquipmentCategory
+        from config.tenant_router import get_current_tenant, set_current_tenant
+
+        previous = get_current_tenant()
+        set_current_tenant(slug)
+        try:
+            EquipmentCategory.ensure_defaults()
+        finally:
+            set_current_tenant(previous)
+
     def _seed_equipment_categories(self):
         from equipment.models import EquipmentCategory
 
-        categories = [
-            {"slug": "impression-3d", "defaults": {"name": "Impression 3D", "icon": "printer"}},
-            {"slug": "decoupe-laser", "defaults": {"name": "Découpe Laser", "icon": "zap"}},
-            {"slug": "usinage-cnc", "defaults": {"name": "Usinage CNC", "icon": "settings"}},
-            {"slug": "electronique", "defaults": {"name": "Électronique & IoT", "icon": "cpu"}},
-            {"slug": "autre", "defaults": {"name": "Autre", "icon": "box"}},
-        ]
-        created_count = 0
-        for cat in categories:
-            _, created = EquipmentCategory.objects.get_or_create(slug=cat["slug"], defaults=cat["defaults"])
-            if created:
-                created_count += 1
+        created_count = EquipmentCategory.ensure_defaults()
         self.stdout.write(f"  Catégories d'équipement : {created_count} créée(s)")
 
     def _seed_channels(self):

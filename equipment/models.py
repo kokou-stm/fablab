@@ -14,6 +14,22 @@ class EquipmentCategory(models.Model):
     def __str__(self):
         return self.name
 
+    DEFAULTS = [
+        {"slug": "impression-3d", "defaults": {"name": "Impression 3D", "icon": "printer"}},
+        {"slug": "decoupe-laser", "defaults": {"name": "Découpe Laser", "icon": "zap"}},
+        {"slug": "usinage-cnc", "defaults": {"name": "Usinage CNC", "icon": "settings"}},
+        {"slug": "electronique", "defaults": {"name": "Électronique & IoT", "icon": "cpu"}},
+        {"slug": "autre", "defaults": {"name": "Autre", "icon": "box"}},
+    ]
+
+    @classmethod
+    def ensure_defaults(cls):
+        created_count = 0
+        for cat in cls.DEFAULTS:
+            _, created = cls.objects.get_or_create(slug=cat["slug"], defaults=cat["defaults"])
+            created_count += created
+        return created_count
+
 
 class Equipment(models.Model):
     STATUS_CHOICES = [

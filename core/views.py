@@ -128,6 +128,8 @@ def equipment_list_view(request):
 
     equipments = Equipment.objects.select_related('category').all()
     categories = EquipmentCategory.objects.all()
+    if not categories.exists():
+        EquipmentCategory.ensure_defaults()
 
     if category_slug:
         equipments = equipments.filter(category__slug=category_slug)

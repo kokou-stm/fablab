@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from core import views
+from core.assistant_views import assistant_chat_api
 from accounts import views as account_views
 
 urlpatterns = [
@@ -51,6 +52,7 @@ urlpatterns = [
 
     path('api/notifications/', views.notifications_api_view, name='notifications_api'),
     path('api/notifications/read/', views.mark_notification_read_api_view, name='mark_notification_read_api'),
+    path('api/assistant/', assistant_chat_api, name='assistant_chat_api'),
 ]
 
 from django.urls import re_path

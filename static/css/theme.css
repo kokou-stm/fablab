@@ -992,3 +992,40 @@ body.sombre .ic-btn.env:hover{background:#C2D9FF}
 
 /* la grille des avantages de l'accroche reste lisible sur mobile */
 .v-hero .v-liste li{border-bottom:none;padding:8px 0}
+
+/* --------- assistant (chat) --------- */
+#assistant-btn{
+  position:fixed;right:24px;bottom:24px;z-index:50;width:56px;height:56px;border-radius:16px;
+  display:grid;place-items:center;background:var(--primary);color:var(--on-primary);box-shadow:var(--e3);
+  transition:transform var(--dur) var(--ease),background var(--dur) var(--ease);
+}
+#assistant-btn:hover{transform:translateY(-2px)}
+#assistant-btn .ms{font-size:26px}
+#assistant{
+  position:fixed;right:24px;bottom:92px;z-index:50;width:380px;height:min(560px,calc(100vh - 120px));
+  display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--outline-variant);
+  border-radius:20px;box-shadow:var(--e3);overflow:hidden;animation:fondu .18s var(--ease);
+}
+#assistant[hidden]{display:none}
+#assistant header{display:flex;align-items:center;gap:10px;padding:14px 10px 14px 16px;border-bottom:1px solid var(--outline-variant)}
+#assistant header b{display:block;font-size:15px;line-height:20px;color:var(--on-surface)}
+#assistant header span:not(.ms){display:block;font-size:12px;line-height:16px;color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.assistant-logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--primary-container);color:var(--on-primary-container);font-size:20px;flex:none}
+.assistant-fil{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--s-container-low)}
+.assistant-fil .bulle{max-width:85%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:20px;white-space:pre-wrap;word-wrap:break-word}
+.assistant-fil .bulle.assistant{align-self:flex-start;background:var(--surface);color:var(--on-surface);border:1px solid var(--outline-variant);border-bottom-left-radius:6px}
+.assistant-fil .bulle.user{align-self:flex-end;background:var(--primary);color:var(--on-primary);border-bottom-right-radius:6px}
+.assistant-fil .bulle.attente{color:var(--on-surface-variant);font-style:italic}
+.assistant-fil .bulle.erreur{align-self:stretch;max-width:none;background:var(--error-container);color:var(--on-error-container);font-size:13px}
+.assistant-saisie{display:flex;align-items:flex-end;gap:8px;padding:12px;border-top:1px solid var(--outline-variant);background:var(--surface)}
+.assistant-saisie textarea{
+  flex:1;resize:none;min-height:44px;max-height:120px;padding:11px 14px;border:1px solid var(--outline);
+  border-radius:22px;background:var(--surface);font-size:14px;line-height:20px;outline:none;field-sizing:content;
+}
+.assistant-saisie textarea:focus{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.assistant-saisie .ic-btn{width:44px;height:44px;background:var(--primary);color:var(--on-primary);flex:none}
+.assistant-saisie .ic-btn:disabled{opacity:.5;cursor:default}
+@media(max-width:600px){
+  #assistant-btn{right:16px;bottom:16px}
+  #assistant{right:8px;left:8px;bottom:84px;width:auto;height:calc(100vh - 100px)}
+}

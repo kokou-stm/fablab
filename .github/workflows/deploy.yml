@@ -71,7 +71,10 @@ jobs:
               DJANGO_BASE_DOMAIN="aidubber.fr" \
               EMAIL_HOST_USER="voicetranslator0@gmail.com" \
               DEFAULT_FROM_EMAIL="LabOS Platform <voicetranslator0@gmail.com>" \
+              AZURE_OPENAI_ENDPOINT="https://voxify-llm.openai.azure.com/" \
+              AZURE_OPENAI_DEPLOYMENT="gpt-5.4-mini" \
             --secure-environment-variables \
+              AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
               DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
               DJANGO_ADMIN_PASSWORD="${{ secrets.DJANGO_ADMIN_PASSWORD }}" \

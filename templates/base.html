@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Crete+Round&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/css/theme.css?v=4" />
+  <link rel="stylesheet" href="/static/css/theme.css?v=5" />
 
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
@@ -267,6 +267,30 @@
 
 <div id="modal"></div>
 
+{% if user.is_authenticated %}
+<button type="button" id="assistant-btn" onclick="toggleAssistant()" aria-label="Ouvrir l'assistant" aria-expanded="false">
+  <span class="ms">chat</span>
+</button>
+<section id="assistant" aria-label="Assistant LabOS" hidden>
+  <header>
+    <span class="ms assistant-logo">smart_toy</span>
+    <div style="flex:1;min-width:0">
+      <b>Assistant LabOS</b>
+      <span>Une question sur la plateforme ou un atelier ?</span>
+    </div>
+    <button type="button" class="ic-btn" onclick="resetAssistant()" aria-label="Nouvelle conversation" title="Nouvelle conversation"><span class="ms">refresh</span></button>
+    <button type="button" class="ic-btn" onclick="toggleAssistant(false)" aria-label="Fermer"><span class="ms">close</span></button>
+  </header>
+  <div class="assistant-fil" id="assistant-fil" aria-live="polite"></div>
+  <form class="assistant-saisie" onsubmit="sendAssistant(event)">
+    {% csrf_token %}
+    <textarea id="assistant-input" rows="1" maxlength="2000" placeholder="Écrivez votre message…"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
+    <button type="submit" class="ic-btn" id="assistant-send" aria-label="Envoyer"><span class="ms">send</span></button>
+  </form>
+</section>
+{% endif %}
+
 <script>
   const $ = s => document.querySelector(s);
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -519,6 +543,97 @@
     document.querySelectorAll('#drawer a.nav-btn.actif').forEach(link => link.classList.remove('actif'));
     if (best) best.classList.add('actif');
   }
+  const ASSISTANT_KEY = 'labos_assistant';
+  const ASSISTANT_HELLO = "Bonjour ! Je suis l'assistant LabOS. Posez-moi une question sur les machines, les réservations, les ateliers ou tout autre sujet du FabLab.";
+  let assistantHistory = [];
+  try { assistantHistory = JSON.parse(sessionStorage.getItem(ASSISTANT_KEY) || '[]'); } catch (e) { assistantHistory = []; }
+
+  function saveAssistant() {
+    try { sessionStorage.setItem(ASSISTANT_KEY, JSON.stringify(assistantHistory.slice(-20))); } catch (e) {}
+  }
+
+  function addAssistantBubble(role, text) {
+    const fil = $('#assistant-fil');
+    const bulle = document.createElement('div');
+    bulle.className = 'bulle ' + role;
+    bulle.textContent = text;
+    fil.appendChild(bulle);
+    fil.scrollTop = fil.scrollHeight;
+    return bulle;
+  }
+
+  function renderAssistant() {
+    const fil = $('#assistant-fil');
+    if (!fil) return;
+    fil.innerHTML = '';
+    addAssistantBubble('assistant', ASSISTANT_HELLO);
+    assistantHistory.forEach(m => addAssistantBubble(m.role, m.content));
+  }
+
+  function toggleAssistant(force) {
+    const panel = $('#assistant'), btn = $('#assistant-btn');
+    if (!panel) return;
+    const open = typeof force === 'boolean' ? force : panel.hidden;
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    btn.querySelector('.ms').textContent = open ? 'close' : 'chat';
+    if (open) {
+      if (!$('#assistant-fil').children.length) renderAssistant();
+      $('#assistant-input').focus();
+    }
+  }
+
+  function resetAssistant() {
+    assistantHistory = [];
+    saveAssistant();
+    renderAssistant();
+    $('#assistant-input').focus();
+  }
+
+  async function sendAssistant(e) {
+    e.preventDefault();
+    const input = $('#assistant-input'), send = $('#assistant-send');
+    const text = input.value.trim();
+    if (!text || send.disabled) return;
+    input.value = '';
+    const userBubble = addAssistantBubble('user', text);
+    assistantHistory.push({ role: 'user', content: text });
+    saveAssistant();
+    send.disabled = true;
+    const attente = addAssistantBubble('assistant attente', 'L’assistant écrit…');
+    try {
+      const res = await fetch('/api/assistant/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({ messages: assistantHistory })
+      });
+      const data = await res.json().catch(() => ({}));
+      attente.remove();
+      if (res.ok && data.reply) {
+        addAssistantBubble('assistant', data.reply);
+        assistantHistory.push({ role: 'assistant', content: data.reply });
+      } else {
+        userBubble.remove();
+        addAssistantBubble('erreur', data.error || "L'assistant est momentanément indisponible.");
+        assistantHistory.pop();
+        input.value = text;
+      }
+    } catch (err) {
+      attente.remove();
+      userBubble.remove();
+      addAssistantBubble('erreur', 'Connexion impossible. Vérifiez votre réseau et réessayez.');
+      assistantHistory.pop();
+      input.value = text;
+    }
+    saveAssistant();
+    send.disabled = false;
+    input.focus();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('#assistant') && !$('#assistant').hidden) toggleAssistant(false);
+  });
+
   document.addEventListener('htmx:pushedIntoHistory', syncActiveNav);
   document.addEventListener('htmx:historyRestore', syncActiveNav);
   window.addEventListener('popstate', () => setTimeout(syncActiveNav, 0));

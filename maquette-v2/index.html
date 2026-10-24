@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LabOS — Proposition d'interface V2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    try { var t = localStorage.getItem('labos_v2_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body>
+
+  <!-- Bibliothèque d'icônes (SVG, aucun emoji) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.6-3.2 8-8 9-4.800-1-8-4.400-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.900 4.900l1.400 1.400M17.700 17.700l1.400 1.400M2 12h2M20 12h2M4.900 19.100l1.400-1.400M17.700 6.300l1.400-1.400"/></symbol>
+    <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.500"/><rect x="14" y="3" width="7" height="7" rx="1.500"/><rect x="14" y="14" width="7" height="7" rx="1.500"/><rect x="3" y="14" width="7" height="7" rx="1.500"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9.500" y="9.500" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M19 9h3M19 15h3M2 9h3M2 15h3"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.500 14l-1.500 8 5-3 5 3-1.500-8"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.500A2.500 2.500 0 0 1 6.500 17H20V3H6.500A2.500 2.500 0 0 0 4 5.500zM4 19.500A2.500 2.500 0 0 0 6.500 22H20v-5"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5zM3.300 7.500L12 12.500l8.700-5M12 22V12.500"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.700 6.300a4.500 4.500 0 0 0-5.900 5.900L3 18l3 3 5.800-5.800a4.500 4.500 0 0 0 5.900-5.900l-3 3-2.500-2.500z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 40 40"><path d="M5 31V19l9-7 7 5.500V31z" fill="currentColor" stroke="none" opacity=".55"/><path d="M15 31V15l11-8 9 6.500V31z" fill="currentColor" stroke="none"/><rect x="22" y="19" width="6" height="12" fill="var(--surface)" stroke="none"/></symbol>
+  </svg>
+
+  <div class="strip">
+    <div class="container strip-inner">
+      <div class="strip-group">
+        <span class="strip-item"><svg class="ico ico-sm"><use href="#i-building"/></svg>Plateforme de gestion pour FabLabs</span>
+        <span class="strip-item optional"><svg class="ico ico-sm"><use href="#i-clock"/></svg>Réservations 24/7</span>
+        <span class="strip-item optional"><svg class="ico ico-sm"><use href="#i-shield"/></svg>Espace sécurisé et privé</span>
+      </div>
+      <div class="strip-group secondary">
+        <span class="pill"><span class="dot"></span>FabLab Polytech Nantes</span>
+      </div>
+    </div>
+  </div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark"><use href="#i-logo"/></svg>
+        <span>Lab<em>OS</em></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#modules">Modules</a>
+        <a href="#machines">Machines</a>
+        <a href="#ateliers">Ateliers</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="toggleTheme()" aria-label="Basculer le thème clair / sombre"><svg class="ico"><use href="#i-sun"/></svg></button>
+        <a class="btn btn-ghost hide-sm" href="dashboard.html"><svg class="ico ico-sm"><use href="#i-login"/></svg>Connexion</a>
+        <a class="btn btn-primary" href="dashboard.html"><svg class="ico ico-sm"><use href="#i-plus"/></svg>Créer mon espace</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-slide active" style="background-image: url('../static/images/hero_carousel/laser_cutter_trotec.jpg')"></div>
+    <div class="hero-slide" style="background-image: url('../static/images/hero_carousel/prusa_3d_printer.jpg')"></div>
+    <div class="hero-slide" style="background-image: url('../static/images/hero_carousel/cnc_router_machine.jpg')"></div>
+
+    <div class="container hero-content">
+      <span class="hero-pill"><svg class="ico ico-sm"><use href="#i-cpu"/></svg>LabOS — Plateforme pour FabLabs</span>
+      <h1>Gestion des FabLabs &amp; Makerspaces</h1>
+      <p class="hero-sub">Gérez efficacement vos machines, makers, consommables et ateliers depuis un seul espace.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="dashboard.html"><svg class="ico"><use href="#i-plus"/></svg>Créer mon Espace FabLab</a>
+        <a class="btn btn-ghost btn-lg" href="dashboard.html"><svg class="ico"><use href="#i-grid"/></svg>Explorer le tableau de bord</a>
+      </div>
+      <div class="hero-checks">
+        <span><svg class="ico"><use href="#i-check"/></svg>Réservations machines 24/7</span>
+        <span><svg class="ico"><use href="#i-check"/></svg>Formations &amp; supports PDF</span>
+        <span><svg class="ico"><use href="#i-check"/></svg>Habilitations &amp; badges RFID</span>
+        <span><svg class="ico"><use href="#i-check"/></svg>Espace 100 % sécurisé et privé</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container grid-4">
+      <div class="card kpi"><div class="kpi-label">FabLabs &amp; écoles actifs</div><div class="kpi-value">4</div><div class="kpi-note">Espaces isolés par établissement</div></div>
+      <div class="card kpi"><div class="kpi-label">Équipements répertoriés</div><div class="kpi-value">18</div><div class="kpi-note ok">12 disponibles de suite</div></div>
+      <div class="card kpi"><div class="kpi-label">Réservations effectuées</div><div class="kpi-value">246</div><div class="kpi-note">Depuis l'ouverture de l'espace</div></div>
+      <div class="card kpi"><div class="kpi-label">Ateliers &amp; formations</div><div class="kpi-value">9</div><div class="kpi-note">Programmés ce trimestre</div></div>
+    </div>
+  </section>
+
+  <section class="section-tight" id="modules">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Modules</span>
+        <h2>Une suite complète pour la gestion de votre FabLab</h2>
+        <p>Conçu pour répondre aux enjeux des FabLabs universitaires, hackerspaces et tiers-lieux de fabrication.</p>
+      </div>
+      <div class="grid-3">
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico"><svg class="ico"><use href="#i-cpu"/></svg></div>
+          <h3>Réservation du parc machine</h3>
+          <p>Planning visuel, créneaux personnalisés et prévention automatique des conflits pour vos imprimantes 3D, découpeuses laser et fraiseuses CNC.</p>
+          <span class="tile-link">Explorer les équipements <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico blue"><svg class="ico"><use href="#i-badge"/></svg></div>
+          <h3>Habilitations &amp; badges de sécurité</h3>
+          <p>Seules les personnes ayant validé la formation et obtenu leur badge peuvent réserver et utiliser les machines à risque.</p>
+          <span class="tile-link">Voir les habilitations <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico amber"><svg class="ico"><use href="#i-book"/></svg></div>
+          <h3>Ateliers &amp; catalogue de formations</h3>
+          <p>Organisez vos sessions d'initiation et de perfectionnement : jauges de participants, inscriptions et notification des makers.</p>
+          <span class="tile-link">Consulter le catalogue <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico violet"><svg class="ico"><use href="#i-box"/></svg></div>
+          <h3>Stocks &amp; consommables</h3>
+          <p>Suivi des filaments PLA/PETG, plaques de contreplaqué, résines et composants, avec alertes automatiques au seuil critique.</p>
+          <span class="tile-link">Gérer l'inventaire <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico amber"><svg class="ico"><use href="#i-wrench"/></svg></div>
+          <h3>Maintenance &amp; incidents</h3>
+          <p>Signalement immédiat des pannes. La machine passe automatiquement en maintenance pour éviter les mauvaises surprises.</p>
+          <span class="tile-link">Voir les tickets <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="card tile" href="dashboard.html">
+          <div class="tile-ico"><svg class="ico"><use href="#i-file"/></svg></div>
+          <h3>Projets &amp; communs open-source</h3>
+          <p>Valorisez le travail des étudiants et makers : étapes de fabrication, nomenclature et fichiers 3D partagés.</p>
+          <span class="tile-link">Parcourir les projets <svg class="ico ico-sm"><use href="#i-arrow"/></svg></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight" id="machines">
+    <div class="container split">
+      <div class="card panel">
+        <div class="panel-head">
+          <div><h2>Machines prêtes à l'emploi</h2><p>Aperçu du parc machine disponible actuellement dans l'espace.</p></div>
+          <a class="link-caps" href="dashboard.html">Voir tout</a>
+        </div>
+        <div class="machines">
+          <div class="machine">
+            <div class="machine-top"><span><span class="dot"></span>Impression 3D</span><span>2 €/h</span></div>
+            <h4>Prusa i3 MK4 (FDM)</h4><div class="machine-zone">Zone A</div>
+            <div class="machine-foot"><span class="tag">Disponible</span><a href="dashboard.html">Réserver</a></div>
+          </div>
+          <div class="machine">
+            <div class="machine-top"><span><span class="dot reserved"></span>Découpe laser</span><span>8 €/h</span></div>
+            <h4>Trotec Speedy 400 CO2</h4><div class="machine-zone">Atelier Laser</div>
+            <div class="machine-foot"><span class="tag reserved">Réservée</span></div>
+          </div>
+          <div class="machine">
+            <div class="machine-top"><span><span class="dot maintenance"></span>Usinage CNC</span><span>10 €/h</span></div>
+            <h4>ShopBot PRSAlpha 3 axes</h4><div class="machine-zone">Atelier CNC</div>
+            <div class="machine-foot"><span class="tag maintenance">Maintenance</span></div>
+          </div>
+          <div class="machine">
+            <div class="machine-top"><span><span class="dot"></span>Électronique</span><span>1 €/h</span></div>
+            <h4>Poste de soudure Weller</h4><div class="machine-zone">Zone B</div>
+            <div class="machine-foot"><span class="tag">Disponible</span><a href="dashboard.html">Réserver</a></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel" id="ateliers">
+        <div class="panel-head">
+          <div><h2>Prochains ateliers</h2><p>Formations et sessions d'initiation.</p></div>
+          <a class="link-caps" href="dashboard.html">Catalogue</a>
+        </div>
+        <div class="row">
+          <div class="row-ico"><svg class="ico"><use href="#i-calendar"/></svg></div>
+          <div class="row-main"><div class="row-title">Initiation à l'impression 3D</div><div class="row-sub">20/10/2026 à 14:00 — 6 places restantes</div></div>
+        </div>
+        <div class="row">
+          <div class="row-ico"><svg class="ico"><use href="#i-calendar"/></svg></div>
+          <div class="row-main"><div class="row-title">Habilitation découpe laser</div><div class="row-sub">23/10/2026 à 09:30 — 3 places restantes</div></div>
+        </div>
+        <div class="row">
+          <div class="row-ico"><svg class="ico"><use href="#i-calendar"/></svg></div>
+          <div class="row-main"><div class="row-title">Arduino pour débutants</div><div class="row-sub">28/10/2026 à 17:00 — 10 places restantes</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="card cta-band">
+        <h2>Prêt à numériser l'expérience maker de votre établissement ?</h2>
+        <p>Rejoignez le réseau LabOS et donnez à vos étudiants et makers les outils modernes d'un espace de fabrication.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="dashboard.html"><svg class="ico"><use href="#i-plus"/></svg>Créer votre instance FabLab</a>
+          <a class="btn btn-ghost btn-lg" href="dashboard.html"><svg class="ico"><use href="#i-grid"/></svg>Explorer le tableau de bord</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>LabOS — Gestion de FabLab</span>
+      <span>Maquette de proposition V2 — données d'exemple</span>
+    </div>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      var html = document.documentElement;
+      var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      try { localStorage.setItem('labos_v2_theme', next); } catch (e) {}
+    }
+
+    (function () {
+      var slides = document.querySelectorAll('.hero-slide');
+      var current = 0;
+      setInterval(function () {
+        slides[current].classList.remove('active');
+        current = (current + 1) % slides.length;
+        slides[current].classList.add('active');
+      }, 5000);
+    })();
+  </script>
+</body>
+</html>

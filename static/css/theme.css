@@ -35,7 +35,7 @@
 html,body{height:100%}
 body{
   margin:0; background:var(--bg); color:var(--on-surface);
-  font-family:Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-family:'Crete Round',Roboto,Georgia,serif;
   font-size:14px; line-height:20px; letter-spacing:.0142em;
   -webkit-font-smoothing:antialiased;
 }
@@ -270,6 +270,16 @@ td small{display:block;color:var(--on-surface-variant);font-size:12px;line-heigh
 .champ .aide{font-size:12px;line-height:16px;color:var(--on-surface-variant);margin-top:6px;padding:0 16px}
 .champ input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary)}
 
+input:-webkit-autofill,input:-webkit-autofill:hover,
+textarea:-webkit-autofill,select:-webkit-autofill{
+  -webkit-box-shadow:0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color:var(--on-surface);caret-color:var(--on-surface);
+  transition:background-color 9999s ease-out 0s;
+}
+input:-webkit-autofill:focus,textarea:-webkit-autofill:focus,select:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--surface) inset,inset 0 0 0 1px var(--primary);
+}
+
 dl.fiche{display:grid;grid-template-columns:38% 1fr;margin:0;font-size:14px}
 dl.fiche dt{color:var(--on-surface-variant);padding:10px 0;border-bottom:1px solid var(--s-container);font-size:13px}
 dl.fiche dd{margin:0;padding:10px 0;border-bottom:1px solid var(--s-container)}
@@ -310,9 +320,9 @@ dl.fiche dt:last-of-type,dl.fiche dd:last-of-type{border-bottom:none}
 .pousse{margin-left:auto}
 
 .vide{padding:56px 24px;text-align:center;color:var(--on-surface-variant)}
-.vide .ms{font-size:44px;color:var(--outline-variant);display:block;margin:0 auto 12px}
+.vide > .ms{font-size:44px;color:var(--outline-variant);display:block;margin:0 auto 12px}
 .vide b{display:block;color:var(--on-surface);font-size:16px;font-weight:500;margin-bottom:4px}
-.vide .btn{margin-top:20px}
+.vide .btn{display:flex;width:fit-content;margin:20px auto 0}
 
 .planning-cadre{overflow-x:auto;background:var(--surface);border-radius:var(--sh-l);padding:8px}
 .planning{display:grid;grid-template-columns:60px repeat(6,1fr);min-width:660px;font-size:12px}
@@ -616,6 +626,7 @@ a:hover{text-decoration:none}
 .btn{text-decoration:none}
 nav a.nav-btn{text-decoration:none}
 h1,h2,h3,h4{font-weight:500;letter-spacing:0}
+h1,h2,.v-hero .accroche,.c-carte h1{font-weight:400;letter-spacing:0}
 
 /* --------- anciennes classes d'habillage conservées --------- */
 .btn-primary{background:var(--primary);border-color:transparent;color:var(--on-primary)}

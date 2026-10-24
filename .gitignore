@@ -25,3 +25,6 @@ backups/
 
 # Dossier de travail hors projet (fichiers audio volumineux)
 stt_ewe/
+
+# Réglages locaux de Claude Code
+.claude/

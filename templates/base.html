@@ -508,6 +508,20 @@
     fetchNotifications();
     setInterval(fetchNotifications, 30000);
   }
+
+  function syncActiveNav() {
+    const path = location.pathname;
+    let best = null;
+    document.querySelectorAll('#drawer a.nav-btn[href^="/"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (path.startsWith(href) && (!best || href.length > best.getAttribute('href').length)) best = link;
+    });
+    document.querySelectorAll('#drawer a.nav-btn.actif').forEach(link => link.classList.remove('actif'));
+    if (best) best.classList.add('actif');
+  }
+  document.addEventListener('htmx:pushedIntoHistory', syncActiveNav);
+  document.addEventListener('htmx:historyRestore', syncActiveNav);
+  window.addEventListener('popstate', () => setTimeout(syncActiveNav, 0));
 </script>
 </body>
 </html>
